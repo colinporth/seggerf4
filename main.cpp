@@ -12,8 +12,8 @@
 #include "font.h"
 //}}}
 //{{{  defines
-//                                 SPI2 PB13  SCK
-//                                 SPI2 PB15  MOSI
+#define SCK_PIN     GPIO_PIN_13 // SPI2 PB13  SCK
+#define MOSI_PIN    GPIO_PIN_15 // SPI2 PB15  MOSI
 #define CS_PIN      GPIO_PIN_12 // SPI2 PB12  CS/NSS active hi
 #define DISP_PIN    GPIO_PIN_14 // GPIO PB14  DISP active hi
 #define VCOM_PIN    GPIO_PIN_11 // GPIO PB11  VCOM normally flipping
@@ -27,28 +27,7 @@
 #define clearByte   0x20
 //}}}
 
-__IO uint32_t DelayCount;
-extern "C" {
-  //{{{
-  void SysTick_Handler() {
-    if (DelayCount != 0x00)
-      DelayCount--;
-    }
-  //}}}
-  }
-//{{{
-void delayMs (uint32_t ms) {
-  DelayCount = ms;
-  while (DelayCount != 0) {}
-  }
-//}}}
-//{{{
-void delayInit() {
-  SysTick->VAL = 0;                       // config sysTick
-  SysTick->LOAD = SystemCoreClock / 1000; // - countdown value
-  SysTick->CTRL = 0x7;                    // - 0x4 = sysTick HCLK, 0x2 = intEnable, 0x1 = enable
-  }
-//}}}
+extern "C" { void SysTick_Handler() { HAL_IncTick(); } }
 
 //{{{
 class cScreen {
@@ -71,7 +50,7 @@ public:
     GPIOB->BSRR = (CS_PIN | DISP_PIN | VCOM_PIN) << 16;
 
     // enable GPIO AF SPI pins
-    GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_15;
+    GPIO_InitStruct.Pin = SCK_PIN | MOSI_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
     HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
@@ -102,9 +81,11 @@ public:
     GPIOB->BSRR = DISP_PIN;
     }
   //}}}
+
   static const uint16_t getWidth() { return 400; }
-  static const uint16_t getPitch() { return (400 / 8) + 2; }
+  static const uint16_t getPitch() { return (getWidth() / 8) + 2; }
   static const uint16_t getHeight() { return 240; }
+
   //{{{
   void setPixel (bool white, int16_t x, int16_t y) {
 
@@ -270,7 +251,7 @@ private:
 
 int main() {
 
-  delayInit();
+  HAL_Init();
 
   auto screen = new cScreen();
   screen->init();
@@ -283,6 +264,7 @@ int main() {
         screen->drawString (false, "helloColin long piece of text", j + i*10, i*20, 300, 20);
         }
       screen->toggleVcom();
+      //HAL_Delay (100);
       }
     }
 
