@@ -2,6 +2,7 @@
 //{{{  includes
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_rcc.h"
@@ -58,23 +59,58 @@ void delayInit() {
 
 uint16_t getWidth() { return TFTWIDTH; }
 uint16_t getHeight() { return TFTHEIGHT; }
-//{{{
-uint8_t reverseByte (uint8_t b) {
 
-  b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
-  b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
-  b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
-  return b;
-  }
-//}}}
 //{{{
-void writeByte (uint8_t byte) {
+void clearScreenBlack() {
 
-  SPI2->DR = byte;
+  // CS hi
+  GPIOB->BSRR = CS_PIN;
+
+  // clearScreen
+  SPI2->DR = clearByte;
   while (!(SPI2->SR & SPI_FLAG_TXE));
+  SPI2->DR = paddingByte;
+  while (SPI2->SR & SPI_FLAG_BSY);
+
+  // CS lo
+  GPIOB->BSRR = CS_PIN << 16;
+
+  // clear frameBuf, each line has leading lineAddress and training paddingByte
+  memset (frameBuf, 0, TFTPITCH*TFTHEIGHT);
+  for (uint16_t y = 0; y < TFTHEIGHT; y++) {
+    uint8_t lineAddress = y+1;
+    lineAddress = (lineAddress & 0xF0) >> 4 | (lineAddress & 0x0F) << 4;
+    lineAddress = (lineAddress & 0xCC) >> 2 | (lineAddress & 0x33) << 2;
+    lineAddress = (lineAddress & 0xAA) >> 1 | (lineAddress & 0x55) << 1;
+    frameBuf [y*TFTPITCH] = lineAddress;
+    frameBuf [(y*TFTPITCH) + 1 + (TFTWIDTH/8)] = paddingByte;
+    }
   }
 //}}}
+//{{{
+void drawLines (uint16_t yorg, uint16_t yend) {
 
+  if (yorg < TFTHEIGHT) {
+    GPIOB->BSRR = CS_PIN;
+
+    // leading command byte
+    SPI2->DR = commandByte;
+    while (!(SPI2->SR & SPI_FLAG_TXE));
+
+    auto frameBufPtr = frameBuf + (yorg * TFTPITCH);
+    for (int i = 0; i < (yend-yorg+1) * TFTPITCH; i++) {
+      SPI2->DR = *frameBufPtr++;
+      while (!(SPI2->SR & SPI_FLAG_TXE));
+      }
+
+    // trainig second padding byte
+    SPI2->DR = paddingByte;
+    while (SPI2->SR & SPI_FLAG_BSY);
+
+    GPIOB->BSRR = CS_PIN << 16;
+    }
+  }
+//}}}
 //{{{
 void toggleVcom() {
 
@@ -86,56 +122,22 @@ void toggleVcom() {
   vcom = !vcom;
   }
 //}}}
-//{{{
-void clearScreenOff() {
-
-  // CS hi
-  GPIOB->BSRR = CS_PIN;
-
-  // clearScreen
-  writeByte (clearByte);
-  writeByte (paddingByte);
-
-  // CS lo
-  while (SPI2->SR & SPI_FLAG_BSY);
-  GPIOB->BSRR = CS_PIN << 16;
-  }
-//}}}
 
 //{{{
-void setPixel (uint16_t colour, int16_t x, int16_t y) {
+void setPixel (bool white, int16_t x, int16_t y) {
 
   if ((x < TFTWIDTH) && (y < TFTHEIGHT)) {
     auto framePtr = frameBuf + (y * TFTPITCH) + 1 + (x/8);
     uint8_t xMask = 0x80 >> (x & 7);
-    if (colour)
-      *framePtr &= ~xMask;
-    else
+    if (white)
       *framePtr |= xMask;
+    else
+      *framePtr &= ~xMask;
     }
   }
 //}}}
 //{{{
-void drawLines (uint16_t yorg, uint16_t yend) {
-
-  if (yorg < TFTHEIGHT) {
-    GPIOB->BSRR = CS_PIN;
-
-    writeByte (commandByte);
-
-    auto frameBufPtr = frameBuf + (yorg * TFTPITCH);
-    for (int i = 0; i < (yend-yorg+1) * TFTPITCH; i++)
-      writeByte (*frameBufPtr++);
-
-    writeByte (paddingByte);
-    while (SPI2->SR & SPI_FLAG_BSY);
-
-    GPIOB->BSRR = CS_PIN << 16;
-    }
-  }
-//}}}
-//{{{
-void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+void drawRect (bool white, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
   uint16_t xend = xorg + xlen - 1;
   if (xend >= TFTWIDTH)
@@ -152,10 +154,10 @@ void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t yl
     auto framePtr = frameBuf + (y * TFTPITCH) + 1 + xFirstByte;
     uint8_t xmask = xFirstMask;
     for (uint16_t x = xorg; x <= xend; x++) {
-      if (black)
-        *framePtr &= ~xmask;
-      else
+      if (white)
         *framePtr |= xmask;
+      else
+        *framePtr &= ~xmask;
       xmask >>= 1;
       if (xmask == 0) {
         xmask = 0x80;
@@ -168,7 +170,7 @@ void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t yl
   }
 //}}}
 //{{{
-void drawString (uint16_t colour,const char* str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+void drawString (bool white, const char* str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
   const font_t* font = &font18;
   int16_t x = xorg;
@@ -187,13 +189,13 @@ void drawString (uint16_t colour,const char* str, int16_t xorg, int16_t yorg, ui
       uint8_t top = (uint8_t)*glyphData++;
       uint8_t advance = (uint8_t)*glyphData++;
 
-      for (int16_t j = y+font->height-top; j < y+font->height-top+height; j++) {
+      for (int16_t j = y + font->height - top; j < y + font->height - top + height; j++) {
         uint8_t glyphByte;
         for (int16_t i = 0; i < width; i++) {
           if (i % 8 == 0)
             glyphByte = *glyphData++;
           if (glyphByte & 0x80)
-            setPixel (colour, x+left+i, j);
+            setPixel (white, x+left+i, j);
           glyphByte <<= 1;
           }
         }
@@ -205,9 +207,12 @@ void drawString (uint16_t colour,const char* str, int16_t xorg, int16_t yorg, ui
   }
 //}}}
 //{{{
-void clearScreen (uint16_t colour) {
+void clearScreen (bool white) {
 
-  drawRect (colour, 0, 0, getWidth(), getHeight());
+  if (white)
+    drawRect (true, 0, 0, getWidth(), getHeight());
+  else
+    clearScreenBlack();
   }
 //}}}
 
@@ -225,7 +230,7 @@ void displayInit() {
   GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
   HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
-  // CS, DISP, VCOM lo
+  // disable CS, DISP, VCOM lo
   GPIOB->BSRR = (CS_PIN | DISP_PIN | VCOM_PIN) << 16;
 
   // enable GPIO AF SPI pins
@@ -254,16 +259,10 @@ void displayInit() {
   // SPI2 enable
   SPI2->CR1 |= SPI_CR1_SPE;
 
-  clearScreenOff();
+  clearScreenBlack();
 
-  // DISP hi
+  // enable DISP hi
   GPIOB->BSRR = DISP_PIN;
-
-  // frameBuf stuffed with lineAddress and line end paddingByte
-  for (uint16_t y = 0; y < TFTHEIGHT; y++) {
-    frameBuf [y*TFTPITCH] = reverseByte (y+1);
-    frameBuf [(y*TFTPITCH) + 1 + (TFTWIDTH/8)] = paddingByte;
-    }
   }
 //}}}
 
@@ -274,10 +273,10 @@ int main() {
 
   while (1) {
     for (int j = 0; j < 200; j++) {
-      clearScreen (0);
+      clearScreen (true);
       for (int i = 0; i < getHeight(); i++) {
-        drawRect (1, 0, i*20, 400, 2);
-        drawString (1, "helloColin", j + i*10, i*20, 300, 20);
+        drawRect (false, 0, i*20, 400, 2);
+        drawString (false, "helloColin", j + i*10, i*20, 300, 20);
         }
       delayMs (20);
       toggleVcom();
