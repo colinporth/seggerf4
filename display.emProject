@@ -8,7 +8,7 @@
       arm_endian="Little"
       arm_fp_abi="Hard"
       arm_fpu_type="FPv4-SP-D16"
-      arm_linker_heap_size="1024"
+      arm_linker_heap_size="20000"
       arm_linker_process_stack_size="0"
       arm_linker_stack_size="1024"
       arm_simulator_memory_simulation_parameter="RX 08000000,00100000,FFFFFFFF;RWX 20000000,00020000,CDCDCDCD"
@@ -28,18 +28,20 @@
       project_directory=""
       project_type="Executable" />
     <folder Name="RTT Files">
-      <file file_name="SEGGER_RTT.c" />
-      <file file_name="SEGGER_RTT.h" />
-      <file file_name="SEGGER_RTT_Conf.h" />
-      <file file_name="SEGGER_RTT_Syscalls_SES.c" />
       <configuration Name="Common" macros="STLport=No" />
+      <folder Name="includes">
+        <file file_name="RTT/SEGGER_RTT.h" />
+        <file file_name="RTT/SEGGER_RTT_Conf.h" />
+      </folder>
+      <file file_name="RTT/SEGGER_RTT.c" />
+      <file file_name="RTT/SEGGER_RTT_Syscalls_SES.c" />
     </folder>
     <folder Name="System Files">
-      <file file_name="thumb_crt0.s" />
-      <file file_name="Cortex_M_Startup.s" />
-      <file file_name="HardFaultHandler.S" />
-      <file file_name="SEGGER_HardFaultHandler.c" />
       <configuration Name="Common" macros="STLport=No" />
+      <file file_name="system/Cortex_M_Startup.s" />
+      <file file_name="system/HardFaultHandler.S" />
+      <file file_name="system/SEGGER_HardFaultHandler.c" />
+      <file file_name="system/thumb_crt0.s" />
     </folder>
     <folder Name="drivers">
       <folder Name="includes">
@@ -47,9 +49,6 @@
         <file file_name="drivers/Inc/stm32f4xx_hal_adc.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_adc_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_cortex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_crc.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_dac.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_dac_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_def.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_dma.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_dma_ex.h" />
@@ -57,57 +56,39 @@
         <file file_name="drivers/Inc/stm32f4xx_hal_flash_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_gpio.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_gpio_ex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_hash.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_hash_ex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_hcd.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_i2c.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_i2c_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_i2s.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_i2s_ex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_irda.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_iwdg.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_pccard.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_pcd.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_pcd_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_pwr.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_pwr_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_rcc.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_rcc_ex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_rng.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_rtc.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_rtc_ex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_sai.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_sai_ex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_sd.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_spi.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_sram.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_tim.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_tim_ex.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_uart.h" />
         <file file_name="drivers/Inc/stm32f4xx_hal_usart.h" />
-        <file file_name="drivers/Inc/stm32f4xx_hal_wwdg.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_adc.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_bus.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_cortex.h" />
-        <file file_name="drivers/Inc/stm32f4xx_ll_crc.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_dac.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_dma.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_exti.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_gpio.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_i2c.h" />
-        <file file_name="drivers/Inc/stm32f4xx_ll_iwdg.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_pwr.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_rcc.h" />
-        <file file_name="drivers/Inc/stm32f4xx_ll_rng.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_rtc.h" />
-        <file file_name="drivers/Inc/stm32f4xx_ll_sdmmc.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_spi.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_system.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_tim.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_usart.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_usb.h" />
         <file file_name="drivers/Inc/stm32f4xx_ll_utils.h" />
-        <file file_name="drivers/Inc/stm32f4xx_ll_wwdg.h" />
         <folder
           Name="Legacy"
           exclude=""
@@ -120,56 +101,35 @@
         <file file_name="drivers/Src/stm32f4xx_hal_adc.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_adc_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_cortex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_crc.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_dac.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_dac_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_dma.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_dma_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_flash.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_flash_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_flash_ramfunc.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_gpio.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_hash.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_hash_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_hcd.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_i2c.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_i2c_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_i2s.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_i2s_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_irda.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_iwdg.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_mmc.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_pcd.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_pcd_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_pwr.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_pwr_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_rcc.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_rcc_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_rng.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_rtc.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_rtc_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_sai.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_sai_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_sd.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_spi.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_tim.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_tim_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_uart.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_usart.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_wwdg.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_adc.c" />
-        <file file_name="drivers/Src/stm32f4xx_ll_crc.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_dac.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_dma.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_exti.c" />
-        <file file_name="drivers/Src/stm32f4xx_ll_fmc.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_gpio.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_i2c.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_pwr.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_rcc.c" />
-        <file file_name="drivers/Src/stm32f4xx_ll_rng.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_rtc.c" />
-        <file file_name="drivers/Src/stm32f4xx_ll_sdmmc.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_spi.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_tim.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_usart.c" />
@@ -189,15 +149,13 @@
       <file file_name="CMSIS/stm32f407xx.h" />
       <file file_name="CMSIS/system_stm32f4xx.h" />
     </folder>
-    <folder Name="a">
-      <file file_name="system_stm32f4xx.c" />
-      <folder Name="includes">
-        <file file_name="font.h" />
-      </folder>
-      <file file_name="font18.c" />
-      <file file_name="main.cpp" />
-    </folder>
     <configuration Name="Release" gcc_optimization_level="Level 3" />
+    <folder Name="includes">
+      <file file_name="font.h" />
+    </folder>
+    <file file_name="font18.c" />
+    <file file_name="main.cpp" />
+    <file file_name="system_stm32f4xx.c" />
   </project>
   <configuration
     Name="Debug"

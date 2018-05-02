@@ -5,85 +5,37 @@
 #endif
 //}}}
 
+//{{{  module enables
 #define HAL_MODULE_ENABLED
-/* #define HAL_ADC_MODULE_ENABLED */
-/* #define HAL_CAN_MODULE_ENABLED */
-/* #define HAL_CAN_LEGACY_MODULE_ENABLED */
-/* #define HAL_CRC_MODULE_ENABLED */
-/* #define HAL_CRYP_MODULE_ENABLED */
-/* #define HAL_DAC_MODULE_ENABLED */
-/* #define HAL_DCMI_MODULE_ENABLED */
 #define HAL_DMA_MODULE_ENABLED
-/* #define HAL_DMA2D_MODULE_ENABLED */
-/* #define HAL_ETH_MODULE_ENABLED */
 #define HAL_FLASH_MODULE_ENABLED
-/* #define HAL_NAND_MODULE_ENABLED */
-/* #define HAL_NOR_MODULE_ENABLED */
-/* #define HAL_PCCARD_MODULE_ENABLED */
-/* #define HAL_SRAM_MODULE_ENABLED */
-/* #define HAL_SDRAM_MODULE_ENABLED */
-/* #define HAL_HASH_MODULE_ENABLED */
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_I2C_MODULE_ENABLED
-/* #define HAL_I2S_MODULE_ENABLED */
-/* #define HAL_IWDG_MODULE_ENABLED */
-/* #define HAL_LTDC_MODULE_ENABLED */
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
-/* #define HAL_RNG_MODULE_ENABLED */
-/* #define HAL_RTC_MODULE_ENABLED */
-/* #define HAL_SAI_MODULE_ENABLED */
-/* #define HAL_SD_MODULE_ENABLED   */
 #define HAL_SPI_MODULE_ENABLED
-/* #define HAL_TIM_MODULE_ENABLED    */
-/* #define HAL_UART_MODULE_ENABLED  */
-/* #define HAL_USART_MODULE_ENABLED  */
-/* #define HAL_IRDA_MODULE_ENABLED  */
-/* #define HAL_SMARTCARD_MODULE_ENABLED */
-/* #define HAL_WWDG_MODULE_ENABLED */
 #define HAL_CORTEX_MODULE_ENABLED
-/* #define HAL_PCD_MODULE_ENABLED */
 #define HAL_HCD_MODULE_ENABLED
+//}}}
 
-#if !defined  (HSE_VALUE)
-  #define HSE_VALUE    (8000000U) /*!< Value of the External oscillator in Hz */
-#endif
+#define HSE_VALUE    (8000000U) /*!< Value of the External oscillator in Hz */
+#define HSE_STARTUP_TIMEOUT    (100U)   /*!< Time out for HSE start up, in ms */
+#define HSI_VALUE    (16000000U) /*!< Value of the Internal oscillator in Hz*/
+#define LSI_VALUE  (32000U)
+#define LSE_VALUE  (32768U)    /*!< Value of the External Low Speed oscillator in Hz */
+#define LSE_STARTUP_TIMEOUT    (5000U)   /*!< Time out for LSE start up, in ms */
+#define EXTERNAL_CLOCK_VALUE    (12288000U) /*!< Value of the External oscillator in Hz*/
 
-#if !defined  (HSE_STARTUP_TIMEOUT)
-  #define HSE_STARTUP_TIMEOUT    (100U)   /*!< Time out for HSE start up, in ms */
-#endif
-
-#if !defined  (HSI_VALUE)
-  #define HSI_VALUE    (16000000U) /*!< Value of the Internal oscillator in Hz*/
-#endif
-
-#if !defined  (LSI_VALUE)
- #define LSI_VALUE  (32000U)
-#endif                            /*!< Value of the Internal Low Speed oscillator in Hz
-                                  The real value may vary depending on the variations
-                                  in voltage and temperature.  */
-#if !defined  (LSE_VALUE)
- #define LSE_VALUE  (32768U)    /*!< Value of the External Low Speed oscillator in Hz */
-#endif
-
-#if !defined  (LSE_STARTUP_TIMEOUT)
-  #define LSE_STARTUP_TIMEOUT    (5000U)   /*!< Time out for LSE start up, in ms */
-#endif
-
-#if !defined  (EXTERNAL_CLOCK_VALUE)
-  #define EXTERNAL_CLOCK_VALUE    (12288000U) /*!< Value of the External oscillator in Hz*/
-#endif
-
-#define  VDD_VALUE                    (3300U) /*!< Value of VDD in mv */
-#define  TICK_INT_PRIORITY            (0x0FU) /*!< tick interrupt priority */
-#define  USE_RTOS                     0U
-#define  PREFETCH_ENABLE              0U /* The prefetch will be enabled in SystemClock_Config(), depending on the used
+#define VDD_VALUE                    (3300U) /*!< Value of VDD in mv */
+#define TICK_INT_PRIORITY            (0x0FU) /*!< tick interrupt priority */
+#define USE_RTOS                     0U
+#define PREFETCH_ENABLE              0U /* The prefetch will be enabled in SystemClock_Config(), depending on the used
                                             STM32F405/415/07/417 device: RevA (prefetch must be off) or RevZ (prefetch can be on/off) */
-#define  INSTRUCTION_CACHE_ENABLE     1U
-#define  DATA_CACHE_ENABLE            1U
-
+#define INSTRUCTION_CACHE_ENABLE     1U
+#define DATA_CACHE_ENABLE            1U
 #define USE_SPI_CRC                   1U
 
+//{{{  module enabled includes
 #ifdef HAL_RCC_MODULE_ENABLED
   #include "stm32f4xx_hal_rcc.h"
 #endif /* HAL_RCC_MODULE_ENABLED */
@@ -235,13 +187,8 @@
 #ifdef HAL_HCD_MODULE_ENABLED
  #include "stm32f4xx_hal_hcd.h"
 #endif /* HAL_HCD_MODULE_ENABLED */
-
-#ifdef  USE_FULL_ASSERT
-  #define assert_param(expr) ((expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
-  void assert_failed(uint8_t* file, uint32_t line);
-#else
-  #define assert_param(expr) ((void)0U)
-#endif 
+//}}}
+#define assert_param(expr) ((void)0U)
 
 //{{{
 #ifdef __cplusplus

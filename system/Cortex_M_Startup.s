@@ -27,7 +27,7 @@
   .global reset_handler
 
   .section .vectors, "ax"
-  .code 16 
+  .code 16
   .global _vectors
 
 .macro DEFAULT_ISR_HANDLER name=
@@ -54,7 +54,8 @@ ISR_RESERVED // Populate if using a debug monitor
 ISR_RESERVED
 ISR_HANDLER PendSV_Handler
 ISR_HANDLER SysTick_Handler
-  // External interrupts start her 
+
+  // External interrupts start her
 ISR_HANDLER ExternalISR0
 ISR_HANDLER ExternalISR1
 ISR_HANDLER ExternalISR2
