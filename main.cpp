@@ -29,23 +29,23 @@
 #define TFTHEIGHT   240 // 96
 #define TFTPITCH    ((TFTWIDTH/8)+2)  // line has lineNum, byte packed bit data, padding
 //}}}
-//font_t font18;
 
 static uint8_t frameBuf [TFTPITCH*TFTHEIGHT];
-static int vcom;
+static bool vcom;
 
 static __IO uint32_t DelayCount;
+extern "C" {
+  //{{{
+  void SysTick_Handler() {
+    if (DelayCount != 0x00)
+      DelayCount--;
+    }
+  //}}}
+  }
 //{{{
 void delayMs (uint32_t ms) {
   DelayCount = ms;
   while (DelayCount != 0) {}
-  }
-//}}}
-//{{{
-
-void SysTick_Handler() {
-  if (DelayCount != 0x00)
-    DelayCount--;
   }
 //}}}
 //{{{
@@ -77,24 +77,26 @@ void writeByte (uint8_t byte) {
 
 //{{{
 void toggleVcom() {
-  if (vcom) {
+
+  if (vcom)
     GPIOB->BSRR = VCOM_PIN << 16;
-    vcom = 0;
-    }
-  else {
+  else
     GPIOB->BSRR = VCOM_PIN;
-    vcom = 1;
-    }
+
+  vcom = !vcom;
   }
 //}}}
 //{{{
 void clearScreenOff() {
-  // CS hi, clearScreen, CS lo
+
+  // CS hi
   GPIOB->BSRR = CS_PIN;
 
+  // clearScreen
   writeByte (clearByte);
   writeByte (paddingByte);
 
+  // CS lo
   while (SPI2->SR & SPI_FLAG_BSY);
   GPIOB->BSRR = CS_PIN << 16;
   }
@@ -104,7 +106,7 @@ void clearScreenOff() {
 void setPixel (uint16_t colour, int16_t x, int16_t y) {
 
   if ((x < TFTWIDTH) && (y < TFTHEIGHT)) {
-    uint8_t* framePtr = frameBuf + (y * TFTPITCH) + 1 + (x/8);
+    auto framePtr = frameBuf + (y * TFTPITCH) + 1 + (x/8);
     uint8_t xMask = 0x80 >> (x & 7);
     if (colour)
       *framePtr &= ~xMask;
@@ -121,7 +123,7 @@ void drawLines (uint16_t yorg, uint16_t yend) {
 
     writeByte (commandByte);
 
-    uint8_t* frameBufPtr = frameBuf + (yorg * TFTPITCH);
+    auto frameBufPtr = frameBuf + (yorg * TFTPITCH);
     for (int i = 0; i < (yend-yorg+1) * TFTPITCH; i++)
       writeByte (*frameBufPtr++);
 
@@ -147,7 +149,7 @@ void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t yl
   uint8_t xFirstMask = 0x80 >> (xorg & 7);
 
   for (uint16_t y = yorg; y <= yend; y++) {
-    uint8_t* framePtr = frameBuf + (y * TFTPITCH) + 1 + xFirstByte;
+    auto framePtr = frameBuf + (y * TFTPITCH) + 1 + xFirstByte;
     uint8_t xmask = xFirstMask;
     for (uint16_t x = xorg; x <= xend; x++) {
       if (black)
@@ -166,12 +168,6 @@ void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t yl
   }
 //}}}
 //{{{
-void clearScreen (uint16_t colour) {
-
-  drawRect (colour, 0, 0, getWidth(), getHeight());
-  }
-//}}}
-//{{{
 void drawString (uint16_t colour, const font_t* font, const char* str,
                  int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
@@ -183,7 +179,8 @@ void drawString (uint16_t colour, const font_t* font, const char* str,
       x += font->spaceWidth;
 
     else if ((*str >= font->firstChar) && (*str <= font->lastChar)) {
-      uint8_t* glyphData = (uint8_t*)(font->glyphsBase + font->glyphOffsets[*str - font->firstChar]);
+      auto glyphData = (uint8_t*)(font->glyphsBase + font->glyphOffsets[*str - font->firstChar]);
+
       uint8_t width = (uint8_t)*glyphData++;
       uint8_t height = (uint8_t)*glyphData++;
       int8_t left = (int8_t)*glyphData++;
@@ -207,6 +204,12 @@ void drawString (uint16_t colour, const font_t* font, const char* str,
   drawLines (yorg, yorg+ylen-1);
   }
 //}}}
+//{{{
+void clearScreen (uint16_t colour) {
+
+  drawRect (colour, 0, 0, getWidth(), getHeight());
+  }
+//}}}
 
 //{{{
 void displayInit() {
@@ -222,7 +225,7 @@ void displayInit() {
   GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
   HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
-  // VCOM, CS, DISP lo
+  // CS, DISP, VCOM lo
   GPIOB->BSRR = (CS_PIN | DISP_PIN | VCOM_PIN) << 16;
 
   // enable GPIO AF SPI pins
@@ -231,7 +234,7 @@ void displayInit() {
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
   HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
-  // set SPI1 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
+  // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
   SPI_HandleTypeDef SPI_Handle;
   SPI_Handle.Instance = SPI2;
   SPI_Handle.Init.Mode = SPI_MODE_MASTER;
@@ -264,10 +267,11 @@ void displayInit() {
   }
 //}}}
 
-void main() {
+int main() {
 
   delayInit();
   displayInit();
+
   while (1) {
     for (int j = 0; j < 200; j++) {
       clearScreen (0);
@@ -279,4 +283,6 @@ void main() {
       toggleVcom();
       }
     }
+
+  return 0;
   }

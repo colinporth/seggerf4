@@ -16,6 +16,8 @@
       arm_target_interface_type="SWD"
       c_user_include_directories=".;CMSIS;drivers/Inc"
       debug_target_connection="J-Link"
+      gcc_c_language_standard="c11"
+      gcc_cplusplus_language_standard="c++14"
       linker_output_format="hex"
       linker_printf_fmt_level="int"
       linker_printf_fp_enabled="Float"
@@ -188,12 +190,12 @@
       <file file_name="CMSIS/system_stm32f4xx.h" />
     </folder>
     <folder Name="a">
-      <file file_name="main.c" />
       <file file_name="system_stm32f4xx.c" />
       <folder Name="includes">
         <file file_name="font.h" />
       </folder>
       <file file_name="font18.c" />
+      <file file_name="main.cpp" />
     </folder>
   </project>
   <configuration
