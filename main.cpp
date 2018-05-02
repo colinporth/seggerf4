@@ -273,10 +273,11 @@ int main() {
 
   while (1) {
     for (int j = 0; j < 200; j++) {
-      clearScreen (true);
+      //clearScreen (true);
       for (int i = 0; i < getHeight(); i++) {
+        drawRect (true, 0, i*20 + 2, 400, 18);
         drawRect (false, 0, i*20, 400, 2);
-        drawString (false, "helloColin", j + i*10, i*20, 300, 20);
+        drawString (false, "helloColin long piece of text", j + i*10, i*20, 300, 20);
         }
       delayMs (20);
       toggleVcom();
