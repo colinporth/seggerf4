@@ -25,12 +25,7 @@
 #define commandByte 0x80
 #define vcomByte    0x40
 #define clearByte   0x20
-
-#define TFTWIDTH    400 // 96
-#define TFTHEIGHT   240 // 96
-#define TFTPITCH    ((TFTWIDTH/8)+2)  // line has lineNum, byte packed bit data, padding
 //}}}
-
 
 __IO uint32_t DelayCount;
 extern "C" {
@@ -107,14 +102,14 @@ public:
     GPIOB->BSRR = DISP_PIN;
     }
   //}}}
-  uint16_t getWidth() { return TFTWIDTH; }
-  uint16_t getHeight() { return TFTHEIGHT; }
-
+  static const uint16_t getWidth() { return 400; }
+  static const uint16_t getPitch() { return (400 / 8) + 2; }
+  static const uint16_t getHeight() { return 240; }
   //{{{
   void setPixel (bool white, int16_t x, int16_t y) {
 
-    if ((x < TFTWIDTH) && (y < TFTHEIGHT)) {
-      auto framePtr = mFrameBuf + (y * TFTPITCH) + 1 + (x/8);
+    if ((x < getWidth()) && (y < getHeight())) {
+      auto framePtr = mFrameBuf + (y * getPitch()) + 1 + (x/8);
       uint8_t xMask = 0x80 >> (x & 7);
       if (white)
         *framePtr |= xMask;
@@ -127,18 +122,18 @@ public:
   void drawRect (bool white, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
     uint16_t xend = xorg + xlen - 1;
-    if (xend >= TFTWIDTH)
-      xend = TFTWIDTH - 1;
+    if (xend >= getWidth())
+      xend = getWidth() - 1;
 
     uint16_t yend = yorg + ylen - 1;
-    if (yend >= TFTHEIGHT)
-      yend = TFTHEIGHT - 1;
+    if (yend >= getHeight())
+      yend = getHeight() - 1;
 
     uint8_t xFirstByte = xorg/8;
     uint8_t xFirstMask = 0x80 >> (xorg & 7);
 
     for (uint16_t y = yorg; y <= yend; y++) {
-      auto framePtr = mFrameBuf + (y * TFTPITCH) + 1 + xFirstByte;
+      auto framePtr = mFrameBuf + (y * getPitch()) + 1 + xFirstByte;
       uint8_t xmask = xFirstMask;
       for (uint16_t x = xorg; x <= xend; x++) {
         if (white)
@@ -232,29 +227,29 @@ private:
     GPIOB->BSRR = CS_PIN << 16;
 
     // clear mFrameBuf, each line has leading lineAddress and training paddingByte
-    memset (mFrameBuf, 0, TFTPITCH*TFTHEIGHT);
-    for (uint16_t y = 0; y < TFTHEIGHT; y++) {
+    memset (mFrameBuf, 0, getPitch()*getHeight());
+    for (uint16_t y = 0; y < getHeight(); y++) {
       uint8_t lineAddress = y+1;
       lineAddress = (lineAddress & 0xF0) >> 4 | (lineAddress & 0x0F) << 4;
       lineAddress = (lineAddress & 0xCC) >> 2 | (lineAddress & 0x33) << 2;
       lineAddress = (lineAddress & 0xAA) >> 1 | (lineAddress & 0x55) << 1;
-      mFrameBuf [y*TFTPITCH] = lineAddress;
-      mFrameBuf [(y*TFTPITCH) + 1 + (TFTWIDTH/8)] = paddingByte;
+      mFrameBuf [y*getPitch()] = lineAddress;
+      mFrameBuf [(y*getPitch()) + 1 + (getWidth()/8)] = paddingByte;
       }
     }
   //}}}
   //{{{
   void drawLines (uint16_t yorg, uint16_t yend) {
 
-    if (yorg < TFTHEIGHT) {
+    if (yorg < getHeight()) {
       GPIOB->BSRR = CS_PIN;
 
       // leading command byte
       SPI2->DR = commandByte;
       while (!(SPI2->SR & SPI_FLAG_TXE));
 
-      auto mFrameBufPtr = mFrameBuf + (yorg * TFTPITCH);
-      for (int i = 0; i < (yend-yorg+1) * TFTPITCH; i++) {
+      auto mFrameBufPtr = mFrameBuf + (yorg * getPitch());
+      for (int i = 0; i < (yend-yorg+1) * getPitch(); i++) {
         SPI2->DR = *mFrameBufPtr++;
         while (!(SPI2->SR & SPI_FLAG_TXE));
         }
@@ -268,7 +263,7 @@ private:
     }
   //}}}
 
-  uint8_t mFrameBuf [TFTPITCH*TFTHEIGHT];
+  uint8_t mFrameBuf [((400/8) + 2) * 240];
   bool mCom = false;
   };
 //}}}
