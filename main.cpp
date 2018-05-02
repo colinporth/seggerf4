@@ -30,10 +30,10 @@
 #define TFTPITCH    ((TFTWIDTH/8)+2)  // line has lineNum, byte packed bit data, padding
 //}}}
 
-static uint8_t frameBuf [TFTPITCH*TFTHEIGHT];
-static bool vcom;
+uint8_t frameBuf [TFTPITCH*TFTHEIGHT];
+bool vcom;
 
-static __IO uint32_t DelayCount;
+__IO uint32_t DelayCount;
 extern "C" {
   //{{{
   void SysTick_Handler() {
@@ -168,9 +168,9 @@ void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t yl
   }
 //}}}
 //{{{
-void drawString (uint16_t colour, const font_t* font, const char* str,
-                 int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+void drawString (uint16_t colour,const char* str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
+  const font_t* font = &font18;
   int16_t x = xorg;
   int16_t y = yorg;
 
@@ -277,7 +277,7 @@ int main() {
       clearScreen (0);
       for (int i = 0; i < getHeight(); i++) {
         drawRect (1, 0, i*20, 400, 2);
-        drawString (1, &font18, "helloColin", j + i*10, i*20, 300, 20);
+        drawString (1, "helloColin", j + i*10, i*20, 300, 20);
         }
       delayMs (20);
       toggleVcom();

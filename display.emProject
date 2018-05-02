@@ -197,6 +197,7 @@
       <file file_name="font18.c" />
       <file file_name="main.cpp" />
     </folder>
+    <configuration Name="Release" gcc_optimization_level="Level 3" />
   </project>
   <configuration
     Name="Debug"
