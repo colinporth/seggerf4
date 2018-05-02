@@ -190,6 +190,10 @@
     <folder Name="a">
       <file file_name="main.c" />
       <file file_name="system_stm32f4xx.c" />
+      <folder Name="includes">
+        <file file_name="font.h" />
+      </folder>
+      <file file_name="font18.c" />
     </folder>
   </project>
   <configuration

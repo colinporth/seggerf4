@@ -1,3 +1,5 @@
+// main.c - sharp lcd testbed
+//{{{  includes
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,11 +8,14 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_spi.h"
 
-#define VCOM_PIN    GPIO_PIN_2 // GPIO PA2 = VCOM normally flipping
-#define DISP_PIN    GPIO_PIN_3 // GPIO PA3 = DISP normally hi
-#define CS_PIN      GPIO_PIN_4 // GPIO PA4 = CS   normally lo, could be AF SPI NSS
-//                                SPI1 PA5 = SCK  AF
-//                                SPI1 PA7 = MOSI AF
+#include "font.h"
+//}}}
+//{{{  defines
+//                                 SPI2 PB13  SCK
+//                                 SPI2 PB15  MOSI
+#define CS_PIN      GPIO_PIN_12 // SPI2 PB12  CS/NSS active hi
+#define DISP_PIN    GPIO_PIN_14 // GPIO PB14  DISP active hi
+#define VCOM_PIN    GPIO_PIN_11 // GPIO PB11  VCOM normally flipping
 //    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //    x  GND   EXTMODE   5v   VCOM   MOSI   3.3v  x
 //    x  GND     5v     DISP   CS    SCLK    GND  x
@@ -23,10 +28,33 @@
 #define TFTWIDTH    400 // 96
 #define TFTHEIGHT   240 // 96
 #define TFTPITCH    ((TFTWIDTH/8)+2)  // line has lineNum, byte packed bit data, padding
-
-static int vcom;
-static uint8_t frameBuf [TFTPITCH*TFTHEIGHT];
+//}}}
 //font_t font18;
+
+static uint8_t frameBuf [TFTPITCH*TFTHEIGHT];
+static int vcom;
+
+static __IO uint32_t DelayCount;
+//{{{
+void delayMs (uint32_t ms) {
+  DelayCount = ms;
+  while (DelayCount != 0) {}
+  }
+//}}}
+//{{{
+
+void SysTick_Handler() {
+  if (DelayCount != 0x00)
+    DelayCount--;
+  }
+//}}}
+//{{{
+void delayInit() {
+  SysTick->VAL = 0;                       // config sysTick
+  SysTick->LOAD = SystemCoreClock / 1000; // - countdown value
+  SysTick->CTRL = 0x7;                    // - 0x4 = sysTick HCLK, 0x2 = intEnable, 0x1 = enable
+  }
+//}}}
 
 uint16_t getWidth() { return TFTWIDTH; }
 uint16_t getHeight() { return TFTHEIGHT; }
@@ -42,19 +70,19 @@ uint8_t reverseByte (uint8_t b) {
 //{{{
 void writeByte (uint8_t byte) {
 
-  SPI1->DR = byte;
-  while (!(SPI1->SR & SPI_FLAG_TXE));
+  SPI2->DR = byte;
+  while (!(SPI2->SR & SPI_FLAG_TXE));
   }
 //}}}
 
 //{{{
 void toggleVcom() {
   if (vcom) {
-    GPIOA->BSRR = VCOM_PIN << 16;
+    GPIOB->BSRR = VCOM_PIN << 16;
     vcom = 0;
     }
   else {
-    GPIOA->BSRR = VCOM_PIN;
+    GPIOB->BSRR = VCOM_PIN;
     vcom = 1;
     }
   }
@@ -62,13 +90,13 @@ void toggleVcom() {
 //{{{
 void clearScreenOff() {
   // CS hi, clearScreen, CS lo
-  GPIOA->BSRR = CS_PIN;
+  GPIOB->BSRR = CS_PIN;
 
   writeByte (clearByte);
   writeByte (paddingByte);
 
-  while (SPI1->SR & SPI_FLAG_BSY);
-  GPIOA->BSRR = CS_PIN << 16;
+  while (SPI2->SR & SPI_FLAG_BSY);
+  GPIOB->BSRR = CS_PIN << 16;
   }
 //}}}
 
@@ -79,9 +107,9 @@ void setPixel (uint16_t colour, int16_t x, int16_t y) {
     uint8_t* framePtr = frameBuf + (y * TFTPITCH) + 1 + (x/8);
     uint8_t xMask = 0x80 >> (x & 7);
     if (colour)
-      *framePtr |= xMask;
-    else
       *framePtr &= ~xMask;
+    else
+      *framePtr |= xMask;
     }
   }
 //}}}
@@ -89,7 +117,7 @@ void setPixel (uint16_t colour, int16_t x, int16_t y) {
 void drawLines (uint16_t yorg, uint16_t yend) {
 
   if (yorg < TFTHEIGHT) {
-    GPIOA->BSRR = CS_PIN;
+    GPIOB->BSRR = CS_PIN;
 
     writeByte (commandByte);
 
@@ -98,23 +126,21 @@ void drawLines (uint16_t yorg, uint16_t yend) {
       writeByte (*frameBufPtr++);
 
     writeByte (paddingByte);
-    while (SPI1->SR & SPI_FLAG_BSY);
+    while (SPI2->SR & SPI_FLAG_BSY);
 
-    GPIOA->BSRR = CS_PIN << 16;
+    GPIOB->BSRR = CS_PIN << 16;
     }
-
-  toggleVcom();
   }
 //}}}
 //{{{
 void drawRect (int black, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
   uint16_t xend = xorg + xlen - 1;
-  if (xend >= TFTWIDTH) 
+  if (xend >= TFTWIDTH)
     xend = TFTWIDTH - 1;
 
   uint16_t yend = yorg + ylen - 1;
-  if (yend >= TFTHEIGHT) 
+  if (yend >= TFTHEIGHT)
     yend = TFTHEIGHT - 1;
 
   uint8_t xFirstByte = xorg/8;
@@ -145,35 +171,69 @@ void clearScreen (uint16_t colour) {
   drawRect (colour, 0, 0, getWidth(), getHeight());
   }
 //}}}
+//{{{
+void drawString (uint16_t colour, const font_t* font, const char* str,
+                 int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+
+  int16_t x = xorg;
+  int16_t y = yorg;
+
+  do {
+    if (*str == ' ')
+      x += font->spaceWidth;
+
+    else if ((*str >= font->firstChar) && (*str <= font->lastChar)) {
+      uint8_t* glyphData = (uint8_t*)(font->glyphsBase + font->glyphOffsets[*str - font->firstChar]);
+      uint8_t width = (uint8_t)*glyphData++;
+      uint8_t height = (uint8_t)*glyphData++;
+      int8_t left = (int8_t)*glyphData++;
+      uint8_t top = (uint8_t)*glyphData++;
+      uint8_t advance = (uint8_t)*glyphData++;
+
+      for (int16_t j = y+font->height-top; j < y+font->height-top+height; j++) {
+        uint8_t glyphByte;
+        for (int16_t i = 0; i < width; i++) {
+          if (i % 8 == 0)
+            glyphByte = *glyphData++;
+          if (glyphByte & 0x80)
+            setPixel (colour, x+left+i, j);
+          glyphByte <<= 1;
+          }
+        }
+      x += advance;
+      }
+    } while (*(++str));
+
+  drawLines (yorg, yorg+ylen-1);
+  }
+//}}}
 
 //{{{
 void displayInit() {
 
   // enable clocks
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_SPI1_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_SPI2_CLK_ENABLE();
 
   GPIO_InitTypeDef GPIO_InitStruct;
-  GPIO_InitStruct.Pin = VCOM_PIN | DISP_PIN | CS_PIN;
+  GPIO_InitStruct.Pin = CS_PIN | DISP_PIN | VCOM_PIN ;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
   // VCOM, CS, DISP lo
-  GPIOA->BSRR = (VCOM_PIN | DISP_PIN | CS_PIN) << 16;
+  GPIOB->BSRR = (CS_PIN | DISP_PIN | VCOM_PIN) << 16;
 
   // enable GPIO AF SPI pins
-  GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_7;
+  GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
-  GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-  HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
+  GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
+  HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
   // set SPI1 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
   SPI_HandleTypeDef SPI_Handle;
-  SPI_Handle.Instance = SPI1;
+  SPI_Handle.Instance = SPI2;
   SPI_Handle.Init.Mode = SPI_MODE_MASTER;
   SPI_Handle.Init.Direction = SPI_DIRECTION_2LINES;
   //SPI_Handle.Init.Direction = SPI_DIRECTION_1LINE;
@@ -188,13 +248,13 @@ void displayInit() {
   SPI_Handle.Init.CRCPolynomial = 7;
   HAL_SPI_Init (&SPI_Handle);
 
-  // SPI1 enable
-  SPI1->CR1 |= SPI_CR1_SPE;
+  // SPI2 enable
+  SPI2->CR1 |= SPI_CR1_SPE;
 
   clearScreenOff();
 
   // DISP hi
-  GPIOA->BSRR = DISP_PIN;
+  GPIOB->BSRR = DISP_PIN;
 
   // frameBuf stuffed with lineAddress and line end paddingByte
   for (uint16_t y = 0; y < TFTHEIGHT; y++) {
@@ -206,8 +266,17 @@ void displayInit() {
 
 void main() {
 
+  delayInit();
   displayInit();
-  clearScreen (0);
-  for (int i = 0; i < 8; i++)
-    drawRect (1, i*400/8,i*240/8, 400/8, 240/8);
+  while (1) {
+    for (int j = 0; j < 200; j++) {
+      clearScreen (0);
+      for (int i = 0; i < getHeight(); i++) {
+        drawRect (1, 0, i*20, 400, 2);
+        drawString (1, &font18, "helloColin", j + i*10, i*20, 300, 20);
+        }
+      delayMs (20);
+      toggleVcom();
+      }
+    }
   }
