@@ -234,11 +234,11 @@ private:
 
     // clearScreen command
     uint8_t byte = clearByte;
-    auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1,1);
+    auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
 
     // paddingByte
     byte = paddingByte;
-    result = HAL_SPI_Transmit (&SpiHandle, &byte, 1,1);
+    result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
 
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
@@ -258,19 +258,22 @@ private:
   //{{{
   void drawLines (int16_t top, int16_t bottom) {
 
-    if ((top >= 0) && (bottom <= getHeight())) {
+    if (top <= 0) 
+      top = 0;
+    if (bottom > getHeight())
+      bottom = getHeight();
+
+    auto lines = bottom - top;
+    if (lines > 0) {
       // CS hi
       GPIOB->BSRR = CS_PIN;
 
       uint8_t byte = commandByte;
-      auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1,1);
+      auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
       //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
       //  lines - lineByte | 50 bytes 400 bits | padding 0
-      auto mFrameBufPtr = mFrameBuf + (top * getPitch());
-
-      //auto result = HAL_SPI_Transmit_DMA (&SpiHandle, mFrameBufPtr, (bottom -top) * getPitch());
-      result = HAL_SPI_Transmit (&SpiHandle, mFrameBufPtr, (bottom-top) * getPitch(), 100);
+      result = HAL_SPI_Transmit (&SpiHandle, mFrameBuf + top * getPitch(), lines * getPitch(), 100);
       //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
       byte = paddingByte;
