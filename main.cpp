@@ -25,11 +25,52 @@
 
 SPI_HandleTypeDef SpiHandle;
 DMA_HandleTypeDef hdma_tx;
+ADC_HandleTypeDef AdcHandle;
 
 extern "C" {
   void SysTick_Handler() { HAL_IncTick(); }
+  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (AdcHandle.DMA_Handle); }
   void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmatx); }
   void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&SpiHandle); }
+  //{{{
+  void HAL_ADC_MspInit (ADC_HandleTypeDef *hadc) {
+
+    static DMA_HandleTypeDef  hdma_adc;
+
+    __HAL_RCC_ADC1_CLK_ENABLE();
+    __HAL_RCC_ADC3_CLK_ENABLE();
+    __HAL_RCC_GPIOF_CLK_ENABLE();
+    __HAL_RCC_DMA2_CLK_ENABLE();
+
+    // ADC Channel GPIO pin configuration
+    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitStruct.Pin = GPIO_PIN_10;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+    // Set the parameters to be configured
+    hdma_adc.Instance = DMA2_Stream0;
+    hdma_adc.Init.Channel  = DMA_CHANNEL_2;
+    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_adc.Init.Mode = DMA_CIRCULAR;
+    hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    HAL_DMA_Init (&hdma_adc);
+    __HAL_LINKDMA (hadc, DMA_Handle, hdma_adc);
+
+    // NVIC configuration for DMA transfer complete interrupt
+    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
+    }
+  //}}}
   }
 //{{{
 class cLcd {
@@ -258,7 +299,7 @@ private:
   //{{{
   void drawLines (int16_t top, int16_t bottom) {
 
-    if (top <= 0) 
+    if (top <= 0)
       top = 0;
     if (bottom > getHeight())
       bottom = getHeight();
@@ -294,22 +335,70 @@ private:
   };
 //}}}
 
+//{{{
+void adcInit() {
+
+  AdcHandle.Instance                   = ADC1;
+  //AdcHandle.Instance                   = ADC3;
+  AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
+  AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
+  AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
+  AdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
+  AdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
+  AdcHandle.Init.NbrOfDiscConversion   = 0;
+  AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
+  AdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
+  AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+  AdcHandle.Init.NbrOfConversion       = 1;
+  AdcHandle.Init.DMAContinuousRequests = ENABLE;
+  AdcHandle.Init.EOCSelection          = DISABLE;
+  HAL_ADC_Init (&AdcHandle);
+
+  ADC_ChannelConfTypeDef sConfig;
+  //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+  //sConfig.Channel = ADC_CHANNEL_VBAT;
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  //sConfig.Channel      = ADC_CHANNEL_8;
+  sConfig.Rank         = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES; // ADC_SAMPLETIME_3CYCLES;
+  sConfig.Offset       = 0;
+
+  //Configure ADC Temperature Sensor Channel
+  //sConfig.Rank = 1;
+  //sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
+  //sConfig.Offset = 0;
+
+  HAL_ADC_ConfigChannel (&AdcHandle, &sConfig);
+  }
+//}}}
 
 int main() {
 
   HAL_Init();
+  adcInit();
 
   auto lcd = new cLcd();
   lcd->init();
 
+  HAL_ADC_Start (&AdcHandle);
+
+  float averageVdd = 0;
   while (1)
-    for (int j = 0; j < 200; j++)
-      for (int i = 0; i < cLcd::getHeight(); i += 20) {
-        lcd->drawRect (false, cRect (0, i, 400, i + 2));
-        lcd->drawRect (true, cRect (0, i + 2, 400, i+20));
-        lcd->drawString (false, "helloColin long piece of text " + dec(i),
-                         cRect (j+i, i, j+i + 300, i+20));
-        }
+    for (int i = 0; i < cLcd::getHeight(); i += 20) {
+      HAL_ADC_PollForConversion (&AdcHandle, 100);
+      auto value = HAL_ADC_GetValue (&AdcHandle);
+
+      auto vdd = 1000.f * 1.2f / (value / 4096.f);
+      if (averageVdd == 0.f)
+        averageVdd = vdd;
+      else
+        averageVdd = ((averageVdd * 99.f) + vdd) / 100.f;
+
+      lcd->drawRect (false, cRect (0, i, 400, i + 2));
+      lcd->drawRect (true, cRect (0, i + 2, 400, i+20));
+      lcd->drawString (false, "helloColin " + dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3),
+                              cRect (i, i, i + 300, i+20));
+      }
 
   return 0;
   }

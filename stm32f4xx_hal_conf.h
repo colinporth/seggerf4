@@ -7,6 +7,7 @@
 
 //{{{  module enables
 #define HAL_MODULE_ENABLED
+#define HAL_ADC_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_FLASH_MODULE_ENABLED
@@ -14,6 +15,7 @@
 #define HAL_I2C_MODULE_ENABLED
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
+#define HAL_RTC_MODULE_ENABLED
 #define HAL_SPI_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
 //}}}
@@ -31,7 +33,7 @@
 #define TICK_INT_PRIORITY            (0x0FU) // tick interrupt priority
 #define USE_RTOS                     0U
 
-#define PREFETCH_ENABLE              0U 
+#define PREFETCH_ENABLE              0U
 #define INSTRUCTION_CACHE_ENABLE     1U
 #define DATA_CACHE_ENABLE            1U
 
