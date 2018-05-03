@@ -25,7 +25,7 @@
 extern "C" { void SysTick_Handler() { HAL_IncTick(); } }
 
 //{{{
-class cScreen {
+class cLcd {
 public:
   //{{{
   void init() {
@@ -269,15 +269,15 @@ int main() {
 
   HAL_Init();
 
-  auto screen = new cScreen();
-  screen->init();
+  auto lcd = new cLcd();
+  lcd->init();
 
   while (1) {
     for (int j = 0; j < 200; j++) {
-      for (int i = 0; i < screen->getHeight(); i++) {
-        screen->drawRect (true, 0, i*20 + 2, 400, 18);
-        screen->drawRect (false, 0, i*20, 400, 2);
-        screen->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20), j + i*10, i*20, 300, 20);
+      for (int i = 0; i < cLcd::getHeight(); i++) {
+        lcd->drawRect (true, 0, i*20 + 2, 400, 18);
+        lcd->drawRect (false, 0, i*20, 400, 2);
+        lcd->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20), j + i*10, i*20, 300, 20);
         }
       //HAL_Delay (100);
       }

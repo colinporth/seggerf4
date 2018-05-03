@@ -29,7 +29,7 @@
       macros="STLport=No"
       project_directory=""
       project_type="Executable" />
-    <folder Name="RTT Files">
+    <folder Name="rtt">
       <configuration Name="Common" macros="STLport=No" />
       <folder Name="includes">
         <file file_name="RTT/SEGGER_RTT.h" />
@@ -38,12 +38,13 @@
       <file file_name="RTT/SEGGER_RTT.c" />
       <file file_name="RTT/SEGGER_RTT_Syscalls_SES.c" />
     </folder>
-    <folder Name="System Files">
+    <folder Name="system">
       <configuration Name="Common" macros="STLport=No" />
       <file file_name="system/Cortex_M_Startup.s" />
       <file file_name="system/HardFaultHandler.S" />
       <file file_name="system/SEGGER_HardFaultHandler.c" />
       <file file_name="system/thumb_crt0.s" />
+      <file file_name="system/system_stm32f4xx.c" />
     </folder>
     <folder Name="drivers">
       <folder Name="includes">
@@ -152,16 +153,13 @@
       <file file_name="CMSIS/system_stm32f4xx.h" />
     </folder>
     <configuration Name="Release" gcc_optimization_level="Level 3" />
-    <folder Name="includes">
-      <file file_name="font.h" />
-    </folder>
     <file file_name="main.cpp" />
-    <file file_name="system_stm32f4xx.c" />
     <folder Name="common">
       <file file_name="common/cPointRect.h" />
       <file file_name="common/utils.cpp" />
       <file file_name="common/utils.h" />
       <file file_name="common/font18.c" />
+      <file file_name="font.h" />
     </folder>
   </project>
   <configuration

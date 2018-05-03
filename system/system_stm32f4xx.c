@@ -141,10 +141,5 @@ void SystemInit() {
     while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS ) != RCC_CFGR_SWS_PLL) {}
     }
 
-// Configure the Vector Table location add offset address
-#ifdef VECT_TAB_SRAM
-  SCB->VTOR = SRAM_BASE;
-#else
   SCB->VTOR = FLASH_BASE;
-#endif
   }
