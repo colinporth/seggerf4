@@ -210,7 +210,7 @@ private:
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
 
-    // init mFrameBuf, 240 x line  -  lineByte | 50 bytes 400 bits | padding 0
+    // set mFrameBuf, 240 x line  -  lineByte | 50 bytes 400 bits | padding 0
     memset (mFrameBuf, 0, getPitch() * getHeight());
     for (uint16_t y = 0; y < getHeight(); y++) {
       uint8_t lineByte = y+1;
@@ -225,7 +225,7 @@ private:
   //{{{
   void drawLines (uint16_t top, uint16_t bottom) {
 
-    if (top < getHeight()) {
+    if ((top >= 0) && (bottom <= getHeight())) {
       // CS hi
       GPIOB->BSRR = CS_PIN;
 
