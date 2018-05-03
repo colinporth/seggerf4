@@ -7,19 +7,20 @@
 #include "stm32f4xx.h"
 //}}}
 //{{{  defines
+//    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//    x  GND   EXTMODE   5v   VCOM   MOSI   3.3v  x
+//    x  GND     5v     DISP   CS    SCLK    GND  x
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 #define SCK_PIN     GPIO_PIN_13  //  SPI2  PB13  SCK
 #define MOSI_PIN    GPIO_PIN_15  //  SPI2  PB15  MOSI
 #define CS_PIN      GPIO_PIN_12  //  SPI2  PB12  CS/NSS active hi
 #define DISP_PIN    GPIO_PIN_14  //  GPIO  PB14  DISP active hi
 #define VCOM_PIN    GPIO_PIN_11  //  GPIO  PB11  VCOM - TIM2 CH4 1Hz flip
-//    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//    x  GND   EXTMODE   5v   VCOM   MOSI   3.3v  x
-//    x  GND     5v     DISP   CS    SCLK    GND  x
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 #define paddingByte 0x00
-#define commandByte 0x80
-#define vcomByte    0x40
 #define clearByte   0x20
+#define commandByte 0x80
 //}}}
 
 extern "C" { void SysTick_Handler() { HAL_IncTick(); } }
@@ -214,7 +215,7 @@ private:
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    // clearScreen
+    // clearScreen command
     SPI2->DR = clearByte;
     while (!(SPI2->SR & SPI_FLAG_TXE));
     SPI2->DR = paddingByte;
@@ -223,15 +224,15 @@ private:
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
 
-    // clear mFrameBuf, each line has leading lineAddress and training paddingByte
-    memset (mFrameBuf, 0, getPitch()*getHeight());
+    // init mFrameBuf, 240 x line  -  lineByte | 50 bytes 400 bits | padding 0
+    memset (mFrameBuf, 0, getPitch() * getHeight());
     for (uint16_t y = 0; y < getHeight(); y++) {
-      uint8_t lineAddress = y+1;
-      lineAddress = (lineAddress & 0xF0) >> 4 | (lineAddress & 0x0F) << 4;
-      lineAddress = (lineAddress & 0xCC) >> 2 | (lineAddress & 0x33) << 2;
-      lineAddress = (lineAddress & 0xAA) >> 1 | (lineAddress & 0x55) << 1;
-      mFrameBuf [y*getPitch()] = lineAddress;
-      mFrameBuf [(y*getPitch()) + 1 + (getWidth()/8)] = paddingByte;
+      uint8_t lineByte = y+1;
+      // bit reverse
+      lineByte = (lineByte & 0xF0) >> 4 | (lineByte & 0x0F) << 4;
+      lineByte = (lineByte & 0xCC) >> 2 | (lineByte & 0x33) << 2;
+      lineByte = (lineByte & 0xAA) >> 1 | (lineByte & 0x55) << 1;
+      mFrameBuf [y*getPitch()] = lineByte;
       }
     }
   //}}}
@@ -239,22 +240,30 @@ private:
   void drawLines (uint16_t yorg, uint16_t yend) {
 
     if (yorg < getHeight()) {
+      // CS hi
       GPIOB->BSRR = CS_PIN;
 
-      // leading command byte
+      // command byte
       SPI2->DR = commandByte;
-      while (!(SPI2->SR & SPI_FLAG_TXE));
 
+      // lines - lineByte | 50 bytes 400 bits | padding 0
       auto mFrameBufPtr = mFrameBuf + (yorg * getPitch());
       for (int i = 0; i < (yend-yorg+1) * getPitch(); i++) {
-        SPI2->DR = *mFrameBufPtr++;
+        // wait for empty
         while (!(SPI2->SR & SPI_FLAG_TXE));
+        SPI2->DR = *mFrameBufPtr++;
         }
 
-      // trainig second padding byte
+      // wait for empty
+      while (!(SPI2->SR & SPI_FLAG_TXE));
+
+      // terminate by second padding byte
       SPI2->DR = paddingByte;
+
+      // wait for all sent
       while (SPI2->SR & SPI_FLAG_BSY);
 
+      // CS lo
       GPIOB->BSRR = CS_PIN << 16;
       }
     }
