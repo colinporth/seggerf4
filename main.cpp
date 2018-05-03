@@ -117,45 +117,29 @@ public:
   static const uint16_t getHeight() { return 240; }
 
   //{{{
-  void setPixel (bool white, int16_t x, int16_t y) {
-
-    if ((x < getWidth()) && (y < getHeight())) {
-      auto framePtr = mFrameBuf + (y * getPitch()) + 1 + (x/8);
-      uint8_t xMask = 0x80 >> (x & 7);
-      if (white)
-        *framePtr |= xMask;
-      else
-        *framePtr &= ~xMask;
-      }
-    }
-  //}}}
-  //{{{
   void clearScreen (bool white) {
 
     if (white)
-      drawRect (true, 0, 0, getWidth(), getHeight());
+      drawRect (true, cRect (0, 0, getWidth(), getHeight()));
     else
       clearScreenBlack();
     }
   //}}}
   //{{{
-  void drawRect (bool white, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+  void drawRect (bool white, cRect rect) {
 
-    uint16_t xend = xorg + xlen - 1;
-    if (xend >= getWidth())
-      xend = getWidth() - 1;
+    if (rect.right > getWidth())
+      rect.right = getWidth();
+    if (rect.bottom > getHeight())
+      rect.bottom = getHeight();
 
-    uint16_t yend = yorg + ylen - 1;
-    if (yend >= getHeight())
-      yend = getHeight() - 1;
+    uint8_t xFirstByte = rect.left / 8;
+    uint8_t xFirstMask = 0x80 >> (rect.left & 7);
 
-    uint8_t xFirstByte = xorg/8;
-    uint8_t xFirstMask = 0x80 >> (xorg & 7);
-
-    for (uint16_t y = yorg; y <= yend; y++) {
+    for (uint16_t y = rect.top; y < rect.bottom; y++) {
       auto framePtr = mFrameBuf + (y * getPitch()) + 1 + xFirstByte;
       uint8_t xmask = xFirstMask;
-      for (uint16_t x = xorg; x <= xend; x++) {
+      for (uint16_t x = rect.left; x < rect.right; x++) {
         if (white)
           *framePtr |= xmask;
         else
@@ -168,43 +152,45 @@ public:
         }
       }
 
-    drawLines (yorg, yend);
+    drawLines (rect.top, rect.bottom);
     }
   //}}}
   //{{{
   void drawString (bool white, const std::string& str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
     const font_t* font = &font18;
-    int16_t x = xorg;
-    int16_t y = yorg;
 
     for (auto ch : str) {
       if ((ch >= font->firstChar) && (ch <= font->lastChar)) {
-        auto glyphData = (uint8_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
+        auto fontChar = (fontChar_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
+        auto charData = (uint8_t*)fontChar + 5;
 
-        uint8_t width = (uint8_t)*glyphData++;
-        uint8_t height = (uint8_t)*glyphData++;
-        int8_t left = (int8_t)*glyphData++;
-        uint8_t top = (uint8_t)*glyphData++;
-        uint8_t advance = (uint8_t)*glyphData++;
-
-        for (int16_t j = y + font->height - top; j < y + font->height - top + height; j++) {
-          uint8_t glyphByte;
-          for (int16_t i = 0; i < width; i++) {
-            if (i % 8 == 0)
-              glyphByte = *glyphData++;
-            if (glyphByte & 0x80)
-              setPixel (white, x+left+i, j);
-            glyphByte <<= 1;
+        for (int16_t yPix = yorg + font->height - fontChar->top; yPix < yorg + font->height - fontChar->top + fontChar->height; yPix++) {
+          uint8_t charByte;
+          for (int16_t bit = 0; bit < fontChar->width; bit++) {
+            if (bit % 8 == 0)
+              charByte = *charData++;
+            if (charByte & 0x80) {
+              int16_t xPix = xorg + fontChar->left + bit;
+              if ((xPix < getWidth()) && (yPix < getHeight())) {
+                auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (xPix/8);
+                uint8_t xMask = 0x80 >> (xPix & 7);
+                if (white)
+                  *framePtr |= xMask;
+                else
+                  *framePtr &= ~xMask;
+                }
+              }
+            charByte <<= 1;
             }
           }
-        x += advance;
+        xorg += fontChar->advance;
         }
       else
-        x += font->spaceWidth;
+        xorg += font->spaceWidth;
       }
 
-    drawLines (yorg, yorg + ylen - 1);
+    drawLines (yorg, yorg + ylen);
     }
   //}}}
 
@@ -237,9 +223,9 @@ private:
     }
   //}}}
   //{{{
-  void drawLines (uint16_t yorg, uint16_t yend) {
+  void drawLines (uint16_t top, uint16_t bottom) {
 
-    if (yorg < getHeight()) {
+    if (top < getHeight()) {
       // CS hi
       GPIOB->BSRR = CS_PIN;
 
@@ -247,8 +233,8 @@ private:
       SPI2->DR = commandByte;
 
       // lines - lineByte | 50 bytes 400 bits | padding 0
-      auto mFrameBufPtr = mFrameBuf + (yorg * getPitch());
-      for (int i = 0; i < (yend-yorg+1) * getPitch(); i++) {
+      auto mFrameBufPtr = mFrameBuf + (top * getPitch());
+      for (int i = 0; i < (bottom -top) * getPitch(); i++) {
         // wait for empty
         while (!(SPI2->SR & SPI_FLAG_TXE));
         SPI2->DR = *mFrameBufPtr++;
@@ -284,8 +270,8 @@ int main() {
   while (1) {
     for (int j = 0; j < 200; j++) {
       for (int i = 0; i < cLcd::getHeight(); i++) {
-        lcd->drawRect (true, 0, i*20 + 2, 400, 18);
-        lcd->drawRect (false, 0, i*20, 400, 2);
+        lcd->drawRect (false, cRect (0, i*20, 400, i*20 + 2));
+        lcd->drawRect (true, cRect (0, i*20 + 2, 400, (i+1)*20));
         lcd->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20), j + i*10, i*20, 300, 20);
         }
       //HAL_Delay (100);
