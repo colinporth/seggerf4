@@ -25,13 +25,11 @@
 
 SPI_HandleTypeDef SpiHandle;
 DMA_HandleTypeDef hdma_tx;
-DMA_HandleTypeDef hdma_rx;
 
 extern "C" {
-  void SysTick_Handler() { HAL_IncTick(); } }
-  void DMA1_Stream3_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmarx); }
+  void SysTick_Handler() { HAL_IncTick(); }
   void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmatx); }
-  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&SpiHandle);
+  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&SpiHandle); }
   }
 //{{{
 class cLcd {
@@ -86,6 +84,7 @@ public:
     //}}}
     result = HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_4);
 
+    //{{{  config SPI2 tx
     // config SPI2 GPIOB
     GPIO_InitStruct.Pin = SCK_PIN | MOSI_PIN;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
@@ -110,7 +109,7 @@ public:
     SpiHandle.Init.CRCPolynomial = 7;
     HAL_SPI_Init (&SpiHandle);
 
-    //{{{  config tx dma
+    // config tx dma
     hdma_tx.Instance                 = DMA1_Stream4;
     hdma_tx.Init.Channel             = DMA_CHANNEL_0;
     hdma_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
@@ -124,40 +123,18 @@ public:
     hdma_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
     hdma_tx.Init.MemBurst            = DMA_MBURST_INC4;
     hdma_tx.Init.PeriphBurst         = DMA_PBURST_INC4;
-
-    HAL_DMA_Init(&hdma_tx);
-
+    HAL_DMA_Init (&hdma_tx);
     __HAL_LINKDMA (&SpiHandle, hdmatx, hdma_tx);
-    //}}}
-    //{{{  config rx dma
-    hdma_rx.Instance                 = DMA1_Stream3;
-    hdma_rx.Init.Channel             = DMA_CHANNEL_0;
-    hdma_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-    hdma_rx.Init.PeriphInc           = DMA_PINC_DISABLE;
-    hdma_rx.Init.MemInc              = DMA_MINC_ENABLE;
-    hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    hdma_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
-    hdma_rx.Init.Mode                = DMA_NORMAL;
-    hdma_rx.Init.Priority            = DMA_PRIORITY_HIGH;
-    hdma_rx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
-    hdma_rx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-    hdma_rx.Init.MemBurst            = DMA_MBURST_INC4;
-    hdma_rx.Init.PeriphBurst         = DMA_PBURST_INC4;
-    HAL_DMA_Init (&hdma_rx);
-    __HAL_LINKDMA (&SpiHandle, hdmarx, hdma_rx);
-    //}}}
 
     HAL_NVIC_SetPriority (DMA1_Stream4_IRQn, 0, 1);
     HAL_NVIC_EnableIRQ (DMA1_Stream4_IRQn);
-
-    HAL_NVIC_SetPriority (DMA1_Stream3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ (DMA1_Stream3_IRQn);
 
     HAL_NVIC_SetPriority (SPI2_IRQn, 0, 2);
     HAL_NVIC_EnableIRQ (SPI2_IRQn);
 
     // SPI2 enable
     SPI2->CR1 |= SPI_CR1_SPE;
+    //}}}
 
     clearScreenBlack();
 
@@ -256,10 +233,12 @@ private:
     GPIOB->BSRR = CS_PIN;
 
     // clearScreen command
-    SPI2->DR = clearByte;
-    while (!(SPI2->SR & SPI_FLAG_TXE));
-    SPI2->DR = paddingByte;
-    while (SPI2->SR & SPI_FLAG_BSY);
+    uint8_t byte = clearByte;
+    auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1,1);
+
+    // paddingByte
+    byte = paddingByte;
+    result = HAL_SPI_Transmit (&SpiHandle, &byte, 1,1);
 
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
@@ -283,37 +262,23 @@ private:
       // CS hi
       GPIOB->BSRR = CS_PIN;
 
-      // command byte
-      //SPI2->DR = commandByte;
-      //while (!(SPI2->SR & SPI_FLAG_TXE));
-      //while (SPI2->SR & SPI_FLAG_BSY);
-
       uint8_t byte = commandByte;
-      auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1000);
+      auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1,1);
+      //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
       //  lines - lineByte | 50 bytes 400 bits | padding 0
       auto mFrameBufPtr = mFrameBuf + (top * getPitch());
 
       //auto result = HAL_SPI_Transmit_DMA (&SpiHandle, mFrameBufPtr, (bottom -top) * getPitch());
-      result = HAL_SPI_Transmit (&SpiHandle, mFrameBufPtr, (bottom-top) * getPitch(), 1000);
+      result = HAL_SPI_Transmit (&SpiHandle, mFrameBufPtr, (bottom-top) * getPitch(), 100);
       //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
-      //for (int i = 0; i < (bottom -top) * getPitch(); i++) {
-        // wait for empty
-      //  while (!(SPI2->SR & SPI_FLAG_TXE));
-      //  SPI2->DR = *mFrameBufPtr++;
-      //  }
-
-      // wait for empty
-      //while (!(SPI2->SR & SPI_FLAG_TXE));
-
-      // terminate by second padding byte
-      //SPI2->DR = paddingByte;
       byte = paddingByte;
-      result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1000);
+      result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
+      //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
       // wait for all sent
-      while (SPI2->SR & SPI_FLAG_BSY);
+      //while (SPI2->SR & SPI_FLAG_BSY);
 
       // CS lo
       GPIOB->BSRR = CS_PIN << 16;
