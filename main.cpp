@@ -156,7 +156,7 @@ public:
     }
   //}}}
   //{{{
-  void drawString (bool white, const std::string& str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+  void drawString (bool white, const std::string& str, cRect rect) {
 
     const font_t* font = &font18;
 
@@ -165,13 +165,13 @@ public:
         auto fontChar = (fontChar_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
         auto charData = (uint8_t*)fontChar + 5;
 
-        for (int16_t yPix = yorg + font->height - fontChar->top; yPix < yorg + font->height - fontChar->top + fontChar->height; yPix++) {
+        for (int16_t yPix = rect.top + font->height - fontChar->top; yPix < rect.top + font->height - fontChar->top + fontChar->height; yPix++) {
           uint8_t charByte;
           for (int16_t bit = 0; bit < fontChar->width; bit++) {
             if (bit % 8 == 0)
               charByte = *charData++;
             if (charByte & 0x80) {
-              int16_t xPix = xorg + fontChar->left + bit;
+              int16_t xPix = rect.left + fontChar->left + bit;
               if ((xPix < getWidth()) && (yPix < getHeight())) {
                 auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (xPix/8);
                 uint8_t xMask = 0x80 >> (xPix & 7);
@@ -184,13 +184,13 @@ public:
             charByte <<= 1;
             }
           }
-        xorg += fontChar->advance;
+        rect.left += fontChar->advance;
         }
       else
-        xorg += font->spaceWidth;
+        rect.left += font->spaceWidth;
       }
 
-    drawLines (yorg, yorg + ylen);
+    drawLines (rect.top, rect.bottom);
     }
   //}}}
 
@@ -223,7 +223,7 @@ private:
     }
   //}}}
   //{{{
-  void drawLines (uint16_t top, uint16_t bottom) {
+  void drawLines (int16_t top, int16_t bottom) {
 
     if ((top >= 0) && (bottom <= getHeight())) {
       // CS hi
@@ -272,7 +272,8 @@ int main() {
       for (int i = 0; i < cLcd::getHeight(); i++) {
         lcd->drawRect (false, cRect (0, i*20, 400, i*20 + 2));
         lcd->drawRect (true, cRect (0, i*20 + 2, 400, (i+1)*20));
-        lcd->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20), j + i*10, i*20, 300, 20);
+        lcd->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20),
+                         cRect (j + i*10, i*20, j + i*10 + 300, (i+1)*20));
         }
       //HAL_Delay (100);
       }
