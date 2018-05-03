@@ -24,6 +24,8 @@
 //}}}
 
 SPI_HandleTypeDef SpiHandle;
+DMA_HandleTypeDef hdma_tx;
+DMA_HandleTypeDef hdma_rx;
 
 extern "C" {
   void SysTick_Handler() { HAL_IncTick(); } }
@@ -282,21 +284,33 @@ private:
       GPIOB->BSRR = CS_PIN;
 
       // command byte
-      SPI2->DR = commandByte;
+      //SPI2->DR = commandByte;
+      //while (!(SPI2->SR & SPI_FLAG_TXE));
+      //while (SPI2->SR & SPI_FLAG_BSY);
 
-      // lines - lineByte | 50 bytes 400 bits | padding 0
+      uint8_t byte = commandByte;
+      auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1000);
+
+      //  lines - lineByte | 50 bytes 400 bits | padding 0
       auto mFrameBufPtr = mFrameBuf + (top * getPitch());
-      for (int i = 0; i < (bottom -top) * getPitch(); i++) {
+
+      //auto result = HAL_SPI_Transmit_DMA (&SpiHandle, mFrameBufPtr, (bottom -top) * getPitch());
+      result = HAL_SPI_Transmit (&SpiHandle, mFrameBufPtr, (bottom-top) * getPitch(), 1000);
+      //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
+
+      //for (int i = 0; i < (bottom -top) * getPitch(); i++) {
         // wait for empty
-        while (!(SPI2->SR & SPI_FLAG_TXE));
-        SPI2->DR = *mFrameBufPtr++;
-        }
+      //  while (!(SPI2->SR & SPI_FLAG_TXE));
+      //  SPI2->DR = *mFrameBufPtr++;
+      //  }
 
       // wait for empty
-      while (!(SPI2->SR & SPI_FLAG_TXE));
+      //while (!(SPI2->SR & SPI_FLAG_TXE));
 
       // terminate by second padding byte
-      SPI2->DR = paddingByte;
+      //SPI2->DR = paddingByte;
+      byte = paddingByte;
+      result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1000);
 
       // wait for all sent
       while (SPI2->SR & SPI_FLAG_BSY);
@@ -309,8 +323,6 @@ private:
 
   uint8_t mFrameBuf [((400/8) + 2) * 240];
   bool mCom = false;
-  DMA_HandleTypeDef hdma_tx;
-  DMA_HandleTypeDef hdma_rx;
   };
 //}}}
 
@@ -322,20 +334,14 @@ int main() {
   auto lcd = new cLcd();
   lcd->init();
 
-  //if(HAL_SPI_TransmitReceive_DMA(&SpiHandle, (uint8_t*)aTxBuffer, (uint8_t *)aRxBuffer, BUFFERSIZE) != HAL_OK)
-  //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY)
-
-  while (1) {
-    for (int j = 0; j < 200; j++) {
-      for (int i = 0; i < cLcd::getHeight(); i++) {
-        lcd->drawRect (false, cRect (0, i*20, 400, i*20 + 2));
-        lcd->drawRect (true, cRect (0, i*20 + 2, 400, (i+1)*20));
-        lcd->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20),
-                         cRect (j + i*10, i*20, j + i*10 + 300, (i+1)*20));
+  while (1)
+    for (int j = 0; j < 200; j++)
+      for (int i = 0; i < cLcd::getHeight(); i += 20) {
+        lcd->drawRect (false, cRect (0, i, 400, i + 2));
+        lcd->drawRect (true, cRect (0, i + 2, 400, i+20));
+        lcd->drawString (false, "helloColin long piece of text " + dec(i),
+                         cRect (j+i, i, j+i + 300, i+20));
         }
-      //HAL_Delay (100);
-      }
-    }
 
   return 0;
   }
