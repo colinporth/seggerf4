@@ -26,7 +26,9 @@
 SPI_HandleTypeDef SpiHandle;
 DMA_HandleTypeDef hdma_tx;
 ADC_HandleTypeDef AdcHandle;
+DMA_HandleTypeDef  hdma_adc;
 
+//{{{
 extern "C" {
   void SysTick_Handler() { HAL_IncTick(); }
   void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (AdcHandle.DMA_Handle); }
@@ -35,19 +37,16 @@ extern "C" {
   //{{{
   void HAL_ADC_MspInit (ADC_HandleTypeDef *hadc) {
 
-    static DMA_HandleTypeDef  hdma_adc;
-
     __HAL_RCC_ADC1_CLK_ENABLE();
-    __HAL_RCC_ADC3_CLK_ENABLE();
-    __HAL_RCC_GPIOF_CLK_ENABLE();
-    __HAL_RCC_DMA2_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    //__HAL_RCC_DMA2_CLK_ENABLE();
 
     // ADC Channel GPIO pin configuration
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_10;
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // Set the parameters to be configured
     hdma_adc.Instance = DMA2_Stream0;
@@ -72,6 +71,7 @@ extern "C" {
     }
   //}}}
   }
+//}}}
 //{{{
 class cLcd {
 public:
@@ -177,7 +177,16 @@ public:
     SPI2->CR1 |= SPI_CR1_SPE;
     //}}}
 
-    clearScreenBlack();
+    memset (mFrameBuf, 0, getPitch() * getHeight());
+    for (uint16_t y = 0; y < getHeight(); y++) {
+      uint8_t lineByte = y+1;
+      // bit reverse
+      lineByte = (lineByte & 0xF0) >> 4 | (lineByte & 0x0F) << 4;
+      lineByte = (lineByte & 0xCC) >> 2 | (lineByte & 0x33) << 2;
+      lineByte = (lineByte & 0xAA) >> 1 | (lineByte & 0x55) << 1;
+      mFrameBuf [y*getPitch()] = lineByte;
+      }
+    present();
 
     // enable DISP hi
     GPIOB->BSRR = DISP_PIN;
@@ -185,23 +194,19 @@ public:
   //}}}
 
   static const uint16_t getWidth() { return 400; }
-  static const uint16_t getPitch() { return (getWidth() / 8) + 2; }
+  static const uint16_t getWidthBytes() { return 400 / 8; }
   static const uint16_t getHeight() { return 240; }
 
-  //{{{
-  void clearScreen (bool white) {
-
-    if (white)
-      drawRect (true, cRect (0, 0, getWidth(), getHeight()));
-    else
-      clearScreenBlack();
-    }
-  //}}}
+  int getFrameNum() { return mFrameNum; }
   //{{{
   void drawRect (bool white, cRect rect) {
 
+    if (rect.left < 0)
+      rect.left = 0;
     if (rect.right > getWidth())
       rect.right = getWidth();
+    if (rect.top < 0)
+      rect.top = 0;
     if (rect.bottom > getHeight())
       rect.bottom = getHeight();
 
@@ -223,8 +228,6 @@ public:
           };
         }
       }
-
-    drawLines (rect.top, rect.bottom);
     }
   //}}}
   //{{{
@@ -237,21 +240,22 @@ public:
         auto fontChar = (fontChar_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
         auto charData = (uint8_t*)fontChar + 5;
 
-        for (int16_t yPix = rect.top + font->height - fontChar->top; yPix < rect.top + font->height - fontChar->top + fontChar->height; yPix++) {
+        for (int16_t yPix = rect.top + font->height - fontChar->top;
+             yPix < rect.top + font->height - fontChar->top + fontChar->height && yPix < getHeight(); yPix++) {
           uint8_t charByte;
           for (int16_t bit = 0; bit < fontChar->width; bit++) {
             if (bit % 8 == 0)
               charByte = *charData++;
             if (charByte & 0x80) {
               int16_t xPix = rect.left + fontChar->left + bit;
-              if ((xPix < getWidth()) && (yPix < getHeight())) {
-                auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (xPix/8);
-                uint8_t xMask = 0x80 >> (xPix & 7);
-                if (white)
-                  *framePtr |= xMask;
-                else
-                  *framePtr &= ~xMask;
-                }
+              if (xPix >= getWidth())
+                break;
+              auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (xPix/8);
+              uint8_t xMask = 0x80 >> (xPix & 7);
+              if (white)
+                *framePtr |= xMask;
+              else
+                *framePtr &= ~xMask;
               }
             charByte <<= 1;
             }
@@ -261,85 +265,59 @@ public:
       else
         rect.left += font->spaceWidth;
       }
-
-    drawLines (rect.top, rect.bottom);
     }
   //}}}
 
-private:
   //{{{
-  void clearScreenBlack() {
+  void clear (bool white) {
+
+    auto framePtr = mFrameBuf + 1;
+    for (int y = 0; y < getHeight(); y++) {
+      memset (framePtr, white ? 0xFF : 0, getWidthBytes());
+      framePtr += getPitch();
+      }
+    }
+  //}}}
+  //{{{
+  void present() {
 
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    // clearScreen command
-    uint8_t byte = clearByte;
-    auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
+    uint8_t byte = commandByte;
+   auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
+    //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
-    // paddingByte
+    //  lines - lineByte | 50 bytes 400 bits | padding 0
+    result = HAL_SPI_Transmit (&SpiHandle, mFrameBuf, getHeight() * getPitch(), 100);
+    //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
+
     byte = paddingByte;
     result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
+    //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
+
+    // wait for all sent
+    //while (SPI2->SR & SPI_FLAG_BSY);
 
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
 
-    // set mFrameBuf, 240 x line  -  lineByte | 50 bytes 400 bits | padding 0
-    memset (mFrameBuf, 0, getPitch() * getHeight());
-    for (uint16_t y = 0; y < getHeight(); y++) {
-      uint8_t lineByte = y+1;
-      // bit reverse
-      lineByte = (lineByte & 0xF0) >> 4 | (lineByte & 0x0F) << 4;
-      lineByte = (lineByte & 0xCC) >> 2 | (lineByte & 0x33) << 2;
-      lineByte = (lineByte & 0xAA) >> 1 | (lineByte & 0x55) << 1;
-      mFrameBuf [y*getPitch()] = lineByte;
-      }
+    mFrameNum++;
     }
   //}}}
-  //{{{
-  void drawLines (int16_t top, int16_t bottom) {
 
-    if (top <= 0)
-      top = 0;
-    if (bottom > getHeight())
-      bottom = getHeight();
-
-    auto lines = bottom - top;
-    if (lines > 0) {
-      // CS hi
-      GPIOB->BSRR = CS_PIN;
-
-      uint8_t byte = commandByte;
-      auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
-      //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
-
-      //  lines - lineByte | 50 bytes 400 bits | padding 0
-      result = HAL_SPI_Transmit (&SpiHandle, mFrameBuf + top * getPitch(), lines * getPitch(), 100);
-      //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
-
-      byte = paddingByte;
-      result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
-      //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
-
-      // wait for all sent
-      //while (SPI2->SR & SPI_FLAG_BSY);
-
-      // CS lo
-      GPIOB->BSRR = CS_PIN << 16;
-      }
-    }
-  //}}}
+private:
+  static const uint16_t getPitch() { return (400 / 8) + 2; }
 
   uint8_t mFrameBuf [((400/8) + 2) * 240];
   bool mCom = false;
+  int mFrameNum = 0;
   };
 //}}}
-
 //{{{
 void adcInit() {
 
   AdcHandle.Instance                   = ADC1;
-  //AdcHandle.Instance                   = ADC3;
   AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
   AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
   AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
@@ -357,10 +335,10 @@ void adcInit() {
   ADC_ChannelConfTypeDef sConfig;
   //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
   //sConfig.Channel = ADC_CHANNEL_VBAT;
-  sConfig.Channel = ADC_CHANNEL_VREFINT;
-  //sConfig.Channel      = ADC_CHANNEL_8;
+  //sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Channel      = ADC_CHANNEL_1;
   sConfig.Rank         = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES; // ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
   sConfig.Offset       = 0;
 
   //Configure ADC Temperature Sensor Channel
@@ -372,33 +350,59 @@ void adcInit() {
   }
 //}}}
 
+const int kMaxValues = 400;
+const int kMaxLen = 220;
+uint32_t values[kMaxValues];
+
 int main() {
 
   HAL_Init();
   adcInit();
-
   auto lcd = new cLcd();
   lcd->init();
 
   HAL_ADC_Start (&AdcHandle);
 
   float averageVdd = 0;
-  while (1)
-    for (int i = 0; i < cLcd::getHeight(); i += 20) {
-      HAL_ADC_PollForConversion (&AdcHandle, 100);
-      auto value = HAL_ADC_GetValue (&AdcHandle);
+  uint32_t minValue = 4096;
+  uint32_t maxValue = 0;
 
-      auto vdd = 1000.f * 1.2f / (value / 4096.f);
-      if (averageVdd == 0.f)
-        averageVdd = vdd;
-      else
-        averageVdd = ((averageVdd * 99.f) + vdd) / 100.f;
+  auto lastTicks = HAL_GetTick();
+  while (1) {
+    HAL_ADC_PollForConversion (&AdcHandle, 100);
+    auto value = HAL_ADC_GetValue (&AdcHandle);
+    values[lcd->getFrameNum() % kMaxValues] = value;
+    if (value < minValue)
+      minValue = value;
+    if (value > maxValue)
+      maxValue = value;
 
-      lcd->drawRect (false, cRect (0, i, 400, i + 2));
-      lcd->drawRect (true, cRect (0, i + 2, 400, i+20));
-      lcd->drawString (false, "helloColin " + dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3),
-                              cRect (i, i, i + 300, i+20));
+    //auto vdd = 1000.f * 1.2f / (value / 4096.f);
+    auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
+
+    if (averageVdd == 0.f)
+      averageVdd = vdd;
+    else
+      averageVdd = ((averageVdd * 99.f) + vdd) / 100.f;
+
+    auto ticks = HAL_GetTick();
+
+    lcd->clear (true);
+    lcd->drawString (false, dec(minValue) + "min " + dec(value)    + " " + dec(maxValue) + "max " +
+                            dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3) + "v " +
+                            dec(ticks - lastTicks),
+                     cRect (0, 0, cLcd::getWidth(), 20));
+    lastTicks = ticks;
+
+    int valueIndex = lcd->getFrameNum() - kMaxValues;
+    for (int i = 0; i < kMaxValues; i++) {
+      int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
+      lcd->drawRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
+      valueIndex++;
       }
+
+    lcd->present();
+    }
 
   return 0;
   }
