@@ -7,6 +7,7 @@
 
 //{{{  module enables
 #define HAL_MODULE_ENABLED
+#define HAL_CORTEX_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_FLASH_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
@@ -14,26 +15,27 @@
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
 #define HAL_SPI_MODULE_ENABLED
-#define HAL_CORTEX_MODULE_ENABLED
-#define HAL_HCD_MODULE_ENABLED
+#define HAL_TIM_MODULE_ENABLED
 //}}}
 
-#define HSE_VALUE    (8000000U) /*!< Value of the External oscillator in Hz */
-#define HSE_STARTUP_TIMEOUT    (100U)   /*!< Time out for HSE start up, in ms */
-#define HSI_VALUE    (16000000U) /*!< Value of the Internal oscillator in Hz*/
+#define HSE_VALUE  (8000000U)  // Value of the External oscillator in Hz
+#define HSI_VALUE  (16000000U) // Value of the Internal oscillator in Hz
 #define LSI_VALUE  (32000U)
-#define LSE_VALUE  (32768U)    /*!< Value of the External Low Speed oscillator in Hz */
-#define LSE_STARTUP_TIMEOUT    (5000U)   /*!< Time out for LSE start up, in ms */
-#define EXTERNAL_CLOCK_VALUE    (12288000U) /*!< Value of the External oscillator in Hz*/
+#define LSE_VALUE  (32768U)    // Value of the External Low Speed oscillator in Hz
 
-#define VDD_VALUE                    (3300U) /*!< Value of VDD in mv */
-#define TICK_INT_PRIORITY            (0x0FU) /*!< tick interrupt priority */
+#define LSE_STARTUP_TIMEOUT    (5000U)     // Time out for LSE start up, in ms
+#define HSE_STARTUP_TIMEOUT    (100U)      // Time out for HSE start up, in ms
+#define EXTERNAL_CLOCK_VALUE   (12288000U) // Value of the External oscillator in Hz
+
+#define VDD_VALUE                    (3300U) //  Value of VDD in mv
+#define TICK_INT_PRIORITY            (0x0FU) // tick interrupt priority
 #define USE_RTOS                     0U
-#define PREFETCH_ENABLE              0U /* The prefetch will be enabled in SystemClock_Config(), depending on the used
-                                            STM32F405/415/07/417 device: RevA (prefetch must be off) or RevZ (prefetch can be on/off) */
+
+#define PREFETCH_ENABLE              0U 
 #define INSTRUCTION_CACHE_ENABLE     1U
 #define DATA_CACHE_ENABLE            1U
-#define USE_SPI_CRC                   1U
+
+#define USE_SPI_CRC                  1U
 
 //{{{  module enabled includes
 #ifdef HAL_RCC_MODULE_ENABLED

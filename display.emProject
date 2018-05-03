@@ -3,6 +3,7 @@
   <project Name="display">
     <configuration
       Name="Common"
+      STLport="Yes"
       arm_architecture="v7EM"
       arm_core_type="Cortex-M4"
       arm_endian="Little"
@@ -16,6 +17,7 @@
       arm_target_interface_type="SWD"
       c_user_include_directories=".;CMSIS;drivers/Inc"
       debug_target_connection="J-Link"
+      debug_type_file="$(StudioDir)/bin/STLport.xml"
       gcc_c_language_standard="c11"
       gcc_cplusplus_language_standard="c++14"
       linker_output_format="hex"
@@ -153,9 +155,14 @@
     <folder Name="includes">
       <file file_name="font.h" />
     </folder>
-    <file file_name="font18.c" />
     <file file_name="main.cpp" />
     <file file_name="system_stm32f4xx.c" />
+    <folder Name="common">
+      <file file_name="common/cPointRect.h" />
+      <file file_name="common/utils.cpp" />
+      <file file_name="common/utils.h" />
+      <file file_name="common/font18.c" />
+    </folder>
   </project>
   <configuration
     Name="Debug"

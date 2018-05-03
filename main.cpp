@@ -1,22 +1,17 @@
-// main.c - sharp lcd testbed
+// main.cpp - sharp lcd testbed
 //{{{  includes
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "common/utils.h"
+#include "common/cPointRect.h"
+#include "common/font.h"
 
 #include "stm32f4xx.h"
-#include "stm32f4xx_hal_rcc.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_spi.h"
-
-#include "font.h"
 //}}}
 //{{{  defines
-#define SCK_PIN     GPIO_PIN_13 // SPI2 PB13  SCK
-#define MOSI_PIN    GPIO_PIN_15 // SPI2 PB15  MOSI
-#define CS_PIN      GPIO_PIN_12 // SPI2 PB12  CS/NSS active hi
-#define DISP_PIN    GPIO_PIN_14 // GPIO PB14  DISP active hi
-#define VCOM_PIN    GPIO_PIN_11 // GPIO PB11  VCOM normally flipping
+#define SCK_PIN     GPIO_PIN_13  //  SPI2  PB13  SCK
+#define MOSI_PIN    GPIO_PIN_15  //  SPI2  PB15  MOSI
+#define CS_PIN      GPIO_PIN_12  //  SPI2  PB12  CS/NSS active hi
+#define DISP_PIN    GPIO_PIN_14  //  GPIO  PB14  DISP active hi
+#define VCOM_PIN    GPIO_PIN_11  //  GPIO  PB11  VCOM - TIM2 CH4 1Hz flip
 //    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //    x  GND   EXTMODE   5v   VCOM   MOSI   3.3v  x
 //    x  GND     5v     DISP   CS    SCLK    GND  x
@@ -35,25 +30,59 @@ public:
   //{{{
   void init() {
 
-    // enable clocks
+    //  config CS, DISP - GPIOB
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    __HAL_RCC_SPI2_CLK_ENABLE();
 
     GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = CS_PIN | DISP_PIN | VCOM_PIN ;
+    GPIO_InitStruct.Pin = CS_PIN | DISP_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
     HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
-    // disable CS, DISP, VCOM lo
-    GPIOB->BSRR = (CS_PIN | DISP_PIN | VCOM_PIN) << 16;
+    // disable CS, DISP lo
+    GPIOB->BSRR = (CS_PIN | DISP_PIN) << 16;
 
-    // enable GPIO AF SPI pins
-    GPIO_InitStruct.Pin = SCK_PIN | MOSI_PIN;
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    //{{{  config VCOM GPIOB as TIM2 CH4
+    GPIO_InitStruct.Pin = VCOM_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+
+    HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
+    //}}}
+    //{{{  init timer timHandle
+    TIM_HandleTypeDef timHandle;
+
+    timHandle.Instance = TIM2;
+    timHandle.Init.Period = 10000 - 1;
+    uint32_t uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
+    timHandle.Init.Prescaler = uwPrescalerValue;
+    timHandle.Init.ClockDivision = 0;
+    timHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+
+    auto result = HAL_TIM_Base_Init (&timHandle);
+    //}}}
+    //{{{  init timer timOcInit
+    TIM_OC_InitTypeDef timOcIn;
+    timOcIn.OCMode       = TIM_OCMODE_PWM1;
+    timOcIn.OCPolarity   = TIM_OCPOLARITY_HIGH;
+    timOcIn.OCFastMode   = TIM_OCFAST_DISABLE;
+    timOcIn.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+    timOcIn.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+    timOcIn.OCIdleState  = TIM_OCIDLESTATE_RESET;
+    timOcIn.Pulse = 10000 /2;
+
+    result = HAL_TIM_PWM_ConfigChannel (&timHandle, &timOcIn, TIM_CHANNEL_4);
+    //}}}
+    result = HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_4);
+
+    // config SPI2 GPIOB
+    GPIO_InitStruct.Pin = SCK_PIN | MOSI_PIN;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
     HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
+
+    __HAL_RCC_SPI2_CLK_ENABLE();
 
     // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
     SPI_HandleTypeDef SPI_Handle;
@@ -100,6 +129,15 @@ public:
     }
   //}}}
   //{{{
+  void clearScreen (bool white) {
+
+    if (white)
+      drawRect (true, 0, 0, getWidth(), getHeight());
+    else
+      clearScreenBlack();
+    }
+  //}}}
+  //{{{
   void drawRect (bool white, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
     uint16_t xend = xorg + xlen - 1;
@@ -133,18 +171,15 @@ public:
     }
   //}}}
   //{{{
-  void drawString (bool white, const char* str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
+  void drawString (bool white, const std::string& str, int16_t xorg, int16_t yorg, uint16_t xlen, uint16_t ylen) {
 
     const font_t* font = &font18;
     int16_t x = xorg;
     int16_t y = yorg;
 
-    do {
-      if (*str == ' ')
-        x += font->spaceWidth;
-
-      else if ((*str >= font->firstChar) && (*str <= font->lastChar)) {
-        auto glyphData = (uint8_t*)(font->glyphsBase + font->glyphOffsets[*str - font->firstChar]);
+    for (auto ch : str) {
+      if ((ch >= font->firstChar) && (ch <= font->lastChar)) {
+        auto glyphData = (uint8_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
 
         uint8_t width = (uint8_t)*glyphData++;
         uint8_t height = (uint8_t)*glyphData++;
@@ -164,30 +199,11 @@ public:
           }
         x += advance;
         }
-      } while (*(++str));
+      else
+        x += font->spaceWidth;
+      }
 
-    drawLines (yorg, yorg+ylen-1);
-    }
-  //}}}
-  //{{{
-  void clearScreen (bool white) {
-
-    if (white)
-      drawRect (true, 0, 0, getWidth(), getHeight());
-    else
-      clearScreenBlack();
-    }
-  //}}}
-
-  //{{{
-  void toggleVcom() {
-
-    if (mCom)
-      GPIOB->BSRR = VCOM_PIN << 16;
-    else
-      GPIOB->BSRR = VCOM_PIN;
-
-    mCom = !mCom;
+    drawLines (yorg, yorg + ylen - 1);
     }
   //}}}
 
@@ -261,9 +277,8 @@ int main() {
       for (int i = 0; i < screen->getHeight(); i++) {
         screen->drawRect (true, 0, i*20 + 2, 400, 18);
         screen->drawRect (false, 0, i*20, 400, 2);
-        screen->drawString (false, "helloColin long piece of text", j + i*10, i*20, 300, 20);
+        screen->drawString (false, "helloColin long piece of text " + dec(i) + " " + dec(i*20), j + i*10, i*20, 300, 20);
         }
-      screen->toggleVcom();
       //HAL_Delay (100);
       }
     }
