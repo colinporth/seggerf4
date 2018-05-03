@@ -23,8 +23,14 @@
 #define commandByte 0x80
 //}}}
 
-extern "C" { void SysTick_Handler() { HAL_IncTick(); } }
+SPI_HandleTypeDef SpiHandle;
 
+extern "C" {
+  void SysTick_Handler() { HAL_IncTick(); } }
+  void DMA1_Stream3_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmarx); }
+  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmatx); }
+  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&SpiHandle);
+  }
 //{{{
 class cLcd {
 public:
@@ -87,20 +93,66 @@ public:
 
     // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
     SPI_HandleTypeDef SPI_Handle;
-    SPI_Handle.Instance = SPI2;
-    SPI_Handle.Init.Mode = SPI_MODE_MASTER;
-    SPI_Handle.Init.Direction = SPI_DIRECTION_2LINES;
-    //SPI_Handle.Init.Direction = SPI_DIRECTION_1LINE;
-    SPI_Handle.Init.DataSize = SPI_DATASIZE_8BIT;
-    SPI_Handle.Init.CLKPolarity = SPI_POLARITY_LOW; // SPI mode0
-    SPI_Handle.Init.CLKPhase = SPI_PHASE_1EDGE;     // SPI mode0
-    SPI_Handle.Init.NSS = SPI_NSS_SOFT;
-    SPI_Handle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // 168mHz/2 / 8 = 10.5mHz
-    SPI_Handle.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    SPI_Handle.Init.TIMode = SPI_TIMODE_DISABLE;
-    SPI_Handle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    SPI_Handle.Init.CRCPolynomial = 7;
-    HAL_SPI_Init (&SPI_Handle);
+    SpiHandle.Instance = SPI2;
+    SpiHandle.Init.Mode = SPI_MODE_MASTER;
+    SpiHandle.Init.Direction = SPI_DIRECTION_2LINES;
+    //SpiHandle.Init.Direction = SPI_DIRECTION_1LINE;
+    SpiHandle.Init.DataSize = SPI_DATASIZE_8BIT;
+    SpiHandle.Init.CLKPolarity = SPI_POLARITY_LOW; // SPI mode0
+    SpiHandle.Init.CLKPhase = SPI_PHASE_1EDGE;     // SPI mode0
+    SpiHandle.Init.NSS = SPI_NSS_SOFT;
+    SpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // 168mHz/2 / 8 = 10.5mHz
+    SpiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    SpiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
+    SpiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    SpiHandle.Init.CRCPolynomial = 7;
+    HAL_SPI_Init (&SpiHandle);
+
+    //{{{  config tx dma
+    hdma_tx.Instance                 = DMA1_Stream4;
+    hdma_tx.Init.Channel             = DMA_CHANNEL_0;
+    hdma_tx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+    hdma_tx.Init.PeriphInc           = DMA_PINC_DISABLE;
+    hdma_tx.Init.MemInc              = DMA_MINC_ENABLE;
+    hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_tx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
+    hdma_tx.Init.Mode                = DMA_NORMAL;
+    hdma_tx.Init.Priority            = DMA_PRIORITY_LOW;
+    hdma_tx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
+    hdma_tx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+    hdma_tx.Init.MemBurst            = DMA_MBURST_INC4;
+    hdma_tx.Init.PeriphBurst         = DMA_PBURST_INC4;
+
+    HAL_DMA_Init(&hdma_tx);
+
+    __HAL_LINKDMA (&SpiHandle, hdmatx, hdma_tx);
+    //}}}
+    //{{{  config rx dma
+    hdma_rx.Instance                 = DMA1_Stream3;
+    hdma_rx.Init.Channel             = DMA_CHANNEL_0;
+    hdma_rx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+    hdma_rx.Init.PeriphInc           = DMA_PINC_DISABLE;
+    hdma_rx.Init.MemInc              = DMA_MINC_ENABLE;
+    hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_rx.Init.MemDataAlignment    = DMA_MDATAALIGN_BYTE;
+    hdma_rx.Init.Mode                = DMA_NORMAL;
+    hdma_rx.Init.Priority            = DMA_PRIORITY_HIGH;
+    hdma_rx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
+    hdma_rx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+    hdma_rx.Init.MemBurst            = DMA_MBURST_INC4;
+    hdma_rx.Init.PeriphBurst         = DMA_PBURST_INC4;
+    HAL_DMA_Init (&hdma_rx);
+    __HAL_LINKDMA (&SpiHandle, hdmarx, hdma_rx);
+    //}}}
+
+    HAL_NVIC_SetPriority (DMA1_Stream4_IRQn, 0, 1);
+    HAL_NVIC_EnableIRQ (DMA1_Stream4_IRQn);
+
+    HAL_NVIC_SetPriority (DMA1_Stream3_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ (DMA1_Stream3_IRQn);
+
+    HAL_NVIC_SetPriority (SPI2_IRQn, 0, 2);
+    HAL_NVIC_EnableIRQ (SPI2_IRQn);
 
     // SPI2 enable
     SPI2->CR1 |= SPI_CR1_SPE;
@@ -257,8 +309,11 @@ private:
 
   uint8_t mFrameBuf [((400/8) + 2) * 240];
   bool mCom = false;
+  DMA_HandleTypeDef hdma_tx;
+  DMA_HandleTypeDef hdma_rx;
   };
 //}}}
+
 
 int main() {
 
@@ -266,6 +321,9 @@ int main() {
 
   auto lcd = new cLcd();
   lcd->init();
+
+  //if(HAL_SPI_TransmitReceive_DMA(&SpiHandle, (uint8_t*)aTxBuffer, (uint8_t *)aRxBuffer, BUFFERSIZE) != HAL_OK)
+  //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY)
 
   while (1) {
     for (int j = 0; j < 200; j++) {

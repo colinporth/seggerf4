@@ -1,12 +1,4 @@
-/*****************************************************************************
- * Copyright (c) 2014 Rowley Associates Limited.                             *
- *                                                                           *
- * This file may be distributed under the terms of the License Agreement     *
- * provided with this software.                                              *
- *                                                                           *
- * THIS FILE IS PROVIDED AS IS WITH NO WARRANTY OF ANY KIND, INCLUDING THE   *
- * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. *
- *****************************************************************************/
+// Copyright (c) 2014 Rowley Associates Limited.                             *
 
 .macro ISR_HANDLER name=
   .section .vectors, "ax"
@@ -18,6 +10,7 @@
 1: b 1b /* endless loop */
 .endm
 
+//
 .macro ISR_RESERVED
   .section .vectors, "ax"
   .word 0
@@ -30,6 +23,7 @@
   .code 16
   .global _vectors
 
+//
 .macro DEFAULT_ISR_HANDLER name=
   .thumb_func
   .weak \name
@@ -37,9 +31,11 @@
 1: b 1b /* endless loop */
 .endm
 
+//
 _vectors:
   .word __stack_end__
   .word reset_handler
+
 ISR_HANDLER NMI_Handler
 ISR_HANDLER HardFault_Handler
 ISR_RESERVED // Populate if using MemManage (MPU)
@@ -55,39 +51,88 @@ ISR_RESERVED
 ISR_HANDLER PendSV_Handler
 ISR_HANDLER SysTick_Handler
 
-  // External interrupts start her
-ISR_HANDLER ExternalISR0
-ISR_HANDLER ExternalISR1
-ISR_HANDLER ExternalISR2
-ISR_HANDLER ExternalISR3
-ISR_HANDLER ExternalISR4
-ISR_HANDLER ExternalISR5
-ISR_HANDLER ExternalISR6
-ISR_HANDLER ExternalISR7
-ISR_HANDLER ExternalISR8
-ISR_HANDLER ExternalISR9
-ISR_HANDLER ExternalISR10
-ISR_HANDLER ExternalISR11
-ISR_HANDLER ExternalISR12
-ISR_HANDLER ExternalISR13
-ISR_HANDLER ExternalISR14
-ISR_HANDLER ExternalISR15
-ISR_HANDLER ExternalISR16
-ISR_HANDLER ExternalISR17
-ISR_HANDLER ExternalISR18
-ISR_HANDLER ExternalISR19
-ISR_HANDLER ExternalISR20
-ISR_HANDLER ExternalISR21
-ISR_HANDLER ExternalISR22
-ISR_HANDLER ExternalISR23
-ISR_HANDLER ExternalISR24
-ISR_HANDLER ExternalISR25
-ISR_HANDLER ExternalISR26
-ISR_HANDLER ExternalISR27
-ISR_HANDLER ExternalISR28
-ISR_HANDLER ExternalISR29
-ISR_HANDLER ExternalISR30
-ISR_HANDLER ExternalISR31
+ISR_HANDLER     WWDG_IRQHandler
+ISR_HANDLER     PVD_IRQHandler
+ISR_HANDLER     TAMP_STAMP_IRQHandler
+ISR_HANDLER     RTC_WKUP_IRQHandler
+ISR_HANDLER     FLASH_IRQHandler
+ISR_HANDLER     RCC_IRQHandler
+ISR_HANDLER     EXTI0_IRQHandler
+ISR_HANDLER     EXTI1_IRQHandler
+ISR_HANDLER     EXTI2_IRQHandler
+ISR_HANDLER     EXTI3_IRQHandler
+ISR_HANDLER     EXTI4_IRQHandler
+ISR_HANDLER     DMA1_Stream0_IRQHandler
+ISR_HANDLER     DMA1_Stream1_IRQHandler
+ISR_HANDLER     DMA1_Stream2_IRQHandler
+ISR_HANDLER     DMA1_Stream3_IRQHandler
+ISR_HANDLER     DMA1_Stream4_IRQHandler
+ISR_HANDLER     DMA1_Stream5_IRQHandler
+ISR_HANDLER     DMA1_Stream6_IRQHandler
+ISR_HANDLER     ADC_IRQHandler
+ISR_HANDLER     CAN1_TX_IRQHandler
+ISR_HANDLER     CAN1_RX0_IRQHandler
+ISR_HANDLER     CAN1_RX1_IRQHandler
+ISR_HANDLER     CAN1_SCE_IRQHandler
+ISR_HANDLER     EXTI9_5_IRQHandler
+ISR_HANDLER     TIM1_BRK_TIM9_IRQHandler
+ISR_HANDLER     TIM1_UP_TIM10_IRQHandler
+ISR_HANDLER     TIM1_TRG_COM_TIM11_IRQHandler
+ISR_HANDLER     TIM1_CC_IRQHandler
+ISR_HANDLER     TIM2_IRQHandler
+ISR_HANDLER     TIM3_IRQHandler
+ISR_HANDLER     TIM4_IRQHandler
+ISR_HANDLER     I2C1_EV_IRQHandler
+ISR_HANDLER     I2C1_ER_IRQHandler
+ISR_HANDLER     I2C2_EV_IRQHandler
+ISR_HANDLER     I2C2_ER_IRQHandler
+ISR_HANDLER     SPI1_IRQHandler
+ISR_HANDLER     SPI2_IRQHandler
+ISR_HANDLER     USART1_IRQHandler
+ISR_HANDLER     USART2_IRQHandler
+ISR_HANDLER     USART3_IRQHandler
+ISR_HANDLER     EXTI15_10_IRQHandler
+ISR_HANDLER     RTC_Alarm_IRQHandler
+ISR_HANDLER     OTG_FS_WKUP_IRQHandler
+ISR_HANDLER     TIM8_BRK_TIM12_IRQHandler
+ISR_HANDLER     TIM8_UP_TIM13_IRQHandler
+ISR_HANDLER     TIM8_TRG_COM_TIM14_IRQHandler
+ISR_HANDLER     TIM8_CC_IRQHandler
+ISR_HANDLER     DMA1_Stream7_IRQHandler
+ISR_HANDLER     FMC_IRQHandler
+ISR_HANDLER     SDIO_IRQHandler
+ISR_HANDLER     TIM5_IRQHandler
+ISR_HANDLER     SPI3_IRQHandler
+ISR_HANDLER     UART4_IRQHandler
+ISR_HANDLER     UART5_IRQHandler
+ISR_HANDLER     TIM6_DAC_IRQHandler
+ISR_HANDLER     TIM7_IRQHandler
+ISR_HANDLER     DMA2_Stream0_IRQHandler
+ISR_HANDLER     DMA2_Stream1_IRQHandler
+ISR_HANDLER     DMA2_Stream2_IRQHandler
+ISR_HANDLER     DMA2_Stream3_IRQHandler
+ISR_HANDLER     DMA2_Stream4_IRQHandler
+ISR_HANDLER     ETH_IRQHandler
+ISR_HANDLER     ETH_WKUP_IRQHandler
+ISR_HANDLER     CAN2_TX_IRQHandler
+ISR_HANDLER     CAN2_RX0_IRQHandler
+ISR_HANDLER     CAN2_RX1_IRQHandler
+ISR_HANDLER     CAN2_SCE_IRQHandler
+ISR_HANDLER     OTG_FS_IRQHandler
+ISR_HANDLER     DMA2_Stream5_IRQHandler
+ISR_HANDLER     DMA2_Stream6_IRQHandler
+ISR_HANDLER     DMA2_Stream7_IRQHandler
+ISR_HANDLER     USART6_IRQHandler
+ISR_HANDLER     I2C3_EV_IRQHandler
+ISR_HANDLER     I2C3_ER_IRQHandler
+ISR_HANDLER     OTG_HS_EP1_OUT_IRQHandler
+ISR_HANDLER     OTG_HS_EP1_IN_IRQHandler
+ISR_HANDLER     OTG_HS_WKUP_IRQHandler
+ISR_HANDLER     OTG_HS_IRQHandler
+ISR_HANDLER     DCMI_IRQHandler
+ISR_RESERVED
+ISR_HANDLER     HASH_RNG_IRQHandler
+ISR_HANDLER     FPU_IRQHandler
   .section .vectors, "ax"
 _vectors_end:
 
