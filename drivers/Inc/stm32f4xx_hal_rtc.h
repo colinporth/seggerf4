@@ -91,7 +91,6 @@ typedef struct {
 typedef struct {
   RTC_TypeDef                 *Instance;  /*!< Register base address    */
   RTC_InitTypeDef             Init;       /*!< RTC required parameters  */
-  HAL_LockTypeDef             Lock;       /*!< RTC locking object       */
   __IO HAL_RTCStateTypeDef    State;      /*!< Time communication state */
   }RTC_HandleTypeDef;
 //}}}
@@ -272,9 +271,6 @@ typedef struct {
 #include "stm32f4xx_hal_rtc_ex.h"
 
 HAL_StatusTypeDef HAL_RTC_Init(RTC_HandleTypeDef *hrtc);
-HAL_StatusTypeDef HAL_RTC_DeInit(RTC_HandleTypeDef *hrtc);
-void HAL_RTC_MspInit(RTC_HandleTypeDef *hrtc);
-void HAL_RTC_MspDeInit(RTC_HandleTypeDef *hrtc);
 
 HAL_StatusTypeDef HAL_RTC_SetTime (RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef *sTime, uint32_t Format);
 HAL_StatusTypeDef HAL_RTC_GetTime (RTC_HandleTypeDef *hrtc, RTC_TimeTypeDef *sTime, uint32_t Format);

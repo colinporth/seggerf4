@@ -22,12 +22,12 @@
 #define clearByte   0x20
 #define commandByte 0x80
 //}}}
+const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 SPI_HandleTypeDef SpiHandle;
 DMA_HandleTypeDef hdma_tx;
 ADC_HandleTypeDef AdcHandle;
 DMA_HandleTypeDef hdma_adc;
-RTC_HandleTypeDef RtcHandle;
 
 //{{{
 extern "C" {
@@ -354,7 +354,6 @@ void adcInit() {
 const int kMaxValues = 400;
 const int kMaxLen = 220;
 uint32_t values[kMaxValues];
-const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 int main() {
 
   HAL_Init();
@@ -385,15 +384,16 @@ int main() {
   //  - OutPut         = Output Disable
   //  - OutPutPolarity = High Polarity
   //  - OutPutType     = Open Drain */
-  RtcHandle.Instance = RTC;
-  RtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
-  RtcHandle.Init.AsynchPrediv = 0x7F;
-  RtcHandle.Init.SynchPrediv = 0x00FF;
-  RtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
-  RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-  RtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-  __HAL_RTC_RESET_HANDLE_STATE (&RtcHandle);
-  result = HAL_RTC_Init (&RtcHandle);
+  RTC_HandleTypeDef rtcHandle;
+  rtcHandle.Instance = RTC;
+  rtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
+  rtcHandle.Init.AsynchPrediv = 0x7F;
+  rtcHandle.Init.SynchPrediv = 0x00FF;
+  rtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
+  rtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  rtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  __HAL_RTC_RESET_HANDLE_STATE (&rtcHandle);
+  result = HAL_RTC_Init (&rtcHandle);
 
   std::string time = __TIME__; // hh:mm:ss      - 8
   std::string date = __DATE__; // dd:mmm:yyyy   - 11
@@ -409,50 +409,48 @@ int main() {
       break;
       }
 
-  // Check if Data stored in BackUp register0: No Need to reconfigure RTC#, Read the BackUp Register 0 Data
-  if (HAL_RTCEx_BKUPRead (&RtcHandle, RTC_BKP_DR0) != 0x32F2) {
+  RTC_TimeTypeDef rtcTime;
+  HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+  RTC_DateTypeDef rtcDate;
+  HAL_RTC_GetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
+
+  if ((rtcTime.Hours * 3600 + rtcTime.Minutes * 60 + rtcTime.Seconds) < (hour * 3600 + min * 60 + sec)) {
     //{{{  set date time
-    // set Date
-    RTC_DateTypeDef rtcDate;
-    rtcDate.Date = 0x18;
-    rtcDate.WeekDay = RTC_WEEKDAY_TUESDAY;
-    rtcDate.Month = RTC_MONTH_FEBRUARY;
-    rtcDate.Year = 0x14;
-    auto result = HAL_RTC_SetDate (&RtcHandle, &rtcDate, RTC_FORMAT_BCD);
+    rtcDate.Date = day;
+    rtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;
+    rtcDate.Month = mon;
+    rtcDate.Year = year;
+    result = HAL_RTC_SetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
 
     // set Time 02:00:00
-    RTC_TimeTypeDef rtcTime;
-    rtcTime.Hours = 0x02;
-    rtcTime.Minutes = 0x00;
-    rtcTime.Seconds = 0x00;
+    rtcTime.Hours = hour;
+    rtcTime.Minutes = min;
+    rtcTime.Seconds = sec;
     rtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
     rtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
     rtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    result = HAL_RTC_SetTime (&RtcHandle, &rtcTime, RTC_FORMAT_BCD);
+    result = HAL_RTC_SetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
 
     // Writes a data in a RTC Backup data Register0
-    HAL_RTCEx_BKUPWrite (&RtcHandle, RTC_BKP_DR0, 0x32F2);
+    //HAL_RTCEx_BKUPWrite (&rtcHandle, RTC_BKP_DR0, 0x32F2);
     }
     //}}}
   else {
-    RTC_TimeTypeDef rtcTime;
-    HAL_RTC_GetTime (&RtcHandle, &rtcTime, RTC_FORMAT_BIN);
-    RTC_DateTypeDef rtcDate;
-    HAL_RTC_GetDate (&RtcHandle, &rtcDate, RTC_FORMAT_BIN);
-
-    //{{{  check reset flags
+    //{{{  time ok
+    //  check reset flags
     // Check if the Power On Reset flag is set
     if (__HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET) {
-      // Power on reset occured: Turn LED2 on
+      // Power on reset
       }
     if(__HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET) {
-      // Check if Pin Reset flag is set, External reset occured
+      // Check if Pin Reset flag is set
       }
 
     // Clear Reset Flag
     __HAL_RCC_CLEAR_RESET_FLAGS();
     }
     //}}}
+  // Check if Data stored in BackUp register0: No Need to reconfigure RTC#, Read the BackUp Register 0 Data
   //}}}
   HAL_ADC_Start (&AdcHandle);
 
@@ -488,11 +486,12 @@ int main() {
     lastTicks = ticks;
 
     RTC_TimeTypeDef rtcTime;
-    HAL_RTC_GetTime (&RtcHandle, &rtcTime, RTC_FORMAT_BIN);
+    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
     RTC_DateTypeDef rtcDate;
-    HAL_RTC_GetDate (&RtcHandle, &rtcDate, RTC_FORMAT_BIN);
+    HAL_RTC_GetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
     lcd->drawString (false, dec(rtcTime.Hours,2) + ":" + dec(rtcTime.Minutes,2) + ":" + dec(rtcTime.Seconds,2) + " " +
-                            kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4),
+                            kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4) + " " +
+                            dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction),
                      cRect (0, 20, cLcd::getWidth(), 40));
     lcd->drawString (false, time + " " + date,
                      cRect (0, 40, cLcd::getWidth(), 60));
