@@ -397,6 +397,17 @@ int main() {
 
   std::string time = __TIME__; // hh:mm:ss      - 8
   std::string date = __DATE__; // dd:mmm:yyyy   - 11
+  int hour = (time[0]  - 0x30) * 10 + (time[1] -0x30);
+  int min = (time[3] - 0x30) * 10 + (time[4] -0x30);
+  int sec = (time[6] - 0x30) * 10 + (time[7] -0x30);
+  int day = ((date[4] == ' ') ? 0 : date[4] - 0x30) * 10 + (date[5] -0x30);
+  int year = (date[9] - 0x30) * 10 + (date[10] -0x30);
+  int mon = 0;
+  for (int i = 0; i < 12; i++)
+    if ((date[0] == *kMonth[i]) && (date[1] == *(kMonth[i]+1)) && (date[2] == *(kMonth[i]+2))) {
+      mon = i;
+      break;
+      }
 
   // Check if Data stored in BackUp register0: No Need to reconfigure RTC#, Read the BackUp Register 0 Data
   if (HAL_RTCEx_BKUPRead (&RtcHandle, RTC_BKP_DR0) != 0x32F2) {
@@ -424,6 +435,11 @@ int main() {
     }
     //}}}
   else {
+    RTC_TimeTypeDef rtcTime;
+    HAL_RTC_GetTime (&RtcHandle, &rtcTime, RTC_FORMAT_BIN);
+    RTC_DateTypeDef rtcDate;
+    HAL_RTC_GetDate (&RtcHandle, &rtcDate, RTC_FORMAT_BIN);
+
     //{{{  check reset flags
     // Check if the Power On Reset flag is set
     if (__HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET) {
@@ -480,6 +496,9 @@ int main() {
                      cRect (0, 20, cLcd::getWidth(), 40));
     lcd->drawString (false, time + " " + date,
                      cRect (0, 40, cLcd::getWidth(), 60));
+    lcd->drawString (false, dec(hour,2) + ":" + dec(min,2) + ":" + dec(sec,2) + " " +
+                            kMonth[mon] + " " + dec(day,2) + " " + dec(2000 + year,4),
+                     cRect (0, 60, cLcd::getWidth(), 80));
 
     int valueIndex = lcd->getFrameNum() - kMaxValues;
     for (int i = 0; i < kMaxValues; i++) {
