@@ -26,7 +26,8 @@
 SPI_HandleTypeDef SpiHandle;
 DMA_HandleTypeDef hdma_tx;
 ADC_HandleTypeDef AdcHandle;
-DMA_HandleTypeDef  hdma_adc;
+DMA_HandleTypeDef hdma_adc;
+RTC_HandleTypeDef RtcHandle;
 
 //{{{
 extern "C" {
@@ -35,7 +36,7 @@ extern "C" {
   void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmatx); }
   void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&SpiHandle); }
   //{{{
-  void HAL_ADC_MspInit (ADC_HandleTypeDef *hadc) {
+  void HAL_ADC_MspInit (ADC_HandleTypeDef* hadc) {
 
     __HAL_RCC_ADC1_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -353,7 +354,7 @@ void adcInit() {
 const int kMaxValues = 400;
 const int kMaxLen = 220;
 uint32_t values[kMaxValues];
-
+const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 int main() {
 
   HAL_Init();
@@ -361,6 +362,82 @@ int main() {
   auto lcd = new cLcd();
   lcd->init();
 
+  //{{{  rtc config
+  // Configue LSE as RTC clock source
+  RCC_OscInitTypeDef rccOscInitStruct;
+  rccOscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
+  rccOscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  rccOscInitStruct.LSEState = RCC_LSE_ON;
+  rccOscInitStruct.LSIState = RCC_LSI_OFF;
+  auto result = HAL_RCC_OscConfig (&rccOscInitStruct);
+
+  RCC_PeriphCLKInitTypeDef periphClkInitStruct;
+  periphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  periphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  result = HAL_RCCEx_PeriphCLKConfig (&periphClkInitStruct);
+  __HAL_RCC_RTC_ENABLE();
+
+  // Configure LSE RTC prescaler and RTC data registers
+  // RTC configured as follow:
+  //  - Hour Format    = Format 24
+  //  - Asynch Prediv  = Value according to source clock
+  //  - Synch Prediv   = Value according to source clock
+  //  - OutPut         = Output Disable
+  //  - OutPutPolarity = High Polarity
+  //  - OutPutType     = Open Drain */
+  RtcHandle.Instance = RTC;
+  RtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
+  RtcHandle.Init.AsynchPrediv = 0x7F;
+  RtcHandle.Init.SynchPrediv = 0x00FF;
+  RtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
+  RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+  RtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+  __HAL_RTC_RESET_HANDLE_STATE (&RtcHandle);
+  result = HAL_RTC_Init (&RtcHandle);
+
+  std::string time = __TIME__; // hh:mm:ss      - 8
+  std::string date = __DATE__; // dd:mmm:yyyy   - 11
+
+  // Check if Data stored in BackUp register0: No Need to reconfigure RTC#, Read the BackUp Register 0 Data
+  if (HAL_RTCEx_BKUPRead (&RtcHandle, RTC_BKP_DR0) != 0x32F2) {
+    //{{{  set date time
+    // set Date
+    RTC_DateTypeDef rtcDate;
+    rtcDate.Date = 0x18;
+    rtcDate.WeekDay = RTC_WEEKDAY_TUESDAY;
+    rtcDate.Month = RTC_MONTH_FEBRUARY;
+    rtcDate.Year = 0x14;
+    auto result = HAL_RTC_SetDate (&RtcHandle, &rtcDate, RTC_FORMAT_BCD);
+
+    // set Time 02:00:00
+    RTC_TimeTypeDef rtcTime;
+    rtcTime.Hours = 0x02;
+    rtcTime.Minutes = 0x00;
+    rtcTime.Seconds = 0x00;
+    rtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
+    rtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+    rtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
+    result = HAL_RTC_SetTime (&RtcHandle, &rtcTime, RTC_FORMAT_BCD);
+
+    // Writes a data in a RTC Backup data Register0
+    HAL_RTCEx_BKUPWrite (&RtcHandle, RTC_BKP_DR0, 0x32F2);
+    }
+    //}}}
+  else {
+    //{{{  check reset flags
+    // Check if the Power On Reset flag is set
+    if (__HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET) {
+      // Power on reset occured: Turn LED2 on
+      }
+    if(__HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET) {
+      // Check if Pin Reset flag is set, External reset occured
+      }
+
+    // Clear Reset Flag
+    __HAL_RCC_CLEAR_RESET_FLAGS();
+    }
+    //}}}
+  //}}}
   HAL_ADC_Start (&AdcHandle);
 
   float averageVdd = 0;
@@ -393,6 +470,16 @@ int main() {
                             dec(ticks - lastTicks),
                      cRect (0, 0, cLcd::getWidth(), 20));
     lastTicks = ticks;
+
+    RTC_TimeTypeDef rtcTime;
+    HAL_RTC_GetTime (&RtcHandle, &rtcTime, RTC_FORMAT_BIN);
+    RTC_DateTypeDef rtcDate;
+    HAL_RTC_GetDate (&RtcHandle, &rtcDate, RTC_FORMAT_BIN);
+    lcd->drawString (false, dec(rtcTime.Hours,2) + ":" + dec(rtcTime.Minutes,2) + ":" + dec(rtcTime.Seconds,2) + " " +
+                            kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4),
+                     cRect (0, 20, cLcd::getWidth(), 40));
+    lcd->drawString (false, time + " " + date,
+                     cRect (0, 40, cLcd::getWidth(), 60));
 
     int valueIndex = lcd->getFrameNum() - kMaxValues;
     for (int i = 0; i < kMaxValues; i++) {

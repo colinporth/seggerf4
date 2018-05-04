@@ -85,10 +85,10 @@ void SystemInit() {
 
   // FPU settings
 #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
+  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // set CP10 and CP11 Full Access
 #endif
 
-  // Reset the RCC clock configuration to the default reset state, Set HSION bit */
+  // Reset the RCC clock configuration to the default reset state, Set HSION bit
   RCC->CR |= (uint32_t)0x00000001;
 
   // Reset CFGR register
@@ -130,10 +130,10 @@ void SystemInit() {
 
     // Enable main PLL, wait till ready
     RCC->CR |= RCC_CR_PLLON;
-    while((RCC->CR & RCC_CR_PLLRDY) == 0) {}
+    while ((RCC->CR & RCC_CR_PLLRDY) == 0) {}
 
     // Flash prefetch, Instruction cache, Data cache, 5 wait state
-    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN |FLASH_ACR_DCEN |FLASH_ACR_LATENCY_5WS;
+    FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS;
 
     // Select main PLL as system clock source, wait till ready
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
