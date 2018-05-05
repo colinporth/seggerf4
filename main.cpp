@@ -239,20 +239,14 @@ public:
     uint8_t lastByte = (rect.right-1) / 8;
 
     if (firstByte == lastByte) {
-      //{{{  simple single x byte case
+      // simple single x byte case
       uint8_t mask = kFirstMask[rect.left & 7] & kLastMask[(rect.right-1) & 7];
-
       auto framePtr = mFrameBuf + 1 + (rect.top * getPitch()) + 1 + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
-        if (white)
-          *framePtr |= mask;
-        else
-          *framePtr &= ~mask;
+          *framePtr ^= mask;
         framePtr += getPitch();
         }
       }
-      //}}}
-
     else {
       // multiple x bytes
       uint8_t firstMask = kFirstMask[rect.left & 7];
@@ -261,24 +255,16 @@ public:
       auto framePtr = mFrameBuf + 1 + (rect.top * getPitch()) + 1 + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
         uint8_t byte = firstByte;
-
-        if (white)
-          *framePtr++ |= firstMask;
-        else
-          *framePtr++ &= ~firstMask;
+        *framePtr++ ^= firstMask;
         byte++;
 
         while (byte < lastByte) {
-          *framePtr++ = white * 0xFF;
+          *framePtr++ ^= 0xFF;
           byte++;
           }
 
-        if (byte == lastByte) {
-          if (white)
-            *framePtr++ |= lastMask;
-          else
-            *framePtr++ &= ~lastMask;
-          }
+        if (byte == lastByte)
+          *framePtr++ ^= lastMask;
 
         framePtr += getPitch() - (lastByte - firstByte) - 1;
         }
@@ -298,7 +284,7 @@ public:
     for (auto ch : str) {
       if ((ch >= font->firstChar) && (ch <= font->lastChar)) {
         auto fontChar = (fontChar_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
-        auto charData = (uint8_t*)fontChar + 5;
+        auto charBytes = (uint8_t*)fontChar + 5;
 
         for (int16_t yPix = rect.top + font->height - fontChar->top;
              yPix < rect.top + font->height - fontChar->top + fontChar->height && yPix < getHeight(); yPix++) {
@@ -306,27 +292,32 @@ public:
           int16_t x = rect.left + fontChar->left;
           auto framePtr = mFrameBuf + 1 + (yPix * getPitch()) + 1 + (x / 8);
 
-          int16_t charBits = fontChar->width;
-          while (charBits > 0) {
-            uint8_t xbit = x & 7;
-            if (xbit) {
-              if (white) {
-                *framePtr++ |= (*charData) >> xbit;
-                *framePtr |= (*charData) << (8 - xbit);
+          if (true) {
+            int16_t charBits = fontChar->width;
+            while (charBits > 0) {
+              uint8_t xbit = x & 7;
+              if (xbit) {
+                *framePtr++ ^= (*charBytes) >> xbit;
+                *framePtr ^= (*charBytes) << (8 - xbit);
                 }
-              else {
-                *framePtr++ &= ~(*charData >> xbit);
-                *framePtr &= ~(*charData << (8 - xbit));
-                }
-              }
-            else {
-              if (white)
-                *framePtr++ |= *charData;
               else
-                *framePtr++ &= ~*charData;
+                *framePtr++ ^= *charBytes;
+              charBits -= 8;
+              charBytes++;
               }
-            charBits -= 8;
-            charData++;
+            }
+          else {
+            // not yet
+            int16_t charBits = fontChar->width;
+            uint8_t charByte = 0;
+            while (charBits > 0) {
+              uint8_t xbit = x & 7;
+              *framePtr++ ^= charByte || ((*charBytes) >> xbit);
+              charByte = (*charBytes) << (8 - xbit);
+              charBytes++;
+              charBits -= 8;
+              }
+            *framePtr++ ^= charByte;
             }
           }
         rect.left += fontChar->advance;
@@ -668,10 +659,7 @@ private:
 
     auto framePtr = mFrameBuf + 1 + (y * getPitch()) + 1 + (x / 8);
     uint8_t mask = 0x80 >> (x & 7);
-    if (white)
-      *framePtr++ |= mask;
-    else
-      *framePtr++ &= ~mask;
+    *framePtr++ ^= mask;
     }
   //}}}
 
