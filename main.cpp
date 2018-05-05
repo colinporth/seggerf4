@@ -183,14 +183,15 @@ public:
     SPI2->CR1 |= SPI_CR1_SPE;
     //}}}
 
-    memset (mFrameBuf, 0, getPitch() * getHeight());
+    mFrameBuf [0] = commandByte;
+    memset (mFrameBuf+1, 0, (getPitch() * getHeight()) + 1);
     for (uint16_t y = 0; y < getHeight(); y++) {
       uint8_t lineByte = y+1;
       // bit reverse
       lineByte = (lineByte & 0xF0) >> 4 | (lineByte & 0x0F) << 4;
       lineByte = (lineByte & 0xCC) >> 2 | (lineByte & 0x33) << 2;
       lineByte = (lineByte & 0xAA) >> 1 | (lineByte & 0x55) << 1;
-      mFrameBuf [y*getPitch()] = lineByte;
+      mFrameBuf [1 + (y*getPitch())] = lineByte;
       }
     present();
 
@@ -208,7 +209,7 @@ public:
   //{{{
   void clear (bool white) {
 
-    auto framePtr = mFrameBuf + 1;
+    auto framePtr = mFrameBuf + 1 + 1;
     for (int y = 0; y < getHeight(); y++) {
       memset (framePtr, white ? 0xFF : 0, getWidthBytes());
       framePtr += getPitch();
@@ -241,7 +242,7 @@ public:
       //{{{  simple single x byte case
       uint8_t mask = kFirstMask[rect.left & 7] & kLastMask[(rect.right-1) & 7];
 
-      auto framePtr = mFrameBuf + (rect.top * getPitch()) + 1 + firstByte;
+      auto framePtr = mFrameBuf + 1 + (rect.top * getPitch()) + 1 + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
         if (white)
           *framePtr |= mask;
@@ -257,7 +258,7 @@ public:
       uint8_t firstMask = kFirstMask[rect.left & 7];
       uint8_t lastMask = kLastMask[(rect.right-1) & 7];
 
-      auto framePtr = mFrameBuf + (rect.top * getPitch()) + 1 + firstByte;
+      auto framePtr = mFrameBuf + 1 + (rect.top * getPitch()) + 1 + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
         uint8_t byte = firstByte;
 
@@ -303,7 +304,7 @@ public:
              yPix < rect.top + font->height - fontChar->top + fontChar->height && yPix < getHeight(); yPix++) {
 
           int16_t x = rect.left + fontChar->left;
-          auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (x / 8);
+          auto framePtr = mFrameBuf + 1 + (yPix * getPitch()) + 1 + (x / 8);
 
           int16_t charBits = fontChar->width;
           while (charBits > 0) {
@@ -645,16 +646,8 @@ public:
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    uint8_t byte = commandByte;
-   auto result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
-    //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
-
     //  lines - lineByte | 50 bytes 400 bits | padding 0
-    result = HAL_SPI_Transmit (&SpiHandle, mFrameBuf, getHeight() * getPitch(), 100);
-    //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
-
-    byte = paddingByte;
-    result = HAL_SPI_Transmit (&SpiHandle, &byte, 1, 1);
+    auto result = HAL_SPI_Transmit (&SpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100);
     //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
 
     // wait for all sent
@@ -673,7 +666,7 @@ private:
   //{{{
   void drawPix (bool white, uint16_t x, uint16_t y) {
 
-    auto framePtr = mFrameBuf + (y * getPitch()) + 1 + (x / 8);
+    auto framePtr = mFrameBuf + 1 + (y * getPitch()) + 1 + (x / 8);
     uint8_t mask = 0x80 >> (x & 7);
     if (white)
       *framePtr++ |= mask;
@@ -682,7 +675,7 @@ private:
     }
   //}}}
 
-  uint8_t mFrameBuf [((400/8) + 2) * 240];
+  uint8_t mFrameBuf [1 + (((400/8) + 2) * 240) + 1];
   int mFrameNum = 0;
   };
 //}}}
@@ -866,31 +859,27 @@ int main() {
                      cRect (0, 20, cLcd::getWidth(), 40));
     //lcd->drawString (false, time + " " + date, cRect (0, 40, cLcd::getWidth(), 60));
 
-    uint16_t radius = 80;
-    lcd->drawCircle (false, cLcd::getCentre(), radius);
+    cPoint centre = { 400-42, 42 };
+    int16_t radius = 40;
+    lcd->drawCircle (false, centre, radius);
 
     float hourRad = radius * 0.7f;
     float hourAng = (1.f - (rtcTime.Hours / 6.f)) * kPi;
-    lcd->drawLine (false, cLcd::getCentre(),
-                   cLcd::getCentre() + cPoint (int16_t(hourRad * sin (hourAng)), int16_t(hourRad * cos (hourAng))));
+    lcd->drawLine (false, centre, centre + cPoint (int16_t(hourRad * sin (hourAng)), int16_t(hourRad * cos (hourAng))));
 
     float minRad = radius * 0.8f;
     float minAng = (1.f - (rtcTime.Minutes / 30.f)) * kPi;
-    lcd->drawLine (false, cLcd::getCentre(), 
-                   cLcd::getCentre() + cPoint (int16_t(minRad * sin (minAng)), int16_t(minRad * cos (minAng))));
+    lcd->drawLine (false, centre, centre + cPoint (int16_t(minRad * sin (minAng)), int16_t(minRad * cos (minAng))));
 
     float secRad = radius * 0.9f;
     float secAng = (1.f - (rtcTime.Seconds / 30.f)) * kPi;
-    lcd->drawLine (false, cLcd::getCentre(),
-                   cLcd::getCentre() + cPoint (int16_t(secRad * sin (secAng)), int16_t(secRad * cos (secAng))));
+    lcd->drawLine (false, centre, centre + cPoint (int16_t(secRad * sin (secAng)), int16_t(secRad * cos (secAng))));
 
-    if (false) {
-      int valueIndex = lcd->getFrameNum() - kMaxValues;
-      for (int i = 0; i < kMaxValues; i++) {
-        int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
-        lcd->fillRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
-        valueIndex++;
-        }
+    int valueIndex = lcd->getFrameNum() - kMaxValues;
+    for (int i = 0; i < kMaxValues; i++) {
+      int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
+      lcd->fillRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
+      valueIndex++;
       }
 
     lcd->present();
