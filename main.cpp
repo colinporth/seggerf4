@@ -336,11 +336,11 @@ public:
     }
   //}}}
   //{{{
-  void drawCircle (bool white, cPoint centre, uint16_t radius) {
+  void drawCircle (bool white, cPoint centre, int16_t radius) {
 
     int32_t decision = 3 - (radius << 1);
-    cPoint p = {0, radius};
 
+    cPoint p = {0, radius};
     while (p.x <= p.y) {
       drawPix (white, centre.x + p.x, centre.y - p.y);
       drawPix (white, centre.x - p.x, centre.y - p.y);
@@ -360,12 +360,14 @@ public:
 
       p.x++;
       }
+
     }
   //}}}
   //{{{
   void fillCircle (bool white, cPoint centre, uint16_t radius) {
 
     int32_t decision = 3 - (radius << 1);
+
     uint32_t current_x = 0;
     uint32_t current_y = radius;
 
@@ -668,20 +670,19 @@ public:
 private:
   static const uint16_t getPitch() { return (400 / 8) + 2; }
 
+  //{{{
   void drawPix (bool white, uint16_t x, uint16_t y) {
 
-    uint8_t firstByte = x / 8;
-    auto framePtr = mFrameBuf + (y * getPitch()) + 1 + firstByte;
+    auto framePtr = mFrameBuf + (y * getPitch()) + 1 + (x / 8);
     uint8_t mask = 0x80 >> (x & 7);
-
     if (white)
       *framePtr++ |= mask;
     else
       *framePtr++ &= ~mask;
     }
+  //}}}
 
   uint8_t mFrameBuf [((400/8) + 2) * 240];
-  bool mCom = false;
   int mFrameNum = 0;
   };
 //}}}
@@ -864,25 +865,24 @@ int main() {
                             dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction),
                      cRect (0, 20, cLcd::getWidth(), 40));
     //lcd->drawString (false, time + " " + date, cRect (0, 40, cLcd::getWidth(), 60));
-    //lcd->drawString (false, dec(hour,2) + ":" + dec(min,2) + ":" + dec(sec,2) + " " +
-    //                        kMonth[mon] + " " + dec(day,2) + " " + dec(2000 + year,4), cRect (0, 60, cLcd::getWidth(), 80));
 
     uint16_t radius = 80;
     lcd->drawCircle (false, cLcd::getCentre(), radius);
 
-    float hourRad = radius * 0.6f;
+    float hourRad = radius * 0.7f;
     float hourAng = (1.f - (rtcTime.Hours / 6.f)) * kPi;
     lcd->drawLine (false, cLcd::getCentre(),
-                   cLcd::getCentre() + cPoint((int)(hourRad * sin (hourAng)), (int)(hourRad * cos (hourAng))));
+                   cLcd::getCentre() + cPoint (int16_t(hourRad * sin (hourAng)), int16_t(hourRad * cos (hourAng))));
 
-    float minRad = radius * 0.85f;
+    float minRad = radius * 0.8f;
     float minAng = (1.f - (rtcTime.Minutes / 30.f)) * kPi;
-    lcd->drawLine (false, cLcd::getCentre(), cLcd::getCentre() + cPoint (minRad * sin (minAng), minRad * cos (minAng)));
+    lcd->drawLine (false, cLcd::getCentre(), 
+                   cLcd::getCentre() + cPoint (int16_t(minRad * sin (minAng)), int16_t(minRad * cos (minAng))));
 
     float secRad = radius * 0.9f;
     float secAng = (1.f - (rtcTime.Seconds / 30.f)) * kPi;
     lcd->drawLine (false, cLcd::getCentre(),
-                   cLcd::getCentre() + cPoint (int(secRad * sin (secAng)), int(secRad * cos (secAng))));
+                   cLcd::getCentre() + cPoint (int16_t(secRad * sin (secAng)), int16_t(secRad * cos (secAng))));
 
     if (false) {
       int valueIndex = lcd->getFrameNum() - kMaxValues;
