@@ -203,7 +203,7 @@ public:
   void drawRect (bool white, cRect rect) {
 
     const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
-    const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0x0FC, 0xFE, 0xFF};
+    const uint8_t  kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
     // clip
     if (rect.left < 0)
@@ -280,22 +280,31 @@ public:
 
         for (int16_t yPix = rect.top + font->height - fontChar->top;
              yPix < rect.top + font->height - fontChar->top + fontChar->height && yPix < getHeight(); yPix++) {
-          uint8_t charByte;
-          for (int16_t bit = 0; bit < fontChar->width; bit++) {
-            if (bit % 8 == 0)
-              charByte = *charData++;
-            if (charByte & 0x80) {
-              int16_t xPix = rect.left + fontChar->left + bit;
-              if (xPix >= getWidth())
-                break;
-              auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (xPix/8);
-              uint8_t xMask = 0x80 >> (xPix & 7);
-              if (white)
-                *framePtr |= xMask;
-              else
-                *framePtr &= ~xMask;
+
+          int16_t x = rect.left + fontChar->left;
+          auto framePtr = mFrameBuf + (yPix * getPitch()) + 1 + (x / 8);
+
+          int16_t charBits = fontChar->width;
+          while (charBits > 0) {
+            uint8_t xbit = x & 7;
+            if (xbit) {
+              if (white) {
+                *framePtr++ |= (*charData) >> xbit;
+                *framePtr |= (*charData) << (8 - xbit);
+                }
+              else {
+                *framePtr++ &= ~(*charData >> xbit);
+                *framePtr &= ~(*charData << (8 - xbit));
+                }
               }
-            charByte <<= 1;
+            else {
+              if (white)
+                *framePtr++ |= *charData;
+              else
+                *framePtr++ &= ~*charData;
+              }
+            charBits -= 8;
+            charData++;
             }
           }
         rect.left += fontChar->advance;
@@ -542,11 +551,6 @@ int main() {
       lcd->drawRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
       valueIndex++;
       }
-
-    for (int i = 0; i < 120; i++)
-      lcd->drawRect (false, cRect (i, 100+i, i+i, 100+i+1));
-
-
     lcd->present();
     }
 
