@@ -202,33 +202,70 @@ public:
   //{{{
   void drawRect (bool white, cRect rect) {
 
+    const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
+    const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0x0FC, 0xFE, 0xFF};
+
+    // clip
     if (rect.left < 0)
       rect.left = 0;
-    if (rect.right > getWidth())
+    else if (rect.right > getWidth())
       rect.right = getWidth();
+    if (rect.left >= rect.right)
+      return;
+
     if (rect.top < 0)
       rect.top = 0;
-    if (rect.bottom > getHeight())
+    else if (rect.bottom > getHeight())
       rect.bottom = getHeight();
 
-    uint8_t xFirstByte = rect.left / 8;
-    uint8_t xFirstMask = 0x80 >> (rect.left & 7);
+    uint8_t firstByte = rect.left / 8;
+    uint8_t lastByte = (rect.right-1) / 8;
 
-    for (uint16_t y = rect.top; y < rect.bottom; y++) {
-      auto framePtr = mFrameBuf + (y * getPitch()) + 1 + xFirstByte;
-      uint8_t xmask = xFirstMask;
-      for (uint16_t x = rect.left; x < rect.right; x++) {
+    if (firstByte == lastByte) {
+      //{{{  simple single x byte case
+      uint8_t mask = kFirstMask[rect.left & 7] & kLastMask[(rect.right-1) & 7];
+
+      auto framePtr = mFrameBuf + (rect.top * getPitch()) + 1 + firstByte;
+      for (uint16_t y = rect.top; y < rect.bottom; y++) {
         if (white)
-          *framePtr |= xmask;
+          *framePtr |= mask;
         else
-          *framePtr &= ~xmask;
-        xmask >>= 1;
-        if (xmask == 0) {
-          xmask = 0x80;
-          framePtr++;
-          };
+          *framePtr &= ~mask;
+        framePtr += getPitch();
         }
       }
+      //}}}
+
+    else {
+      // multiple x bytes
+      uint8_t firstMask = kFirstMask[rect.left & 7];
+      uint8_t lastMask = kLastMask[(rect.right-1) & 7];
+
+      auto framePtr = mFrameBuf + (rect.top * getPitch()) + 1 + firstByte;
+      for (uint16_t y = rect.top; y < rect.bottom; y++) {
+        uint8_t byte = firstByte;
+
+        if (white)
+          *framePtr++ |= firstMask;
+        else
+          *framePtr++ &= ~firstMask;
+        byte++;
+
+        while (byte < lastByte) {
+          *framePtr++ = white * 0xFF;
+          byte++;
+          }
+
+        if (byte == lastByte) {
+          if (white)
+            *framePtr++ |= lastMask;
+          else
+            *framePtr++ &= ~lastMask;
+          }
+
+        framePtr += getPitch() - (lastByte - firstByte) - 1;
+        }
+     }
     }
   //}}}
   //{{{
@@ -505,6 +542,10 @@ int main() {
       lcd->drawRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
       valueIndex++;
       }
+
+    for (int i = 0; i < 120; i++)
+      lcd->drawRect (false, cRect (i, 100+i, i+i, 100+i+1));
+
 
     lcd->present();
     }
