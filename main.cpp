@@ -21,6 +21,11 @@
 #define paddingByte 0x00
 #define clearByte   0x20
 #define commandByte 0x80
+
+#define kPi 3.1415926f
+#define POLY_X(Z)  ((int32_t)((points + Z)->x))
+#define POLY_Y(Z)  ((int32_t)((points + Z)->y))
+#define ABS(X)     ((X) > 0 ? (X) : -(X))
 //}}}
 const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
@@ -195,12 +200,23 @@ public:
   //}}}
 
   static const uint16_t getWidth() { return 400; }
-  static const uint16_t getWidthBytes() { return 400 / 8; }
+  static const uint16_t getWidthBytes() { return getWidth() / 8; }
   static const uint16_t getHeight() { return 240; }
+  static cPoint getCentre() { return cPoint (getWidth()/2, getHeight()/2); }
 
   int getFrameNum() { return mFrameNum; }
   //{{{
-  void drawRect (bool white, cRect rect) {
+  void clear (bool white) {
+
+    auto framePtr = mFrameBuf + 1;
+    for (int y = 0; y < getHeight(); y++) {
+      memset (framePtr, white ? 0xFF : 0, getWidthBytes());
+      framePtr += getPitch();
+      }
+    }
+  //}}}
+  //{{{
+  void fillRect (bool white, cRect rect) {
 
     const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
     const uint8_t  kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
@@ -269,6 +285,11 @@ public:
     }
   //}}}
   //{{{
+  void fillRect (uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    fillRect (color, cRect (x, y, x+width, y+height));
+    }
+  //}}}
+  //{{{
   void drawString (bool white, const std::string& str, cRect rect) {
 
     const font_t* font = &font18;
@@ -314,14 +335,305 @@ public:
       }
     }
   //}}}
-
   //{{{
-  void clear (bool white) {
+  void drawCircle (bool white, cPoint centre, uint16_t radius) {
 
-    auto framePtr = mFrameBuf + 1;
-    for (int y = 0; y < getHeight(); y++) {
-      memset (framePtr, white ? 0xFF : 0, getWidthBytes());
-      framePtr += getPitch();
+    int32_t decision = 3 - (radius << 1);
+    cPoint p = {0, radius};
+
+    while (p.x <= p.y) {
+      drawPix (white, centre.x + p.x, centre.y - p.y);
+      drawPix (white, centre.x - p.x, centre.y - p.y);
+      drawPix (white, centre.x + p.y, centre.y - p.x);
+      drawPix (white, centre.x - p.y, centre.y - p.x);
+      drawPix (white, centre.x + p.x, centre.y + p.y);
+      drawPix (white, centre.x - p.x, centre.y + p.y);
+      drawPix (white, centre.x + p.y, centre.y + p.x);
+      drawPix (white, centre.x - p.y, centre.y + p.x);
+
+      if (decision < 0)
+        decision += (p.x << 2) + 6;
+      else {
+        decision += ((p.x - p.y) << 2) + 10;
+        p.y--;
+        }
+
+      p.x++;
+      }
+    }
+  //}}}
+  //{{{
+  void fillCircle (bool white, cPoint centre, uint16_t radius) {
+
+    int32_t decision = 3 - (radius << 1);
+    uint32_t current_x = 0;
+    uint32_t current_y = radius;
+
+    while (current_x <= current_y) {
+      if (current_y > 0) {
+        fillRect (white, centre.x - current_y, centre.y + current_x, 1, 2*current_y);
+        fillRect (white, centre.x - current_y, centre.y - current_x, 1, 2*current_y);
+        }
+      if (current_x > 0) {
+        fillRect (white, centre.x - current_x, centre.y - current_y, 1, 2*current_x);
+        fillRect (white, centre.x - current_x, centre.y + current_y, 1, 2*current_x);
+        }
+      if (decision < 0)
+        decision += (current_x << 2) + 6;
+      else {
+        decision += ((current_x - current_y) << 2) + 10;
+        current_y--;
+        }
+      current_x++;
+      }
+
+    drawCircle (white, centre, radius);
+    }
+  //}}}
+  //{{{
+  void drawEllipse (bool white, cPoint centre, cPoint radius) {
+
+    int x = 0;
+    int y = -radius.y;
+
+    int err = 2 - 2 * radius.x;
+    float k = (float)radius.y / (float)radius.x;
+
+    do {
+      drawPix (white, (centre.x - (int16_t)(x / k)), centre.y + y);
+      drawPix (white, (centre.x + (int16_t)(x / k)), centre.y + y);
+      drawPix (white, (centre.x + (int16_t)(x / k)), centre.y - y);
+      drawPix (white, (centre.x - (int16_t)(x / k)), centre.y - y);
+
+      int e2 = err;
+      if (e2 <= x) {
+        err += ++x * 2+ 1 ;
+        if (-y == x && e2 <= y)
+          e2 = 0;
+        }
+      if (e2 > y)
+        err += ++y *2 + 1;
+      } while (y <= 0);
+    }
+  //}}}
+  //{{{
+  void fillEllipse (bool white, cPoint centre, cPoint radius) {
+
+    int x = 0;
+    int y = -radius.y;
+    int err = 2 - 2 * radius.x;
+    float k = (float)radius.y / (float)radius.x;
+
+    do {
+      fillRect (white, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));
+      fillRect (white, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));
+
+      int e2 = err;
+      if (e2 <= x) {
+        err += ++x * 2 + 1;
+        if (-y == x && e2 <= y)
+          e2 = 0;
+        }
+      if (e2 > y)
+        err += ++y*2+1;
+      } while (y <= 0);
+    }
+  //}}}
+  //{{{
+  void drawPolygon (bool white, cPoint* points, uint16_t numPoints) {
+
+    int16_t x = 0, y = 0;
+
+    if (numPoints < 2)
+      return;
+
+    drawLine (white, *points, *(points + numPoints-1));
+
+    while (--numPoints) {
+      cPoint point = *points++;
+      drawLine (white, point, *points);
+      }
+    }
+  //}}}
+  //{{{
+  void fillPolygon (bool white, cPoint* points, uint16_t numPoints) {
+
+    cPoint tl = *points;
+    cPoint br = *points;
+
+    cPoint pixel;
+    for (int16_t counter = 1; counter < numPoints; counter++) {
+      pixel.x = POLY_X (counter);
+      if (pixel.x < tl.x)
+        tl.x = pixel.x;
+      if (pixel.x > br.x)
+        br.x = pixel.x;
+
+      pixel.y = POLY_Y(counter);
+      if (pixel.y < tl.y)
+        tl.y = pixel.y;
+      if (pixel.y > br.y)
+        br.y = pixel.y;
+      }
+
+    if (numPoints < 2)
+      return;
+
+    cPoint centre = (tl + br) / 2;
+    cPoint first = *points;
+
+    cPoint p2;
+    while (--numPoints) {
+      cPoint p1 = *points;
+      points++;
+      p2 = *points;
+
+      fillTriangle (white, p1, p2, centre);
+      fillTriangle (white, p1, centre, p2);
+      fillTriangle (white, centre, p2, p1);
+      }
+
+    fillTriangle (white, first, p2, centre);
+    fillTriangle (white, first, centre, p2);
+    fillTriangle (white, centre, p2, first);
+    }
+  //}}}
+  //{{{
+  void drawLine (bool white, cPoint p1, cPoint p2) {
+
+    int16_t xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0;
+    int16_t den = 0, num = 0, num_add = 0, num_pixels = 0;
+
+    int16_t deltax = ABS(p2.x - p1.x); // The difference between the x's
+    int16_t deltay = ABS(p2.y - p1.y); // The difference between the y's
+    int16_t x = p1.x;                       // Start x off at the first pixel
+    int16_t y = p1.y;                       // Start y off at the first pixel
+
+    if (p2.x >= p1.x) {
+      // The x-values are increasing
+      xinc1 = 1;
+      xinc2 = 1;
+      }
+    else {
+      // The x-values are decreasing
+      xinc1 = -1;
+      xinc2 = -1;
+      }
+
+    if (p2.y >= p1.y) {
+      // The y-values are increasing
+      yinc1 = 1;
+      yinc2 = 1;
+      }
+    else {
+      // The y-values are decreasing
+      yinc1 = -1;
+      yinc2 = -1;
+      }
+
+    if (deltax >= deltay) { // There is at least one x-value for every y-value
+      xinc1 = 0;            // Don't change the x when numerator >= denominator
+      yinc2 = 0;            // Don't change the y for every iteration
+      den = deltax;
+      num = deltax / 2;
+      num_add = deltay;
+      num_pixels = deltax;  // There are more x-values than y-values
+      }
+    else {                  // There is at least one y-value for every x-value
+      xinc2 = 0;            // Don't change the x for every iteration
+      yinc1 = 0;            // Don't change the y when numerator >= denominator
+      den = deltay;
+      num = deltay / 2;
+      num_add = deltax;
+      num_pixels = deltay;  // There are more y-values than x-values
+      }
+
+    for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
+      drawPix (white, x, y);
+      num += num_add;     // Increase the numerator by the top of the fraction
+      if (num >= den) {   // Check if numerator >= denominator
+        num -= den;       // Calculate the new numerator value
+        x += xinc1;       // Change the x as appropriate
+        y += yinc1;       // Change the y as appropriate
+        }
+
+      x += xinc2;         // Change the x as appropriate
+      y += yinc2;         // Change the y as appropriate
+      }
+    }
+  //}}}
+  //{{{
+  void fillTriangle (bool white, cPoint p1, cPoint p2, cPoint p3) {
+
+    cPoint inc1;
+    cPoint inc2;
+
+    if (p2.x >= p1.x) {
+      //{{{  x increasing
+      inc1.x = 1;
+      inc2.x = 1;
+      }
+      //}}}
+    else {
+      //{{{  x decreasing
+      inc1.x = -1;
+      inc2.x = -1;
+      }
+      //}}}
+
+    if (p2.y >= p1.y) {
+      //{{{  y increasing
+      inc1.y = 1;
+      inc2.y = 1;
+      }
+      //}}}
+    else {
+      //{{{  y decreasing
+      inc1.y = -1;
+      inc2.y = -1;
+      }
+      //}}}
+
+    int16_t den;
+    int16_t num;
+    int16_t num_add;
+    int16_t num_pixels;
+
+    int16_t deltax = ABS (p2.x - p1.x);  // The difference between the x's
+    int16_t deltay = ABS (p2.y - p1.y);  // The difference between the y's
+    if (deltax >= deltay) {
+      //{{{  at least one x-value for every y-value
+      inc1.x = 0;           // Don't change the x when numerator >= denominator
+      inc2.y = 0;           // Don't change the y for every iteration
+
+      den = deltax;
+      num = deltax / 2;
+      num_add = deltay;
+      num_pixels = deltax;  // There are more x-values than y-values
+      }
+      //}}}
+    else {
+      //{{{  at least one y-value for every x-value
+      inc2.x = 0;           // Don't change the x for every iteration
+      inc1.y = 0;           // Don't change the y when numerator >= denominator
+
+      den = deltay;
+      num = deltay / 2;
+      num_add = deltax;
+      num_pixels = deltay; // There are more y-values than x-values
+      }
+      //}}}
+
+    cPoint p = p1;
+    for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
+      drawLine (white, p, p3);
+      num += num_add;     // Increase the numerator by the top of the fraction
+      if (num >= den)  {  // Check if numerator >= denominator
+        num -= den;       // Calculate the new numerator value
+        p += inc1;       // Change the x as appropriate
+        }
+
+      p += inc2;         // Change the x as appropriate
       }
     }
   //}}}
@@ -355,6 +667,18 @@ public:
 
 private:
   static const uint16_t getPitch() { return (400 / 8) + 2; }
+
+  void drawPix (bool white, uint16_t x, uint16_t y) {
+
+    uint8_t firstByte = x / 8;
+    auto framePtr = mFrameBuf + (y * getPitch()) + 1 + firstByte;
+    uint8_t mask = 0x80 >> (x & 7);
+
+    if (white)
+      *framePtr++ |= mask;
+    else
+      *framePtr++ &= ~mask;
+    }
 
   uint8_t mFrameBuf [((400/8) + 2) * 240];
   bool mCom = false;
@@ -539,18 +863,36 @@ int main() {
                             kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4) + " " +
                             dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction),
                      cRect (0, 20, cLcd::getWidth(), 40));
-    lcd->drawString (false, time + " " + date,
-                     cRect (0, 40, cLcd::getWidth(), 60));
-    lcd->drawString (false, dec(hour,2) + ":" + dec(min,2) + ":" + dec(sec,2) + " " +
-                            kMonth[mon] + " " + dec(day,2) + " " + dec(2000 + year,4),
-                     cRect (0, 60, cLcd::getWidth(), 80));
+    //lcd->drawString (false, time + " " + date, cRect (0, 40, cLcd::getWidth(), 60));
+    //lcd->drawString (false, dec(hour,2) + ":" + dec(min,2) + ":" + dec(sec,2) + " " +
+    //                        kMonth[mon] + " " + dec(day,2) + " " + dec(2000 + year,4), cRect (0, 60, cLcd::getWidth(), 80));
 
-    int valueIndex = lcd->getFrameNum() - kMaxValues;
-    for (int i = 0; i < kMaxValues; i++) {
-      int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
-      lcd->drawRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
-      valueIndex++;
+    uint16_t radius = 80;
+    lcd->drawCircle (false, cLcd::getCentre(), radius);
+
+    float hourRad = radius * 0.6f;
+    float hourAng = (1.f - (rtcTime.Hours / 6.f)) * kPi;
+    lcd->drawLine (false, cLcd::getCentre(),
+                   cLcd::getCentre() + cPoint((int)(hourRad * sin (hourAng)), (int)(hourRad * cos (hourAng))));
+
+    float minRad = radius * 0.85f;
+    float minAng = (1.f - (rtcTime.Minutes / 30.f)) * kPi;
+    lcd->drawLine (false, cLcd::getCentre(), cLcd::getCentre() + cPoint (minRad * sin (minAng), minRad * cos (minAng)));
+
+    float secRad = radius * 0.9f;
+    float secAng = (1.f - (rtcTime.Seconds / 30.f)) * kPi;
+    lcd->drawLine (false, cLcd::getCentre(),
+                   cLcd::getCentre() + cPoint (int(secRad * sin (secAng)), int(secRad * cos (secAng))));
+
+    if (false) {
+      int valueIndex = lcd->getFrameNum() - kMaxValues;
+      for (int i = 0; i < kMaxValues; i++) {
+        int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
+        lcd->fillRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
+        valueIndex++;
+        }
       }
+
     lcd->present();
     }
 
