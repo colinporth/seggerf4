@@ -151,9 +151,9 @@ public:
     }
   //}}}
 
-  static const uint16_t getWidth() { return 400; }
-  static const uint16_t getHeight() { return 240; }
-  static cPoint getCentre() { return cPoint (getWidth()/2, getHeight()/2); }
+  const uint16_t getWidth() { return 400; }
+  const uint16_t getHeight() { return 240; }
+  cPoint getCentre() { return cPoint (getWidth()/2, getHeight()/2); }
 
   int getFrameNum() { return mFrameNum; }
 
@@ -311,6 +311,70 @@ public:
     }
   //}}}
   //{{{
+  void drawLine (eDraw draw, cPoint p1, cPoint p2) {
+
+    int16_t xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0;
+    int16_t den = 0, num = 0, num_add = 0, num_pixels = 0;
+
+    int16_t deltax = ABS(p2.x - p1.x); // The difference between the x's
+    int16_t deltay = ABS(p2.y - p1.y); // The difference between the y's
+    int16_t x = p1.x;                       // Start x off at the first pixel
+    int16_t y = p1.y;                       // Start y off at the first pixel
+
+    if (p2.x >= p1.x) {
+      // The x-values are increasing
+      xinc1 = 1;
+      xinc2 = 1;
+      }
+    else {
+      // The x-values are decreasing
+      xinc1 = -1;
+      xinc2 = -1;
+      }
+
+    if (p2.y >= p1.y) {
+      // The y-values are increasing
+      yinc1 = 1;
+      yinc2 = 1;
+      }
+    else {
+      // The y-values are decreasing
+      yinc1 = -1;
+      yinc2 = -1;
+      }
+
+    if (deltax >= deltay) { // There is at least one x-value for every y-value
+      xinc1 = 0;            // Don't change the x when numerator >= denominator
+      yinc2 = 0;            // Don't change the y for every iteration
+      den = deltax;
+      num = deltax / 2;
+      num_add = deltay;
+      num_pixels = deltax;  // There are more x-values than y-values
+      }
+    else {                  // There is at least one y-value for every x-value
+      xinc2 = 0;            // Don't change the x for every iteration
+      yinc1 = 0;            // Don't change the y when numerator >= denominator
+      den = deltay;
+      num = deltay / 2;
+      num_add = deltax;
+      num_pixels = deltay;  // There are more y-values than x-values
+      }
+
+    for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
+      drawPix (draw, x, y);
+      num += num_add;     // Increase the numerator by the top of the fraction
+      if (num >= den) {   // Check if numerator >= denominator
+        num -= den;       // Calculate the new numerator value
+        x += xinc1;       // Change the x as appropriate
+        y += yinc1;       // Change the y as appropriate
+        }
+
+      x += xinc2;         // Change the x as appropriate
+      y += yinc2;         // Change the y as appropriate
+      }
+    }
+  //}}}
+  //{{{
   void fillCircle (eDraw draw, cPoint centre, uint16_t radius) {
 
     int32_t decision = 3 - (radius << 1);
@@ -448,70 +512,6 @@ public:
     }
   //}}}
   //{{{
-  void drawLine (eDraw draw, cPoint p1, cPoint p2) {
-
-    int16_t xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0;
-    int16_t den = 0, num = 0, num_add = 0, num_pixels = 0;
-
-    int16_t deltax = ABS(p2.x - p1.x); // The difference between the x's
-    int16_t deltay = ABS(p2.y - p1.y); // The difference between the y's
-    int16_t x = p1.x;                       // Start x off at the first pixel
-    int16_t y = p1.y;                       // Start y off at the first pixel
-
-    if (p2.x >= p1.x) {
-      // The x-values are increasing
-      xinc1 = 1;
-      xinc2 = 1;
-      }
-    else {
-      // The x-values are decreasing
-      xinc1 = -1;
-      xinc2 = -1;
-      }
-
-    if (p2.y >= p1.y) {
-      // The y-values are increasing
-      yinc1 = 1;
-      yinc2 = 1;
-      }
-    else {
-      // The y-values are decreasing
-      yinc1 = -1;
-      yinc2 = -1;
-      }
-
-    if (deltax >= deltay) { // There is at least one x-value for every y-value
-      xinc1 = 0;            // Don't change the x when numerator >= denominator
-      yinc2 = 0;            // Don't change the y for every iteration
-      den = deltax;
-      num = deltax / 2;
-      num_add = deltay;
-      num_pixels = deltax;  // There are more x-values than y-values
-      }
-    else {                  // There is at least one y-value for every x-value
-      xinc2 = 0;            // Don't change the x for every iteration
-      yinc1 = 0;            // Don't change the y when numerator >= denominator
-      den = deltay;
-      num = deltay / 2;
-      num_add = deltax;
-      num_pixels = deltay;  // There are more y-values than x-values
-      }
-
-    for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
-      drawPix (draw, x, y);
-      num += num_add;     // Increase the numerator by the top of the fraction
-      if (num >= den) {   // Check if numerator >= denominator
-        num -= den;       // Calculate the new numerator value
-        x += xinc1;       // Change the x as appropriate
-        y += yinc1;       // Change the y as appropriate
-        }
-
-      x += xinc2;         // Change the x as appropriate
-      y += yinc2;         // Change the y as appropriate
-      }
-    }
-  //}}}
-  //{{{
   void fillTriangle (eDraw draw, cPoint p1, cPoint p2, cPoint p3) {
 
     cPoint inc1;
@@ -624,12 +624,12 @@ private:
     }
   //}}}
 
+  SPI_HandleTypeDef mSpiHandle;
+  DMA_HandleTypeDef mSpiTxDma;
+
   // commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
   uint8_t mFrameBuf [1 + (((400/8) + 2) * 240) + 1];
   int mFrameNum = 0;
-
-  SPI_HandleTypeDef mSpiHandle;
-  DMA_HandleTypeDef mSpiTxDma;
   };
 //}}}
 //{{{
@@ -834,29 +834,6 @@ public:
 
 private:
   //{{{
-  uint8_t byteToBcd2 (uint8_t Value)
-  {
-    uint32_t bcdhigh = 0U;
-
-    while(Value >= 10U)
-    {
-      bcdhigh++;
-      Value -= 10U;
-    }
-
-    return  ((uint8_t)(bcdhigh << 4U) | Value);
-  }
-
-  //}}}
-  //{{{
-  uint8_t bcd2ToByte (uint8_t Value)
-  {
-    uint32_t tmp = 0U;
-    tmp = ((uint8_t)(Value & (uint8_t)0xF0) >> (uint8_t)0x4) * 10;
-    return (tmp + (Value & (uint8_t)0x0F));
-  }
-  //}}}
-  //{{{
   void getDateTime (RTC_HandleTypeDef* hrtc, RTC_DateTypeDef* date, RTC_TimeTypeDef* time) {
 
     time->SubSeconds = RTC->SSR;
@@ -875,7 +852,6 @@ private:
     date->Date = bcd2ToByte (dr & (RTC_DR_DT | RTC_DR_DU));
     }
   //}}}
-
   //{{{
   void setDateTime (RTC_HandleTypeDef* hrtc, RTC_DateTypeDef* date, RTC_TimeTypeDef* time) {
 
@@ -919,6 +895,25 @@ private:
       }
 
     __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+    }
+  //}}}
+  //{{{
+  uint8_t byteToBcd2 (uint8_t value) {
+
+    uint32_t bcdHigh = 0U;
+    while (value >= 10U) {
+      bcdHigh++;
+      value -= 10U;
+      }
+
+    return  ((uint8_t)(bcdHigh << 4U) | value);
+    }
+  //}}}
+  //{{{
+  uint8_t bcd2ToByte (uint8_t value) {
+
+    uint32_t tmp = ((uint8_t)(value & (uint8_t)0xF0) >> (uint8_t)0x4) * 10;
+    return (tmp + (value & (uint8_t)0x0F));
     }
   //}}}
 
@@ -975,11 +970,11 @@ public:
                            dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
                            dec(ticks - lastTicks) + " " +
                            (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
-                  cRect (0, 0, cLcd::getWidth(), 20));
+                  cRect (0, 0, getWidth(), 20));
       lastTicks = ticks;
 
-      drawString (eInvert, mRtc.getClockTimeString(), cRect (0, 20, cLcd::getWidth(), 40));
-      drawString (eInvert, mRtc.getBuildTimeString(), cRect (0, 40, cLcd::getWidth(), 60));
+      drawString (eInvert, mRtc.getClockTimeString(), cRect (0, 20, getWidth(), 40));
+      drawString (eInvert, mRtc.getBuildTimeString(), cRect (0, 40, getWidth(), 60));
 
       drawClock();
       drawValues();
