@@ -1,7 +1,6 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="1396" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="315" extra="osKernelStart();" color="5"/>
   <BookmarkItem objectName="" line="28" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="44" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="49" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -312,6 +311,20 @@
   <BookmarkItem objectName="" line="1392" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="312" extra="sys_thread_new (&quot;net&quot;, netThread, NULL, 1024, osPriorityNormal);" color="5"/>
   <BookmarkItem objectName="" line="1393" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="313" extra="sys_thread_new (&quot;touch&quot;, touchThread, NULL, 2048, osPriorityNormal);" color="5"/>
   <BookmarkItem objectName="" line="1394" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="314" extra="sys_thread_new (&quot;save&quot;, saveThread, NULL, 10000, osPriorityAboveNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1396" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="315" extra="osKernelStart();" color="5"/>
+  <BookmarkItem objectName="" line="150" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="const uint16_t getWidth() { return 400; }" color="5"/>
+  <BookmarkItem objectName="" line="151" column="-1" path="C:/projects/seggerf4/main.cpp" number="2" extra="const uint16_t getHeight() { return 240; }" color="5"/>
+  <BookmarkItem objectName="" line="152" column="-1" path="C:/projects/seggerf4/main.cpp" number="3" extra="const cPoint getSize() { return cPoint (getWidth(), getHeight()); }" color="5"/>
+  <BookmarkItem objectName="" line="153" column="-1" path="C:/projects/seggerf4/main.cpp" number="4" extra="const cRect getRect() { return cRect (getSize()); }" color="5"/>
+  <BookmarkItem objectName="" line="154" column="-1" path="C:/projects/seggerf4/main.cpp" number="5" extra="const cPoint getCentre() { return getSize()/2; }" color="5"/>
+  <BookmarkItem objectName="" line="233" column="-1" path="C:/projects/seggerf4/main.cpp" number="6" extra="void drawString (eDraw draw, const std::string&amp; str, cRect rect) {" color="5"/>
+  <BookmarkItem objectName="" line="235" column="-1" path="C:/projects/seggerf4/main.cpp" number="7" extra="const font_t* font = &amp;font18;" color="5"/>
+  <BookmarkItem objectName="" line="611" column="-1" path="C:/projects/seggerf4/main.cpp" number="8" extra="const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };" color="5"/>
+  <BookmarkItem objectName="" line="612" column="-1" path="C:/projects/seggerf4/main.cpp" number="9" extra="const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };" color="5"/>
+  <BookmarkItem objectName="" line="974" column="-1" path="C:/projects/seggerf4/main.cpp" number="10" extra="const float kPi = 3.1415926f;" color="5"/>
+  <BookmarkItem objectName="" line="975" column="-1" path="C:/projects/seggerf4/main.cpp" number="11" extra="const char* kMonth[12] = { &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;, &quot;Jul&quot;, &quot;Aug&quot;, &quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot;};" color="5"/>
+  <BookmarkItem objectName="" line="1115" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="static const int kMaxLen = 220;" color="5"/>
+  <BookmarkItem objectName="" line="1116" column="-1" path="C:/projects/seggerf4/main.cpp" number="13" extra="static const int kMaxValues = 400;" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="133" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.c" useHWbreakpoint="false"/>
@@ -408,6 +421,8 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="2" y="153" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="1" top="121" codecName="Default"/>
+ </Files>
  <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

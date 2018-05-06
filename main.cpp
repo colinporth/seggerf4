@@ -35,7 +35,7 @@ public:
   //{{{
   void init() {
 
-    // config CS, DISP - GPIOB
+    // config CS, DISP
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
     // CS, DISP init lo
@@ -92,21 +92,19 @@ public:
     // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
     SPI_HandleTypeDef SPI_Handle;
     mSpiHandle.Instance = SPI2;
-    mSpiHandle.Init.Mode = SPI_MODE_MASTER;
-    mSpiHandle.Init.Direction = SPI_DIRECTION_2LINES;
-    mSpiHandle.Init.DataSize = SPI_DATASIZE_8BIT;
-    mSpiHandle.Init.CLKPolarity = SPI_POLARITY_LOW; // SPI mode0
-    mSpiHandle.Init.CLKPhase = SPI_PHASE_1EDGE;     // SPI mode0
-    mSpiHandle.Init.NSS = SPI_NSS_SOFT;
+    mSpiHandle.Init.Mode              = SPI_MODE_MASTER;
+    mSpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
+    mSpiHandle.Init.DataSize          = SPI_DATASIZE_8BIT;
+    mSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW; // SPI mode0
+    mSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;     // SPI mode0
+    mSpiHandle.Init.NSS               = SPI_NSS_SOFT;
     mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 168mHz/2 / 4 = 20.5mHz
-    mSpiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    mSpiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
-    mSpiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    mSpiHandle.Init.CRCPolynomial = 7;
+    mSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+    mSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLE;
     HAL_SPI_Init (&mSpiHandle);
 
     // config tx dma
-    mSpiTxDma.Instance                 = DMA1_Stream4;
+    mSpiTxDma.Instance = DMA1_Stream4;
     mSpiTxDma.Init.Channel             = DMA_CHANNEL_0;
     mSpiTxDma.Init.Direction           = DMA_MEMORY_TO_PERIPH;
     mSpiTxDma.Init.PeriphInc           = DMA_PINC_DISABLE;
@@ -136,12 +134,12 @@ public:
     mFrameBuf [0] = commandByte;
     memset (mFrameBuf+1, 0, (getPitch() * getHeight()) + 1);
     for (uint16_t y = 0; y < getHeight(); y++) {
-      uint8_t lineByte = y+1;
+      uint8_t lineAddressByte = y+1;
       // bit reverse
-      lineByte = (lineByte & 0xF0) >> 4 | (lineByte & 0x0F) << 4;
-      lineByte = (lineByte & 0xCC) >> 2 | (lineByte & 0x33) << 2;
-      lineByte = (lineByte & 0xAA) >> 1 | (lineByte & 0x55) << 1;
-      mFrameBuf [1 + (y*getPitch())] = lineByte;
+      lineAddressByte = ((lineAddressByte & 0xF0) >> 4) | ((lineAddressByte & 0x0F) << 4);
+      lineAddressByte = ((lineAddressByte & 0xCC) >> 2) | ((lineAddressByte & 0x33) << 2);
+      lineAddressByte = ((lineAddressByte & 0xAA) >> 1) | ((lineAddressByte & 0x55) << 1);
+      mFrameBuf [1 + (y*getPitch())] = lineAddressByte;
       }
     present();
 
@@ -152,7 +150,9 @@ public:
 
   const uint16_t getWidth() { return 400; }
   const uint16_t getHeight() { return 240; }
-  cPoint getCentre() { return cPoint (getWidth()/2, getHeight()/2); }
+  const cPoint getSize() { return cPoint (getWidth(), getHeight()); }
+  const cRect getRect() { return cRect (getSize()); }
+  const cPoint getCentre() { return getSize()/2; }
 
   int getFrameNum() { return mFrameNum; }
 
@@ -595,9 +595,8 @@ public:
     //if (HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100))
     if (HAL_SPI_Transmit_DMA (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1))
       printf ("HAL_SPI_Transmit failed\n");
-    while (HAL_SPI_GetState (&mSpiHandle) != HAL_SPI_STATE_READY) {
+    while (HAL_SPI_GetState (&mSpiHandle) != HAL_SPI_STATE_READY)
       HAL_Delay(1);
-      }
 
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
@@ -617,20 +616,26 @@ private:
   uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }
 
   //{{{
-  void drawPix (bool white, uint16_t x, uint16_t y) {
+  void drawPix (eDraw draw, uint16_t x, uint16_t y) {
 
     uint8_t mask = 0x80 >> (x & 7);
     auto framePtr = getFramePtr (y) + x/8;
-    *framePtr++ ^= mask;
+
+    if (draw == eInvert)
+      *framePtr++ ^= mask;
+    else if (draw == eOff)
+      *framePtr++ &= ~mask;
+    else
+      *framePtr++ |= mask;
     }
   //}}}
-
-  SPI_HandleTypeDef mSpiHandle;
-  DMA_HandleTypeDef mSpiTxDma;
 
   // commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
   uint8_t mFrameBuf [1 + (((400/8) + 2) * 240) + 1];
   int mFrameNum = 0;
+
+  SPI_HandleTypeDef mSpiHandle;
+  DMA_HandleTypeDef mSpiTxDma;
   };
 //}}}
 //{{{
@@ -1081,19 +1086,19 @@ private:
   //{{{
   void drawClock (cPoint centre, int16_t radius) {
 
-    drawCircle (eInvert, centre, radius);
+    drawCircle (eOff, centre, radius);
 
     float hourRadius = radius * 0.7f;
     float hourAngle = mRtc.getClockHourAngle();
-    drawLine (eInvert, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
+    drawLine (eOff, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
 
     float minuteRadius = radius * 0.8f;
     float minuteAngle = mRtc.getClockMinuteAngle();
-    drawLine (eInvert, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
+    drawLine (eOff, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
 
     float secondRadius = radius * 0.9f;
     float secondAngle = mRtc.getClockSecondAngle();
-    drawLine (eInvert, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
+    drawLine (eOff, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
     }
   //}}}
   //{{{
@@ -1141,11 +1146,13 @@ int main() {
   printf ("main started\n");
 
   HAL_Init();
-  bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET;
-  bool powerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET;
-  __HAL_RCC_CLEAR_RESET_FLAGS();
 
+  // get reset flags
+  bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
+  bool powerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST);
+  __HAL_RCC_CLEAR_RESET_FLAGS();
   printf ("start cApp pin:%d power:%d\n", pinReset, powerOnReset);
+
   cApp::mApp = new cApp (pinReset, powerOnReset);
   cApp::mApp->init();
   cApp::mApp->run();
