@@ -98,7 +98,7 @@ public:
     mSpiHandle.Init.CLKPolarity = SPI_POLARITY_LOW; // SPI mode0
     mSpiHandle.Init.CLKPhase = SPI_PHASE_1EDGE;     // SPI mode0
     mSpiHandle.Init.NSS = SPI_NSS_SOFT;
-    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // 168mHz/2 / 8 = 10.5mHz
+    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 168mHz/2 / 4 = 20.5mHz
     mSpiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
     mSpiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
     mSpiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -830,8 +830,8 @@ public:
     getDateTime();
 
     return dec(mDateTime.Hours,2) + ":" + dec(mDateTime.Minutes,2) + ":" + dec(mDateTime.Seconds,2) + " " +
-           kMonth[mDateTime.Month] + " " + dec(mDateTime.Date,2) + " " + dec(2000 + mDateTime.Year,4) + " " +
-           dec(mDateTime.SubSeconds) + " " + dec(mDateTime.SecondFraction);
+           kMonth[mDateTime.Month] + " " + dec(mDateTime.Date,2) + " " + dec(2000 + mDateTime.Year,4);
+           //dec(mDateTime.SubSeconds) + " " + dec(mDateTime.SecondFraction);
     }
   //}}}
   //{{{
@@ -849,16 +849,16 @@ private:
     mDateTime.SecondFraction = RTC->PRER & RTC_PRER_PREDIV_S;
 
     uint32_t tr = RTC->TR;
-    mDateTime.TimeFormat = (tr & (RTC_TR_PM)) >> 16U;
-    mDateTime.Hours = bcd2ToByte ((tr & (RTC_TR_HT | RTC_TR_HU)) >> 16U);
-    mDateTime.Minutes = bcd2ToByte ((tr & (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);
-    mDateTime.Seconds = bcd2ToByte (tr & (RTC_TR_ST | RTC_TR_SU));
+    mDateTime.TimeFormat = (tr & RTC_TR_PM) >> 16U;
+    mDateTime.Hours = getBcd ((tr & (RTC_TR_HT | RTC_TR_HU)) >> 16U);
+    mDateTime.Minutes = getBcd ((tr & (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);
+    mDateTime.Seconds = getBcd (tr & (RTC_TR_ST | RTC_TR_SU));
 
     uint32_t dr = RTC->DR;
-    mDateTime.Year = bcd2ToByte ((dr & (RTC_DR_YT | RTC_DR_YU)) >> 16U);
-    mDateTime.WeekDay = (dr & (RTC_DR_WDU)) >> 13U;
-    mDateTime.Month = bcd2ToByte ((dr & (RTC_DR_MT | RTC_DR_MU)) >> 8U);
-    mDateTime.Date = bcd2ToByte (dr & (RTC_DR_DT | RTC_DR_DU));
+    mDateTime.Year = getBcd ((dr & (RTC_DR_YT | RTC_DR_YU)) >> 16U);
+    mDateTime.WeekDay = (dr & RTC_DR_WDU) >> 13U;
+    mDateTime.Month = getBcd ((dr & (RTC_DR_MT | RTC_DR_MU)) >> 8U);
+    mDateTime.Date = getBcd (dr & (RTC_DR_DT | RTC_DR_DU));
     }
   //}}}
   //{{{
@@ -873,24 +873,20 @@ private:
         mDateTime.Month = (uint8_t)((mDateTime.Month & (uint8_t)~(0x10U)) + (uint8_t)0x0AU);
 
       // Set the RTC_DR register
-      uint32_t tmp = ((uint32_t)byteToBcd2 (mDateTime.Year) << 16U) |
-                     ((uint32_t)byteToBcd2 (mDateTime.Month) << 8U) |
-                     ((uint32_t)byteToBcd2 (mDateTime.Date))        |
-                     ((uint32_t)mDateTime.WeekDay << 13U);
+      uint32_t tmp = (getByte (mDateTime.Year) << 16) | (getByte (mDateTime.Month) << 8) | getByte (mDateTime.Date) |
+                     (mDateTime.WeekDay << 13);
       RTC->DR = (uint32_t)(tmp & RTC_DR_RESERVED_MASK);
 
       // Set the RTC_TR register
-      tmp = (uint32_t)(((uint32_t)byteToBcd2 (mDateTime.Hours) << 16U) |
-                       ((uint32_t)byteToBcd2 (mDateTime.Minutes) << 8U) |
-                       ((uint32_t)byteToBcd2 (mDateTime.Seconds)) |
-                      (((uint32_t)mDateTime.TimeFormat) << 16U));
+      tmp = ((getByte (mDateTime.Hours) << 16) | (getByte (mDateTime.Minutes) << 8) | getByte (mDateTime.Seconds) |
+            (mDateTime.TimeFormat) << 16);
       RTC->TR = (uint32_t)(tmp & RTC_TR_RESERVED_MASK);
 
       // Clear the bits to be configured
       RTC->CR &= (uint32_t)~RTC_CR_BCK;
 
       // Configure the RTC_CR register
-      RTC->CR |= (uint32_t)(mDateTime.DayLightSaving | mDateTime.StoreOperation);
+      RTC->CR |= mDateTime.DayLightSaving | mDateTime.StoreOperation;
 
       // Exit Initialization mode
       RTC->ISR &= (uint32_t)~RTC_ISR_INIT;
@@ -904,22 +900,22 @@ private:
     }
   //}}}
   //{{{
-  uint8_t byteToBcd2 (uint8_t value) {
+  uint8_t getByte (uint8_t bcd) {
 
     uint32_t bcdHigh = 0U;
-    while (value >= 10U) {
+    while (bcd >= 10U) {
       bcdHigh++;
-      value -= 10U;
+      bcd -= 10U;
       }
 
-    return  ((uint8_t)(bcdHigh << 4U) | value);
+    return  ((uint8_t)(bcdHigh << 4U) | bcd);
     }
   //}}}
   //{{{
-  uint8_t bcd2ToByte (uint8_t value) {
+  uint8_t getBcd (uint8_t byte) {
 
-    uint32_t tmp = ((uint8_t)(value & (uint8_t)0xF0) >> (uint8_t)0x4) * 10;
-    return (tmp + (value & (uint8_t)0x0F));
+    uint32_t tmp = ((uint8_t)(byte & (uint8_t)0xF0) >> (uint8_t)0x4) * 10;
+    return (tmp + (byte & (uint8_t)0x0F));
     }
   //}}}
 
@@ -1066,8 +1062,9 @@ public:
       drawString (eInvert, mRtc.getClockTimeString(), cRect (0, 20, getWidth(), 40));
       drawString (eInvert, mRtc.getBuildTimeString(), cRect (0, 40, getWidth(), 60));
 
-      drawClock();
-      drawValues();
+      //drawClock (cPoint(400-42, 42), 40);
+      //drawValues();
+      drawClock (getCentre(), 100);
 
       present();
 
@@ -1082,10 +1079,8 @@ public:
 
 private:
   //{{{
-  void drawClock() {
+  void drawClock (cPoint centre, int16_t radius) {
 
-    cPoint centre = { 400-42, 42 };
-    int16_t radius = 40;
     drawCircle (eInvert, centre, radius);
 
     float hourRadius = radius * 0.7f;

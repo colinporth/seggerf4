@@ -1,7 +1,7 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="1396" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="314" extra="sys_thread_new (&quot;save&quot;, saveThread, NULL, 10000, osPriorityAboveNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1396" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="315" extra="osKernelStart();" color="5"/>
   <BookmarkItem objectName="" line="28" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="44" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="49" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -152,173 +152,173 @@
   <BookmarkItem objectName="" line="736" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="151" extra="// debug (LCD_COLOR_YELLOW, &quot;temp %d %d&quot;, ConvertedValue, JTemp);" color="5"/>
   <BookmarkItem objectName="" line="739" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="152" extra="HAL_ADC_PollForConversion (&amp;AdcHandle, 100);" color="5"/>
   <BookmarkItem objectName="" line="740" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="153" extra="ConvertedValue = HAL_ADC_GetValue (&amp;AdcHandle);" color="5"/>
-  <BookmarkItem objectName="" line="749" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="154" extra="//BSP_LED_Toggle (LED1);" color="5"/>
-  <BookmarkItem objectName="" line="750" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="155" extra="for (auto box : mBoxes) box->onDraw (mLcd);" color="5"/>
-  <BookmarkItem objectName="" line="753" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="156" extra="dec(int(avVal*kScale) / 1000) + &quot;.&quot; + dec(int(avVal*kScale) % 1000)).c_str());" color="5"/>
-  <BookmarkItem objectName="" line="754" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="157" extra="drawInfo (LCD_COLOR_YELLOW, cLcd::eTextRight, &quot;%d %d%%&quot;, xPortGetFreeHeapSize(), osGetCPUUsage());" color="5"/>
-  <BookmarkItem objectName="" line="756" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="158" extra="drawDebug();" color="5"/>
-  <BookmarkItem objectName="" line="758" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="159" extra="present();" color="5"/>
-  <BookmarkItem objectName="" line="766" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="160" extra="pollTouch();" color="5"/>
-  <BookmarkItem objectName="" line="771" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="161" extra="mJpeg ? mCam->capture() : mCam->preview();" color="5"/>
-  <BookmarkItem objectName="" line="778" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="162" extra="mCam->setFocus (mFocus);" color="5"/>
-  <BookmarkItem objectName="" line="784" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="163" extra="clearDebug();" color="5"/>
-  <BookmarkItem objectName="" line="788" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="164" extra="osDelay (40);" color="5"/>
-  <BookmarkItem objectName="" line="798" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="165" extra="auto frame = mCam->getNextFrame (frameLen, jpeg);" color="5"/>
-  <BookmarkItem objectName="" line="806" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="166" extra="auto header = mCam->getFullJpgHeader (6, headerLen);" color="5"/>
-  <BookmarkItem objectName="" line="807" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="167" extra="saveNumFile (&quot;save&quot; + dec(jpgFrameNum++, 3) + &quot;.jpg&quot;, header, headerLen, frame, frameLen);" color="5"/>
-  <BookmarkItem objectName="" line="815" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="168" extra="auto header = mCam->getBmpHeader (headerLen);" color="5"/>
-  <BookmarkItem objectName="" line="816" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="169" extra="saveNumFile (&quot;save&quot; + dec(bmpFrameNum++, 3) + &quot;.bmp&quot;, header, headerLen, frame, frameLen);" color="5"/>
-  <BookmarkItem objectName="" line="822" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="170" extra="mjpgFrameNum++;" color="5"/>
-  <BookmarkItem objectName="" line="824" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="171" extra="auto header = mCam->getFullJpgHeader (6, headerLen);" color="5"/>
-  <BookmarkItem objectName="" line="825" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="172" extra="createNumFile (&quot;save&quot; + dec(mjpgFileNum++,3) + &quot;.mjpeg&quot;, header, headerLen, frame, frameLen);" color="5"/>
-  <BookmarkItem objectName="" line="831" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="173" extra="auto header = mCam->getSmallJpgHeader (6, headerLen);" color="5"/>
-  <BookmarkItem objectName="" line="832" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="174" extra="appendFile (mjpgFrameNum++, header, headerLen, frame, frameLen);" color="5"/>
-  <BookmarkItem objectName="" line="839" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="175" extra="mjpgFrameNum++;" color="5"/>
-  <BookmarkItem objectName="" line="840" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="176" extra="closeFile();" color="5"/>
-  <BookmarkItem objectName="" line="848" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="177" extra="debug (LCD_COLOR_YELLOW, &quot;formatting sdCard&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="850" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="178" extra="void* work = malloc (0x10000);" color="5"/>
-  <BookmarkItem objectName="" line="851" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="179" extra="f_mkfs (&quot;&quot;, FM_EXFAT, 0, work, 0x10000);" color="5"/>
-  <BookmarkItem objectName="" line="852" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="180" extra="free (work);" color="5"/>
-  <BookmarkItem objectName="" line="854" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="181" extra="f_setlabel (&quot;exfat&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="855" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="182" extra="f_mount (&amp;gFatFs, &quot;&quot;, 1);" color="5"/>
-  <BookmarkItem objectName="" line="857" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="183" extra="debug (LCD_COLOR_YELLOW, &quot;sdCard formatted&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="861" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="184" extra="osDelay (20);" color="5"/>
-  <BookmarkItem objectName="" line="870" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="185" extra="struct netconn* connection = netconn_new (NETCONN_TCP);" color="5"/>
-  <BookmarkItem objectName="" line="874" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="186" extra="netconn_listen (connection);" color="5"/>
-  <BookmarkItem objectName="" line="883" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="187" extra="netbuf_data (requestNetBuf, (void**)&amp;buf, &amp;bufLen);" color="5"/>
-  <BookmarkItem objectName="" line="886" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="188" extra="char str[40];" color="5"/>
-  <BookmarkItem objectName="" line="895" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="190" extra="str[dst++] = buf[src++];" color="5"/>
-  <BookmarkItem objectName="" line="901" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="191" extra="debug (LCD_COLOR_YELLOW, str);" color="5"/>
-  <BookmarkItem objectName="" line="909" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="192" extra="netconn_write (request, kHtmlResponseHeader, sizeof(kHtmlResponseHeader)-1, NETCONN_NOCOPY);" color="5"/>
-  <BookmarkItem objectName="" line="910" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="193" extra="netconn_write (request, kHtmlBody, sizeof(kHtmlBody)-1, NETCONN_NOCOPY);" color="5"/>
-  <BookmarkItem objectName="" line="918" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="194" extra="auto frame = mCam->getLastFrame (frameLen, jpeg, frameId);" color="5"/>
-  <BookmarkItem objectName="" line="924" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="195" extra="NETCONN_NOCOPY);" color="5"/>
-  <BookmarkItem objectName="" line="928" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="196" extra="auto header = jpeg ? mCam->getFullJpgHeader (6, headerLen) : mCam->getBmpHeader (headerLen);" color="5"/>
-  <BookmarkItem objectName="" line="929" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="197" extra="netconn_write (request, header, headerLen, NETCONN_NOCOPY);" color="5"/>
-  <BookmarkItem objectName="" line="932" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="198" extra="netconn_write (request, frame, frameLen, NETCONN_NOCOPY);" color="5"/>
-  <BookmarkItem objectName="" line="938" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="199" extra="netconn_write (request, k404Response, sizeof(k404Response)-1, NETCONN_NOCOPY);" color="5"/>
-  <BookmarkItem objectName="" line="943" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="200" extra="netconn_close (request);" color="5"/>
-  <BookmarkItem objectName="" line="944" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="201" extra="netbuf_delete (requestNetBuf);" color="5"/>
-  <BookmarkItem objectName="" line="945" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="202" extra="netconn_delete (request);" color="5"/>
-  <BookmarkItem objectName="" line="954" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="203" extra="enum eDhcpState { DHCP_OFF, DHCP_START, DHCP_WAIT_ADDRESS, DHCP_ADDRESS_ASSIGNED, DHCP_TIMEOUT, DHCP_LINK_DOWN };" color="5"/>
-  <BookmarkItem objectName="" line="962" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="204" extra="ip_addr_set_zero_ip4 (&amp;netif->ip_addr);" color="5"/>
-  <BookmarkItem objectName="" line="963" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="205" extra="ip_addr_set_zero_ip4 (&amp;netif->netmask);" color="5"/>
-  <BookmarkItem objectName="" line="964" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="206" extra="ip_addr_set_zero_ip4 (&amp;netif->gw);" color="5"/>
-  <BookmarkItem objectName="" line="965" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="207" extra="dhcp_start (netif);" color="5"/>
-  <BookmarkItem objectName="" line="972" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="208" extra="mIpAddress = ip4addr_ntoa ((const ip4_addr_t*)&amp;netif->ip_addr);" color="5"/>
-  <BookmarkItem objectName="" line="973" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="209" extra="cLcd::mLcd->debug (LCD_COLOR_GREEN, &quot;dhcp &quot; + mIpAddress);" color="5"/>
-  <BookmarkItem objectName="" line="974" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="210" extra="sntpSetServerName (0, &quot;pool.ntp.org&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="975" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="211" extra="sntpInit();" color="5"/>
-  <BookmarkItem objectName="" line="978" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="212" extra="auto dhcp = (struct dhcp*)netif_get_client_data (netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP);" color="5"/>
-  <BookmarkItem objectName="" line="981" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="213" extra="dhcp_stop (netif);" color="5"/>
-  <BookmarkItem objectName="" line="982" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="214" extra="cLcd::mLcd->debug (LCD_COLOR_RED, &quot;dhcp timeout&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="988" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="215" extra="cLcd::mLcd->debug (LCD_COLOR_RED, &quot;dhcp link down&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="989" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="216" extra="dhcp_stop (netif);" color="5"/>
-  <BookmarkItem objectName="" line="997" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="217" extra="osDelay (250);" color="5"/>
-  <BookmarkItem objectName="" line="1008" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="218" extra="for (auto boxIt = mBoxes.rbegin(); boxIt != mBoxes.rend(); ++boxIt) {" color="5"/>
-  <BookmarkItem objectName="" line="1009" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="219" extra="bool wasProxed = (*boxIt)->getProxed();" color="5"/>
-  <BookmarkItem objectName="" line="1010" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="220" extra="(*boxIt)->setProxed ((*boxIt)->getEnabled() &amp;&amp; (*boxIt)->pick (pos));" color="5"/>
-  <BookmarkItem objectName="" line="1014" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="221" extra="proxBox->onProx (pos - proxBox->getTL(), z);" color="5"/>
-  <BookmarkItem objectName="" line="1018" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="222" extra="(*boxIt)->onProxExit();" color="5"/>
-  <BookmarkItem objectName="" line="1027" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="223" extra="for (auto boxIt = mBoxes.rbegin(); boxIt != mBoxes.rend(); ++boxIt) {" color="5"/>
-  <BookmarkItem objectName="" line="1028" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="224" extra="(*boxIt)->setProxed ((*boxIt)->getEnabled() &amp;&amp; (*boxIt)->pick (pos));" color="5"/>
-  <BookmarkItem objectName="" line="1032" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="225" extra="mPressedBox->setPressed (true);" color="5"/>
-  <BookmarkItem objectName="" line="1033" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="226" extra="mPressedBox->setMoved (false);" color="5"/>
-  <BookmarkItem objectName="" line="1034" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="227" extra="mPressedBox->onPress (pos - mPressedBox->getTL(), z);" color="5"/>
-  <BookmarkItem objectName="" line="1043" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="228" extra="mPressedBox->setMoved (true);" color="5"/>
-  <BookmarkItem objectName="" line="1044" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="229" extra="mPressedBox->onMove (pos - mPressedBox->getTL(), inc, z);" color="5"/>
-  <BookmarkItem objectName="" line="1052" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="230" extra="mPressedBox->setProxed (false);" color="5"/>
-  <BookmarkItem objectName="" line="1053" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="231" extra="mPressedBox->setPressed (false);" color="5"/>
-  <BookmarkItem objectName="" line="1054" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="232" extra="mPressedBox->onRelease (pos - mPressedBox->getTL(), z);" color="5"/>
-  <BookmarkItem objectName="" line="1062" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="233" extra="//debug (LCD_COLOR_GREEN, &quot;onKey %x %s&quot;, ch, release ? &quot;release&quot; : &quot;press&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="1064" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="234" extra="incScrollIndex (-1);" color="5"/>
-  <BookmarkItem objectName="" line="1066" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="235" extra="incScrollIndex (1);" color="5"/>
-  <BookmarkItem objectName="" line="1068" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="236" extra="incScrollIndex (-16);" color="5"/>
-  <BookmarkItem objectName="" line="1070" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="237" extra="incScrollIndex (16);" color="5"/>
-  <BookmarkItem objectName="" line="1089" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="238" extra="debug (LCD_COLOR_GREEN, filePath);" color="5"/>
-  <BookmarkItem objectName="" line="1090" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="239" extra="readDirectory (filePath);" color="5"/>
-  <BookmarkItem objectName="" line="1093" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="240" extra="debug (LCD_COLOR_WHITE, filePath);" color="5"/>
-  <BookmarkItem objectName="" line="1096" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="241" extra="f_closedir (&amp;dir);" color="5"/>
-  <BookmarkItem objectName="" line="1113" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="242" extra="countFiles (dirPath + &quot;/&quot; + filinfo.fname);" color="5"/>
-  <BookmarkItem objectName="" line="1115" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="243" extra="mFiles++;" color="5"/>
-  <BookmarkItem objectName="" line="1118" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="244" extra="f_closedir (&amp;dir);" color="5"/>
-  <BookmarkItem objectName="" line="1128" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="245" extra="debug (LCD_COLOR_WHITE, &quot;f_getfree failed&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="1132" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="246" extra="debug (LCD_COLOR_WHITE, &quot;%d free of %d total&quot;, freeSectors/2, totalSectors/2);" color="5"/>
-  <BookmarkItem objectName="" line="1142" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="247" extra="debug (LCD_COLOR_RED, &quot;%s not found&quot;, fileName);" color="5"/>
-  <BookmarkItem objectName="" line="1146" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="248" extra="debug (LCD_COLOR_WHITE, &quot;%s %d bytes&quot;, fileName.c_str(), (int)(filInfo.fsize));" color="5"/>
-  <BookmarkItem objectName="" line="1152" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="249" extra="(filInfo.fattrib &amp; AM_ARC) ? 'A' : '-');" color="5"/>
-  <BookmarkItem objectName="" line="1156" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="250" extra="debug (LCD_COLOR_RED, &quot;%s not read&quot; + fileName);" color="5"/>
-  <BookmarkItem objectName="" line="1161" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="251" extra="f_read (&amp;gFile, (void*)buf, (UINT)filInfo.fsize, &amp;bytesRead);" color="5"/>
-  <BookmarkItem objectName="" line="1162" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="252" extra="debug (LCD_COLOR_WHITE, &quot;- read %d bytes&quot;, bytesRead);" color="5"/>
-  <BookmarkItem objectName="" line="1163" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="253" extra="f_close (&amp;gFile);" color="5"/>
-  <BookmarkItem objectName="" line="1166" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="254" extra="jpeg_mem_src (&amp;mCinfo, buf, bytesRead);" color="5"/>
-  <BookmarkItem objectName="" line="1167" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="255" extra="jpeg_read_header (&amp;mCinfo, TRUE);" color="5"/>
-  <BookmarkItem objectName="" line="1168" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="256" extra="debug (LCD_COLOR_WHITE, &quot;- image %dx%d&quot;, mCinfo.image_width, mCinfo.image_height);" color="5"/>
-  <BookmarkItem objectName="" line="1174" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="257" extra="uint8_t* bufArray = (uint8_t*)malloc (mCinfo.output_width * 3);" color="5"/>
-  <BookmarkItem objectName="" line="1175" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="258" extra="jpeg_start_decompress (&amp;mCinfo);" color="5"/>
-  <BookmarkItem objectName="" line="1177" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="259" extra="jpeg_read_scanlines (&amp;mCinfo, &amp;bufArray, 1);" color="5"/>
-  <BookmarkItem objectName="" line="1178" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="260" extra="rgb888to565 (bufArray, rgb565Buf + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);" color="5"/>
-  <BookmarkItem objectName="" line="1180" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="261" extra="free (bufArray);" color="5"/>
-  <BookmarkItem objectName="" line="1181" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="262" extra="jpeg_finish_decompress (&amp;mCinfo);" color="5"/>
-  <BookmarkItem objectName="" line="1183" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="263" extra="debug (LCD_COLOR_WHITE, &quot;- load %dx%d scale %d&quot;, mCinfo.output_width, mCinfo.output_height, 4);" color="5"/>
-  <BookmarkItem objectName="" line="1191" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="264" extra="debug (LCD_COLOR_RED, &quot;save &quot; + fileName);" color="5"/>
-  <BookmarkItem objectName="" line="1195" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="265" extra="f_write (&amp;gFile, buf, (bufLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1196" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="266" extra="f_close (&amp;gFile);" color="5"/>
-  <BookmarkItem objectName="" line="1197" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="267" extra="debug (LCD_COLOR_YELLOW, &quot;save &quot; + fileName + dec(bufLen,0));" color="5"/>
-  <BookmarkItem objectName="" line="1205" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="268" extra="debug (LCD_COLOR_RED, &quot;saveNumFile &quot; + fileName);" color="5"/>
-  <BookmarkItem objectName="" line="1209" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="269" extra="debug (LCD_COLOR_RED, &quot;save align &quot; + fileName + &quot; &quot; + dec(headerLen));" color="5"/>
-  <BookmarkItem objectName="" line="1212" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="270" extra="f_write (&amp;gFile, header, headerLen, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1213" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="271" extra="f_write (&amp;gFile, frame, (frameLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1214" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="272" extra="f_close (&amp;gFile);" color="5"/>
-  <BookmarkItem objectName="" line="1216" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="273" extra="debug (LCD_COLOR_YELLOW, &quot;save &quot; + fileName + &quot; &quot; + dec(headerLen) + &quot;:&quot; + dec(frameLen,0));" color="5"/>
-  <BookmarkItem objectName="" line="1224" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="274" extra="debug (LCD_COLOR_RED, &quot;createFile %s fail&quot;, fileName.c_str());" color="5"/>
-  <BookmarkItem objectName="" line="1228" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="275" extra="debug (LCD_COLOR_RED, &quot;createFile align %s %d&quot;, fileName, headerLen);" color="5"/>
-  <BookmarkItem objectName="" line="1231" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="276" extra="f_write (&amp;gFile, header, headerLen, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1232" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="277" extra="f_write (&amp;gFile, frame, (frameLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1234" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="278" extra="debug (LCD_COLOR_YELLOW, &quot;%s %d:%d:%d ok&quot;, fileName.c_str(), headerLen,frameLen, bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1242" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="279" extra="f_write (&amp;gFile, header, headerLen, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1243" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="280" extra="f_write (&amp;gFile, frame, (frameLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1245" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="281" extra="debug (LCD_COLOR_YELLOW, &quot;append %d %d:%d:%d ok&quot;, num, headerLen,frameLen, bytesWritten);" color="5"/>
-  <BookmarkItem objectName="" line="1251" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="282" extra="f_close (&amp;gFile);" color="5"/>
-  <BookmarkItem objectName="" line="1258" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="283" extra="gApp->touchThread();" color="5"/>
-  <BookmarkItem objectName="" line="1264" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="284" extra="gApp->saveThread();" color="5"/>
-  <BookmarkItem objectName="" line="1270" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="285" extra="gApp->run();" color="5"/>
-  <BookmarkItem objectName="" line="1275" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="286" extra="gApp->serverThread (arg);" color="5"/>
-  <BookmarkItem objectName="" line="1280" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="287" extra="gApp->dhcpThread (arg);" color="5"/>
-  <BookmarkItem objectName="" line="1309" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="288" extra="tcpip_init (NULL, NULL);" color="5"/>
-  <BookmarkItem objectName="" line="1311" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="289" extra="//IP_ADDR4(&amp;ipaddr, IP_ADDR0 ,IP_ADDR1 , IP_ADDR2 , IP_ADDR3 );" color="5"/>
-  <BookmarkItem objectName="" line="1312" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="290" extra="//IP_ADDR4(&amp;netmask, NETMASK_ADDR0, NETMASK_ADDR1, NETMASK_ADDR2, NETMASK_ADDR3);" color="5"/>
-  <BookmarkItem objectName="" line="1313" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="291" extra="//IP_ADDR4(&amp;gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);" color="5"/>
-  <BookmarkItem objectName="" line="1314" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="292" extra="ip_addr_set_zero_ip4 (&amp;ipaddr);" color="5"/>
-  <BookmarkItem objectName="" line="1315" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="293" extra="ip_addr_set_zero_ip4 (&amp;netmask);" color="5"/>
-  <BookmarkItem objectName="" line="1316" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="294" extra="ip_addr_set_zero_ip4 (&amp;gw);" color="5"/>
-  <BookmarkItem objectName="" line="1317" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="295" extra="netif_add (&amp;netIf, &amp;ipaddr, &amp;netmask, &amp;gw, NULL, &amp;ethernetIfInit, &amp;tcpip_input);" color="5"/>
-  <BookmarkItem objectName="" line="1319" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="296" extra="netif_set_default (&amp;netIf);" color="5"/>
-  <BookmarkItem objectName="" line="1321" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="297" extra="netif_set_up (&amp;netIf);" color="5"/>
-  <BookmarkItem objectName="" line="1322" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="298" extra="cLcd::mLcd->debug (LCD_COLOR_GREEN, &quot;ethernet ok&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="1323" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="299" extra="sys_thread_new (&quot;dhcp&quot;, dhcpThread, &amp;netIf, 2048, osPriorityBelowNormal);" color="5"/>
-  <BookmarkItem objectName="" line="1324" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="300" extra="sys_thread_new (&quot;server&quot;, serverThread, NULL, 2048, osPriorityAboveNormal);" color="5"/>
-  <BookmarkItem objectName="" line="1327" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="301" extra="cLcd::mLcd->debug (LCD_COLOR_MAGENTA, &quot;ethernet not connected&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="1328" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="302" extra="netif_set_down (&amp;netIf);" color="5"/>
-  <BookmarkItem objectName="" line="1331" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="303" extra="osThreadTerminate (NULL);" color="5"/>
-  <BookmarkItem objectName="" line="1338" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="304" extra="SCB_EnableICache();" color="5"/>
-  <BookmarkItem objectName="" line="1339" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="305" extra="SCB_EnableDCache();" color="5"/>
-  <BookmarkItem objectName="" line="1341" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="306" extra="HAL_Init();" color="5"/>
-  <BookmarkItem objectName="" line="1381" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="307" extra="RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);" color="5"/>
-  <BookmarkItem objectName="" line="1388" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="308" extra="BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);" color="5"/>
-  <BookmarkItem objectName="" line="1389" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="309" extra="//BSP_LED_Init (LED1);" color="5"/>
-  <BookmarkItem objectName="" line="1391" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="310" extra="gApp = new cApp (cLcd::getWidth(), cLcd::getHeight());" color="5"/>
-  <BookmarkItem objectName="" line="1393" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="311" extra="sys_thread_new (&quot;app&quot;, appThread, NULL, 2048, osPriorityNormal);" color="5"/>
-  <BookmarkItem objectName="" line="1394" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="312" extra="sys_thread_new (&quot;net&quot;, netThread, NULL, 1024, osPriorityNormal);" color="5"/>
-  <BookmarkItem objectName="" line="1395" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="313" extra="sys_thread_new (&quot;touch&quot;, touchThread, NULL, 2048, osPriorityNormal);" color="5"/>
-  <BookmarkItem objectName="" line="1398" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="315" extra="osKernelStart();" color="5"/>
+  <BookmarkItem objectName="" line="748" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="154" extra="//BSP_LED_Toggle (LED1);" color="5"/>
+  <BookmarkItem objectName="" line="749" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="155" extra="for (auto box : mBoxes) box->onDraw (mLcd);" color="5"/>
+  <BookmarkItem objectName="" line="752" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="156" extra="dec(int(avVal*kScale) / 1000) + &quot;.&quot; + dec(int(avVal*kScale) % 1000)).c_str());" color="5"/>
+  <BookmarkItem objectName="" line="753" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="157" extra="drawInfo (LCD_COLOR_YELLOW, cLcd::eTextRight, &quot;%d %d%%&quot;, xPortGetFreeHeapSize(), osGetCPUUsage());" color="5"/>
+  <BookmarkItem objectName="" line="755" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="158" extra="drawDebug();" color="5"/>
+  <BookmarkItem objectName="" line="757" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="159" extra="present();" color="5"/>
+  <BookmarkItem objectName="" line="765" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="160" extra="pollTouch();" color="5"/>
+  <BookmarkItem objectName="" line="770" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="161" extra="mJpeg ? mCam->capture() : mCam->preview();" color="5"/>
+  <BookmarkItem objectName="" line="777" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="162" extra="mCam->setFocus (mFocus);" color="5"/>
+  <BookmarkItem objectName="" line="783" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="163" extra="clearDebug();" color="5"/>
+  <BookmarkItem objectName="" line="787" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="164" extra="osDelay (40);" color="5"/>
+  <BookmarkItem objectName="" line="797" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="165" extra="auto frame = mCam->getNextFrame (frameLen, jpeg);" color="5"/>
+  <BookmarkItem objectName="" line="805" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="166" extra="auto header = mCam->getFullJpgHeader (6, headerLen);" color="5"/>
+  <BookmarkItem objectName="" line="806" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="167" extra="saveNumFile (&quot;save&quot; + dec(jpgFrameNum++, 3) + &quot;.jpg&quot;, header, headerLen, frame, frameLen);" color="5"/>
+  <BookmarkItem objectName="" line="814" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="168" extra="auto header = mCam->getBmpHeader (headerLen);" color="5"/>
+  <BookmarkItem objectName="" line="815" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="169" extra="saveNumFile (&quot;save&quot; + dec(bmpFrameNum++, 3) + &quot;.bmp&quot;, header, headerLen, frame, frameLen);" color="5"/>
+  <BookmarkItem objectName="" line="821" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="170" extra="mjpgFrameNum++;" color="5"/>
+  <BookmarkItem objectName="" line="823" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="171" extra="auto header = mCam->getFullJpgHeader (6, headerLen);" color="5"/>
+  <BookmarkItem objectName="" line="824" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="172" extra="createNumFile (&quot;save&quot; + dec(mjpgFileNum++,3) + &quot;.mjpeg&quot;, header, headerLen, frame, frameLen);" color="5"/>
+  <BookmarkItem objectName="" line="830" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="173" extra="auto header = mCam->getSmallJpgHeader (6, headerLen);" color="5"/>
+  <BookmarkItem objectName="" line="831" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="174" extra="appendFile (mjpgFrameNum++, header, headerLen, frame, frameLen);" color="5"/>
+  <BookmarkItem objectName="" line="837" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="175" extra="mjpgFrameNum++;" color="5"/>
+  <BookmarkItem objectName="" line="838" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="176" extra="closeFile();" color="5"/>
+  <BookmarkItem objectName="" line="846" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="177" extra="debug (LCD_COLOR_YELLOW, &quot;formatting sdCard&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="848" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="178" extra="void* work = malloc (0x10000);" color="5"/>
+  <BookmarkItem objectName="" line="849" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="179" extra="f_mkfs (&quot;&quot;, FM_EXFAT, 0, work, 0x10000);" color="5"/>
+  <BookmarkItem objectName="" line="850" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="180" extra="free (work);" color="5"/>
+  <BookmarkItem objectName="" line="852" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="181" extra="f_setlabel (&quot;exfat&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="853" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="182" extra="f_mount (&amp;gFatFs, &quot;&quot;, 1);" color="5"/>
+  <BookmarkItem objectName="" line="855" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="183" extra="debug (LCD_COLOR_YELLOW, &quot;sdCard formatted&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="859" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="184" extra="osDelay (20);" color="5"/>
+  <BookmarkItem objectName="" line="868" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="185" extra="struct netconn* connection = netconn_new (NETCONN_TCP);" color="5"/>
+  <BookmarkItem objectName="" line="872" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="186" extra="netconn_listen (connection);" color="5"/>
+  <BookmarkItem objectName="" line="881" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="187" extra="netbuf_data (requestNetBuf, (void**)&amp;buf, &amp;bufLen);" color="5"/>
+  <BookmarkItem objectName="" line="884" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="188" extra="char str[40];" color="5"/>
+  <BookmarkItem objectName="" line="893" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="190" extra="str[dst++] = buf[src++];" color="5"/>
+  <BookmarkItem objectName="" line="899" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="191" extra="debug (LCD_COLOR_YELLOW, str);" color="5"/>
+  <BookmarkItem objectName="" line="907" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="192" extra="netconn_write (request, kHtmlResponseHeader, sizeof(kHtmlResponseHeader)-1, NETCONN_NOCOPY);" color="5"/>
+  <BookmarkItem objectName="" line="908" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="193" extra="netconn_write (request, kHtmlBody, sizeof(kHtmlBody)-1, NETCONN_NOCOPY);" color="5"/>
+  <BookmarkItem objectName="" line="916" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="194" extra="auto frame = mCam->getLastFrame (frameLen, jpeg, frameId);" color="5"/>
+  <BookmarkItem objectName="" line="922" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="195" extra="NETCONN_NOCOPY);" color="5"/>
+  <BookmarkItem objectName="" line="926" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="196" extra="auto header = jpeg ? mCam->getFullJpgHeader (6, headerLen) : mCam->getBmpHeader (headerLen);" color="5"/>
+  <BookmarkItem objectName="" line="927" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="197" extra="netconn_write (request, header, headerLen, NETCONN_NOCOPY);" color="5"/>
+  <BookmarkItem objectName="" line="930" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="198" extra="netconn_write (request, frame, frameLen, NETCONN_NOCOPY);" color="5"/>
+  <BookmarkItem objectName="" line="936" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="199" extra="netconn_write (request, k404Response, sizeof(k404Response)-1, NETCONN_NOCOPY);" color="5"/>
+  <BookmarkItem objectName="" line="941" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="200" extra="netconn_close (request);" color="5"/>
+  <BookmarkItem objectName="" line="942" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="201" extra="netbuf_delete (requestNetBuf);" color="5"/>
+  <BookmarkItem objectName="" line="943" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="202" extra="netconn_delete (request);" color="5"/>
+  <BookmarkItem objectName="" line="952" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="203" extra="enum eDhcpState { DHCP_OFF, DHCP_START, DHCP_WAIT_ADDRESS, DHCP_ADDRESS_ASSIGNED, DHCP_TIMEOUT, DHCP_LINK_DOWN };" color="5"/>
+  <BookmarkItem objectName="" line="960" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="204" extra="ip_addr_set_zero_ip4 (&amp;netif->ip_addr);" color="5"/>
+  <BookmarkItem objectName="" line="961" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="205" extra="ip_addr_set_zero_ip4 (&amp;netif->netmask);" color="5"/>
+  <BookmarkItem objectName="" line="962" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="206" extra="ip_addr_set_zero_ip4 (&amp;netif->gw);" color="5"/>
+  <BookmarkItem objectName="" line="963" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="207" extra="dhcp_start (netif);" color="5"/>
+  <BookmarkItem objectName="" line="970" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="208" extra="mIpAddress = ip4addr_ntoa ((const ip4_addr_t*)&amp;netif->ip_addr);" color="5"/>
+  <BookmarkItem objectName="" line="971" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="209" extra="cLcd::mLcd->debug (LCD_COLOR_GREEN, &quot;dhcp &quot; + mIpAddress);" color="5"/>
+  <BookmarkItem objectName="" line="972" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="210" extra="sntpSetServerName (0, &quot;pool.ntp.org&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="973" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="211" extra="sntpInit();" color="5"/>
+  <BookmarkItem objectName="" line="976" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="212" extra="auto dhcp = (struct dhcp*)netif_get_client_data (netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP);" color="5"/>
+  <BookmarkItem objectName="" line="979" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="213" extra="dhcp_stop (netif);" color="5"/>
+  <BookmarkItem objectName="" line="980" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="214" extra="cLcd::mLcd->debug (LCD_COLOR_RED, &quot;dhcp timeout&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="986" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="215" extra="cLcd::mLcd->debug (LCD_COLOR_RED, &quot;dhcp link down&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="987" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="216" extra="dhcp_stop (netif);" color="5"/>
+  <BookmarkItem objectName="" line="995" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="217" extra="osDelay (250);" color="5"/>
+  <BookmarkItem objectName="" line="1006" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="218" extra="for (auto boxIt = mBoxes.rbegin(); boxIt != mBoxes.rend(); ++boxIt) {" color="5"/>
+  <BookmarkItem objectName="" line="1007" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="219" extra="bool wasProxed = (*boxIt)->getProxed();" color="5"/>
+  <BookmarkItem objectName="" line="1008" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="220" extra="(*boxIt)->setProxed ((*boxIt)->getEnabled() &amp;&amp; (*boxIt)->pick (pos));" color="5"/>
+  <BookmarkItem objectName="" line="1012" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="221" extra="proxBox->onProx (pos - proxBox->getTL(), z);" color="5"/>
+  <BookmarkItem objectName="" line="1016" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="222" extra="(*boxIt)->onProxExit();" color="5"/>
+  <BookmarkItem objectName="" line="1025" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="223" extra="for (auto boxIt = mBoxes.rbegin(); boxIt != mBoxes.rend(); ++boxIt) {" color="5"/>
+  <BookmarkItem objectName="" line="1026" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="224" extra="(*boxIt)->setProxed ((*boxIt)->getEnabled() &amp;&amp; (*boxIt)->pick (pos));" color="5"/>
+  <BookmarkItem objectName="" line="1030" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="225" extra="mPressedBox->setPressed (true);" color="5"/>
+  <BookmarkItem objectName="" line="1031" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="226" extra="mPressedBox->setMoved (false);" color="5"/>
+  <BookmarkItem objectName="" line="1032" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="227" extra="mPressedBox->onPress (pos - mPressedBox->getTL(), z);" color="5"/>
+  <BookmarkItem objectName="" line="1041" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="228" extra="mPressedBox->setMoved (true);" color="5"/>
+  <BookmarkItem objectName="" line="1042" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="229" extra="mPressedBox->onMove (pos - mPressedBox->getTL(), inc, z);" color="5"/>
+  <BookmarkItem objectName="" line="1050" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="230" extra="mPressedBox->setProxed (false);" color="5"/>
+  <BookmarkItem objectName="" line="1051" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="231" extra="mPressedBox->setPressed (false);" color="5"/>
+  <BookmarkItem objectName="" line="1052" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="232" extra="mPressedBox->onRelease (pos - mPressedBox->getTL(), z);" color="5"/>
+  <BookmarkItem objectName="" line="1060" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="233" extra="//debug (LCD_COLOR_GREEN, &quot;onKey %x %s&quot;, ch, release ? &quot;release&quot; : &quot;press&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1062" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="234" extra="incScrollIndex (-1);" color="5"/>
+  <BookmarkItem objectName="" line="1064" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="235" extra="incScrollIndex (1);" color="5"/>
+  <BookmarkItem objectName="" line="1066" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="236" extra="incScrollIndex (-16);" color="5"/>
+  <BookmarkItem objectName="" line="1068" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="237" extra="incScrollIndex (16);" color="5"/>
+  <BookmarkItem objectName="" line="1087" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="238" extra="debug (LCD_COLOR_GREEN, filePath);" color="5"/>
+  <BookmarkItem objectName="" line="1088" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="239" extra="readDirectory (filePath);" color="5"/>
+  <BookmarkItem objectName="" line="1091" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="240" extra="debug (LCD_COLOR_WHITE, filePath);" color="5"/>
+  <BookmarkItem objectName="" line="1094" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="241" extra="f_closedir (&amp;dir);" color="5"/>
+  <BookmarkItem objectName="" line="1111" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="242" extra="countFiles (dirPath + &quot;/&quot; + filinfo.fname);" color="5"/>
+  <BookmarkItem objectName="" line="1113" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="243" extra="mFiles++;" color="5"/>
+  <BookmarkItem objectName="" line="1116" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="244" extra="f_closedir (&amp;dir);" color="5"/>
+  <BookmarkItem objectName="" line="1126" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="245" extra="debug (LCD_COLOR_WHITE, &quot;f_getfree failed&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1130" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="246" extra="debug (LCD_COLOR_WHITE, &quot;%d free of %d total&quot;, freeSectors/2, totalSectors/2);" color="5"/>
+  <BookmarkItem objectName="" line="1140" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="247" extra="debug (LCD_COLOR_RED, &quot;%s not found&quot;, fileName);" color="5"/>
+  <BookmarkItem objectName="" line="1144" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="248" extra="debug (LCD_COLOR_WHITE, &quot;%s %d bytes&quot;, fileName.c_str(), (int)(filInfo.fsize));" color="5"/>
+  <BookmarkItem objectName="" line="1150" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="249" extra="(filInfo.fattrib &amp; AM_ARC) ? 'A' : '-');" color="5"/>
+  <BookmarkItem objectName="" line="1154" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="250" extra="debug (LCD_COLOR_RED, &quot;%s not read&quot; + fileName);" color="5"/>
+  <BookmarkItem objectName="" line="1159" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="251" extra="f_read (&amp;gFile, (void*)buf, (UINT)filInfo.fsize, &amp;bytesRead);" color="5"/>
+  <BookmarkItem objectName="" line="1160" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="252" extra="debug (LCD_COLOR_WHITE, &quot;- read %d bytes&quot;, bytesRead);" color="5"/>
+  <BookmarkItem objectName="" line="1161" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="253" extra="f_close (&amp;gFile);" color="5"/>
+  <BookmarkItem objectName="" line="1164" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="254" extra="jpeg_mem_src (&amp;mCinfo, buf, bytesRead);" color="5"/>
+  <BookmarkItem objectName="" line="1165" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="255" extra="jpeg_read_header (&amp;mCinfo, TRUE);" color="5"/>
+  <BookmarkItem objectName="" line="1166" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="256" extra="debug (LCD_COLOR_WHITE, &quot;- image %dx%d&quot;, mCinfo.image_width, mCinfo.image_height);" color="5"/>
+  <BookmarkItem objectName="" line="1172" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="257" extra="uint8_t* bufArray = (uint8_t*)malloc (mCinfo.output_width * 3);" color="5"/>
+  <BookmarkItem objectName="" line="1173" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="258" extra="jpeg_start_decompress (&amp;mCinfo);" color="5"/>
+  <BookmarkItem objectName="" line="1175" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="259" extra="jpeg_read_scanlines (&amp;mCinfo, &amp;bufArray, 1);" color="5"/>
+  <BookmarkItem objectName="" line="1176" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="260" extra="rgb888to565 (bufArray, rgb565Buf + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);" color="5"/>
+  <BookmarkItem objectName="" line="1178" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="261" extra="free (bufArray);" color="5"/>
+  <BookmarkItem objectName="" line="1179" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="262" extra="jpeg_finish_decompress (&amp;mCinfo);" color="5"/>
+  <BookmarkItem objectName="" line="1181" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="263" extra="debug (LCD_COLOR_WHITE, &quot;- load %dx%d scale %d&quot;, mCinfo.output_width, mCinfo.output_height, 4);" color="5"/>
+  <BookmarkItem objectName="" line="1189" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="264" extra="debug (LCD_COLOR_RED, &quot;save &quot; + fileName);" color="5"/>
+  <BookmarkItem objectName="" line="1193" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="265" extra="f_write (&amp;gFile, buf, (bufLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1194" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="266" extra="f_close (&amp;gFile);" color="5"/>
+  <BookmarkItem objectName="" line="1195" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="267" extra="debug (LCD_COLOR_YELLOW, &quot;save &quot; + fileName + dec(bufLen,0));" color="5"/>
+  <BookmarkItem objectName="" line="1203" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="268" extra="debug (LCD_COLOR_RED, &quot;saveNumFile &quot; + fileName);" color="5"/>
+  <BookmarkItem objectName="" line="1207" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="269" extra="debug (LCD_COLOR_RED, &quot;save align &quot; + fileName + &quot; &quot; + dec(headerLen));" color="5"/>
+  <BookmarkItem objectName="" line="1210" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="270" extra="f_write (&amp;gFile, header, headerLen, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1211" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="271" extra="f_write (&amp;gFile, frame, (frameLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1212" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="272" extra="f_close (&amp;gFile);" color="5"/>
+  <BookmarkItem objectName="" line="1214" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="273" extra="debug (LCD_COLOR_YELLOW, &quot;save &quot; + fileName + &quot; &quot; + dec(headerLen) + &quot;:&quot; + dec(frameLen,0));" color="5"/>
+  <BookmarkItem objectName="" line="1222" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="274" extra="debug (LCD_COLOR_RED, &quot;createFile %s fail&quot;, fileName.c_str());" color="5"/>
+  <BookmarkItem objectName="" line="1226" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="275" extra="debug (LCD_COLOR_RED, &quot;createFile align %s %d&quot;, fileName, headerLen);" color="5"/>
+  <BookmarkItem objectName="" line="1229" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="276" extra="f_write (&amp;gFile, header, headerLen, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1230" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="277" extra="f_write (&amp;gFile, frame, (frameLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1232" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="278" extra="debug (LCD_COLOR_YELLOW, &quot;%s %d:%d:%d ok&quot;, fileName.c_str(), headerLen,frameLen, bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1240" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="279" extra="f_write (&amp;gFile, header, headerLen, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1241" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="280" extra="f_write (&amp;gFile, frame, (frameLen + 3) &amp; 0xFFFFFFFC, &amp;bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1243" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="281" extra="debug (LCD_COLOR_YELLOW, &quot;append %d %d:%d:%d ok&quot;, num, headerLen,frameLen, bytesWritten);" color="5"/>
+  <BookmarkItem objectName="" line="1249" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="282" extra="f_close (&amp;gFile);" color="5"/>
+  <BookmarkItem objectName="" line="1256" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="283" extra="gApp->touchThread();" color="5"/>
+  <BookmarkItem objectName="" line="1262" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="284" extra="gApp->saveThread();" color="5"/>
+  <BookmarkItem objectName="" line="1268" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="285" extra="gApp->run();" color="5"/>
+  <BookmarkItem objectName="" line="1273" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="286" extra="gApp->serverThread (arg);" color="5"/>
+  <BookmarkItem objectName="" line="1278" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="287" extra="gApp->dhcpThread (arg);" color="5"/>
+  <BookmarkItem objectName="" line="1307" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="288" extra="tcpip_init (NULL, NULL);" color="5"/>
+  <BookmarkItem objectName="" line="1309" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="289" extra="//IP_ADDR4(&amp;ipaddr, IP_ADDR0 ,IP_ADDR1 , IP_ADDR2 , IP_ADDR3 );" color="5"/>
+  <BookmarkItem objectName="" line="1310" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="290" extra="//IP_ADDR4(&amp;netmask, NETMASK_ADDR0, NETMASK_ADDR1, NETMASK_ADDR2, NETMASK_ADDR3);" color="5"/>
+  <BookmarkItem objectName="" line="1311" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="291" extra="//IP_ADDR4(&amp;gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);" color="5"/>
+  <BookmarkItem objectName="" line="1312" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="292" extra="ip_addr_set_zero_ip4 (&amp;ipaddr);" color="5"/>
+  <BookmarkItem objectName="" line="1313" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="293" extra="ip_addr_set_zero_ip4 (&amp;netmask);" color="5"/>
+  <BookmarkItem objectName="" line="1314" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="294" extra="ip_addr_set_zero_ip4 (&amp;gw);" color="5"/>
+  <BookmarkItem objectName="" line="1315" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="295" extra="netif_add (&amp;netIf, &amp;ipaddr, &amp;netmask, &amp;gw, NULL, &amp;ethernetIfInit, &amp;tcpip_input);" color="5"/>
+  <BookmarkItem objectName="" line="1317" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="296" extra="netif_set_default (&amp;netIf);" color="5"/>
+  <BookmarkItem objectName="" line="1319" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="297" extra="netif_set_up (&amp;netIf);" color="5"/>
+  <BookmarkItem objectName="" line="1320" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="298" extra="cLcd::mLcd->debug (LCD_COLOR_GREEN, &quot;ethernet ok&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1321" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="299" extra="sys_thread_new (&quot;dhcp&quot;, dhcpThread, &amp;netIf, 2048, osPriorityBelowNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1322" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="300" extra="sys_thread_new (&quot;server&quot;, serverThread, NULL, 2048, osPriorityAboveNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1325" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="301" extra="cLcd::mLcd->debug (LCD_COLOR_MAGENTA, &quot;ethernet not connected&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1326" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="302" extra="netif_set_down (&amp;netIf);" color="5"/>
+  <BookmarkItem objectName="" line="1329" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="303" extra="osThreadTerminate (NULL);" color="5"/>
+  <BookmarkItem objectName="" line="1336" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="304" extra="SCB_EnableICache();" color="5"/>
+  <BookmarkItem objectName="" line="1337" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="305" extra="SCB_EnableDCache();" color="5"/>
+  <BookmarkItem objectName="" line="1339" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="306" extra="HAL_Init();" color="5"/>
+  <BookmarkItem objectName="" line="1379" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="307" extra="RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);" color="5"/>
+  <BookmarkItem objectName="" line="1386" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="308" extra="BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);" color="5"/>
+  <BookmarkItem objectName="" line="1387" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="309" extra="//BSP_LED_Init (LED1);" color="5"/>
+  <BookmarkItem objectName="" line="1389" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="310" extra="gApp = new cApp (cLcd::getWidth(), cLcd::getHeight());" color="5"/>
+  <BookmarkItem objectName="" line="1391" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="311" extra="sys_thread_new (&quot;app&quot;, appThread, NULL, 2048, osPriorityNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1392" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="312" extra="sys_thread_new (&quot;net&quot;, netThread, NULL, 1024, osPriorityNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1393" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="313" extra="sys_thread_new (&quot;touch&quot;, touchThread, NULL, 2048, osPriorityNormal);" color="5"/>
+  <BookmarkItem objectName="" line="1394" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="314" extra="sys_thread_new (&quot;save&quot;, saveThread, NULL, 10000, osPriorityAboveNormal);" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="133" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="107" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="main.cpp" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="1045" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="main.cpp" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="107" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="398" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="449" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="drivers/Src/stm32f4xx_hal_spi.c" useHWbreakpoint="false"/>
-  <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
  <FrameBufferWindow>
@@ -359,9 +359,6 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;display"/>
-  <ProjectSessionItem path="display;display;common"/>
-  <ProjectSessionItem path="display;display;drivers"/>
-  <ProjectSessionItem path="display;display;drivers;src"/>
   <ProjectSessionItem path="display;display;system"/>
  </Project>
  <Register1>
@@ -411,9 +408,6 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="106" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="0" top="84" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="301" useTextEdit="1" useBinaryEdit="0" left="0" path="drivers/Src/stm32f4xx_hal_spi.c" debugPath="drivers/Src/stm32f4xx_hal_spi.c" selected="1" top="243" codecName=""/>
- </Files>
- <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <Files/>
+ <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
