@@ -6,31 +6,32 @@
 
 #include "stm32f4xx.h"
 //}}}
-//{{{  defines
-//    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//    x  GND   EXTMODE   5v   VCOM   MOSI   3.3v  x
-//    x  GND     5v     DISP   CS    SCLK    GND  x
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-#define SCK_PIN     GPIO_PIN_13  //  SPI2  PB13  SCK
-#define MOSI_PIN    GPIO_PIN_15  //  SPI2  PB15  MOSI
-#define CS_PIN      GPIO_PIN_12  //  SPI2  PB12  CS/NSS active hi
-#define DISP_PIN    GPIO_PIN_14  //  GPIO  PB14  DISP active hi
-#define VCOM_PIN    GPIO_PIN_11  //  GPIO  PB11  VCOM - TIM2 CH4 1Hz flip
-
-#define paddingByte 0x00
-#define clearByte   0x20
-#define commandByte 0x80
-
-#define kPi 3.1415926f
-#define POLY_X(Z)  ((int32_t)((points + Z)->x))
-#define POLY_Y(Z)  ((int32_t)((points + Z)->y))
-#define ABS(X)     ((X) > 0 ? (X) : -(X))
-//}}}
 
 //{{{
 class cLcd {
 public:
+  //{{{  defines
+  //    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  //    x  GND   EXTMODE   5v   VCOM   MOSI   3.3v  x
+  //    x  GND     5v     DISP   CS    SCLK    GND  x
+  //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  #define SCK_PIN     GPIO_PIN_13  //  SPI2  PB13  SCK
+  #define MOSI_PIN    GPIO_PIN_15  //  SPI2  PB15  MOSI
+  #define CS_PIN      GPIO_PIN_12  //  SPI2  PB12  CS/NSS active hi
+  #define DISP_PIN    GPIO_PIN_14  //  GPIO  PB14  DISP active hi
+  #define VCOM_PIN    GPIO_PIN_11  //  GPIO  PB11  VCOM - TIM2 CH4 1Hz flip
+
+  #define paddingByte 0x00
+  #define clearByte   0x20 // unused
+  #define vcomByte    0x40 // unused
+  #define commandByte 0x80
+
+  #define POLY_X(Z)  ((int32_t)((points + Z)->x))
+  #define POLY_Y(Z)  ((int32_t)((points + Z)->y))
+  #define ABS(X)     ((X) > 0 ? (X) : -(X))
+  //}}}
+  enum eDraw { eInvert, eOff, eOn };
   //{{{
   void init() {
 
@@ -157,18 +158,21 @@ public:
   int getFrameNum() { return mFrameNum; }
 
   //{{{
-  void clear (bool white) {
+  void clear (eDraw draw) {
+
+    if (draw == eInvert)
+      printf ("cLcd::clear - eInvert clear\n");
 
     // point to first line pixel bytes
     auto framePtr = mFrameBuf + 2;
     for (int y = 0; y < getHeight(); y++) {
-      memset (framePtr, white ? 0xFF : 0, getWidth()/8);
+      memset (framePtr, draw == eOn ? 0xFF : 0, getWidth()/8);
       framePtr += getPitch();
       }
     }
   //}}}
   //{{{
-  void fillRect (bool white, cRect rect) {
+  void fillRect (eDraw draw, cRect rect) {
 
     // clip x
     if (rect.left < 0)
@@ -223,12 +227,12 @@ public:
     }
   //}}}
   //{{{
-  void fillRect (uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
-    fillRect (color, cRect (x, y, x+width, y+height));
+  void fillRect (eDraw draw, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
+    fillRect (draw, cRect (x, y, x+width, y+height));
     }
   //}}}
   //{{{
-  void drawString (bool white, const std::string& str, cRect rect) {
+  void drawString (eDraw draw, const std::string& str, cRect rect) {
 
     const font_t* font = &font18;
 
@@ -279,20 +283,20 @@ public:
     }
   //}}}
   //{{{
-  void drawCircle (bool white, cPoint centre, int16_t radius) {
+  void drawCircle (eDraw draw, cPoint centre, int16_t radius) {
 
     int32_t decision = 3 - (radius << 1);
 
     cPoint p = {0, radius};
     while (p.x <= p.y) {
-      drawPix (white, centre.x + p.x, centre.y - p.y);
-      drawPix (white, centre.x - p.x, centre.y - p.y);
-      drawPix (white, centre.x + p.y, centre.y - p.x);
-      drawPix (white, centre.x - p.y, centre.y - p.x);
-      drawPix (white, centre.x + p.x, centre.y + p.y);
-      drawPix (white, centre.x - p.x, centre.y + p.y);
-      drawPix (white, centre.x + p.y, centre.y + p.x);
-      drawPix (white, centre.x - p.y, centre.y + p.x);
+      drawPix (draw, centre.x + p.x, centre.y - p.y);
+      drawPix (draw, centre.x - p.x, centre.y - p.y);
+      drawPix (draw, centre.x + p.y, centre.y - p.x);
+      drawPix (draw, centre.x - p.y, centre.y - p.x);
+      drawPix (draw, centre.x + p.x, centre.y + p.y);
+      drawPix (draw, centre.x - p.x, centre.y + p.y);
+      drawPix (draw, centre.x + p.y, centre.y + p.x);
+      drawPix (draw, centre.x - p.y, centre.y + p.x);
 
       if (decision < 0)
         decision += (p.x << 2) + 6;
@@ -307,7 +311,7 @@ public:
     }
   //}}}
   //{{{
-  void fillCircle (bool white, cPoint centre, uint16_t radius) {
+  void fillCircle (eDraw draw, cPoint centre, uint16_t radius) {
 
     int32_t decision = 3 - (radius << 1);
 
@@ -316,12 +320,12 @@ public:
 
     while (current_x <= current_y) {
       if (current_y > 0) {
-        fillRect (white, centre.x - current_y, centre.y + current_x, 1, 2*current_y);
-        fillRect (white, centre.x - current_y, centre.y - current_x, 1, 2*current_y);
+        fillRect (draw, centre.x - current_y, centre.y + current_x, 1, 2*current_y);
+        fillRect (draw, centre.x - current_y, centre.y - current_x, 1, 2*current_y);
         }
       if (current_x > 0) {
-        fillRect (white, centre.x - current_x, centre.y - current_y, 1, 2*current_x);
-        fillRect (white, centre.x - current_x, centre.y + current_y, 1, 2*current_x);
+        fillRect (draw, centre.x - current_x, centre.y - current_y, 1, 2*current_x);
+        fillRect (draw, centre.x - current_x, centre.y + current_y, 1, 2*current_x);
         }
       if (decision < 0)
         decision += (current_x << 2) + 6;
@@ -332,11 +336,11 @@ public:
       current_x++;
       }
 
-    drawCircle (white, centre, radius);
+    drawCircle (draw, centre, radius);
     }
   //}}}
   //{{{
-  void drawEllipse (bool white, cPoint centre, cPoint radius) {
+  void drawEllipse (eDraw draw, cPoint centre, cPoint radius) {
 
     int x = 0;
     int y = -radius.y;
@@ -345,10 +349,10 @@ public:
     float k = (float)radius.y / (float)radius.x;
 
     do {
-      drawPix (white, (centre.x - (int16_t)(x / k)), centre.y + y);
-      drawPix (white, (centre.x + (int16_t)(x / k)), centre.y + y);
-      drawPix (white, (centre.x + (int16_t)(x / k)), centre.y - y);
-      drawPix (white, (centre.x - (int16_t)(x / k)), centre.y - y);
+      drawPix (draw, (centre.x - (int16_t)(x / k)), centre.y + y);
+      drawPix (draw, (centre.x + (int16_t)(x / k)), centre.y + y);
+      drawPix (draw, (centre.x + (int16_t)(x / k)), centre.y - y);
+      drawPix (draw, (centre.x - (int16_t)(x / k)), centre.y - y);
 
       int e2 = err;
       if (e2 <= x) {
@@ -362,7 +366,7 @@ public:
     }
   //}}}
   //{{{
-  void fillEllipse (bool white, cPoint centre, cPoint radius) {
+  void fillEllipse (eDraw draw, cPoint centre, cPoint radius) {
 
     int x = 0;
     int y = -radius.y;
@@ -370,8 +374,8 @@ public:
     float k = (float)radius.y / (float)radius.x;
 
     do {
-      fillRect (white, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));
-      fillRect (white, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));
+      fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));
+      fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));
 
       int e2 = err;
       if (e2 <= x) {
@@ -385,23 +389,23 @@ public:
     }
   //}}}
   //{{{
-  void drawPolygon (bool white, cPoint* points, uint16_t numPoints) {
+  void drawPolygon (eDraw draw, cPoint* points, uint16_t numPoints) {
 
     int16_t x = 0, y = 0;
 
     if (numPoints < 2)
       return;
 
-    drawLine (white, *points, *(points + numPoints-1));
+    drawLine (draw, *points, *(points + numPoints-1));
 
     while (--numPoints) {
       cPoint point = *points++;
-      drawLine (white, point, *points);
+      drawLine (draw, point, *points);
       }
     }
   //}}}
   //{{{
-  void fillPolygon (bool white, cPoint* points, uint16_t numPoints) {
+  void fillPolygon (eDraw draw, cPoint* points, uint16_t numPoints) {
 
     cPoint tl = *points;
     cPoint br = *points;
@@ -433,18 +437,18 @@ public:
       points++;
       p2 = *points;
 
-      fillTriangle (white, p1, p2, centre);
-      fillTriangle (white, p1, centre, p2);
-      fillTriangle (white, centre, p2, p1);
+      fillTriangle (draw, p1, p2, centre);
+      fillTriangle (draw, p1, centre, p2);
+      fillTriangle (draw, centre, p2, p1);
       }
 
-    fillTriangle (white, first, p2, centre);
-    fillTriangle (white, first, centre, p2);
-    fillTriangle (white, centre, p2, first);
+    fillTriangle (draw, first, p2, centre);
+    fillTriangle (draw, first, centre, p2);
+    fillTriangle (draw, centre, p2, first);
     }
   //}}}
   //{{{
-  void drawLine (bool white, cPoint p1, cPoint p2) {
+  void drawLine (eDraw draw, cPoint p1, cPoint p2) {
 
     int16_t xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0;
     int16_t den = 0, num = 0, num_add = 0, num_pixels = 0;
@@ -494,7 +498,7 @@ public:
       }
 
     for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
-      drawPix (white, x, y);
+      drawPix (draw, x, y);
       num += num_add;     // Increase the numerator by the top of the fraction
       if (num >= den) {   // Check if numerator >= denominator
         num -= den;       // Calculate the new numerator value
@@ -508,7 +512,7 @@ public:
     }
   //}}}
   //{{{
-  void fillTriangle (bool white, cPoint p1, cPoint p2, cPoint p3) {
+  void fillTriangle (eDraw draw, cPoint p1, cPoint p2, cPoint p3) {
 
     cPoint inc1;
     cPoint inc2;
@@ -571,7 +575,7 @@ public:
 
     cPoint p = p1;
     for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
-      drawLine (white, p, p3);
+      drawLine (draw, p, p3);
       num += num_add;     // Increase the numerator by the top of the fraction
       if (num >= den)  {  // Check if numerator >= denominator
         num -= den;       // Calculate the new numerator value
@@ -606,7 +610,7 @@ public:
 
 private:
   const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
-  const uint8_t  kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
+  const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
   uint16_t getPitch() { return 2 + getWidth()/8; }
   uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }
@@ -614,12 +618,13 @@ private:
   //{{{
   void drawPix (bool white, uint16_t x, uint16_t y) {
 
-    auto framePtr = getFramePtr (y) + x/8;
     uint8_t mask = 0x80 >> (x & 7);
+    auto framePtr = getFramePtr (y) + x/8;
     *framePtr++ ^= mask;
     }
   //}}}
 
+  // commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
   uint8_t mFrameBuf [1 + (((400/8) + 2) * 240) + 1];
   int mFrameNum = 0;
 
@@ -883,6 +888,7 @@ private:
   }
   //}}}
 
+  const float kPi = 3.1415926f;
   const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
   RTC_HandleTypeDef rtcHandle;
@@ -930,16 +936,16 @@ public:
 
       auto ticks = HAL_GetTick();
 
-      clear (true);
-      drawString (false, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
-                         dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
-                         dec(ticks - lastTicks) + " " +
-                         (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
-                       cRect (0, 0, cLcd::getWidth(), 20));
+      clear (eOn);
+      drawString (eInvert, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
+                           dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
+                           dec(ticks - lastTicks) + " " +
+                           (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
+                  cRect (0, 0, cLcd::getWidth(), 20));
       lastTicks = ticks;
 
-      drawString (false, mRtc.getClockTimeString(), cRect (0, 20, cLcd::getWidth(), 40));
-      drawString (false, mRtc.getBuildTimeString(), cRect (0, 40, cLcd::getWidth(), 60));
+      drawString (eInvert, mRtc.getClockTimeString(), cRect (0, 20, cLcd::getWidth(), 40));
+      drawString (eInvert, mRtc.getBuildTimeString(), cRect (0, 40, cLcd::getWidth(), 60));
 
       drawClock();
       drawValues();
@@ -961,19 +967,19 @@ private:
 
     cPoint centre = { 400-42, 42 };
     int16_t radius = 40;
-    drawCircle (false, centre, radius);
+    drawCircle (eInvert, centre, radius);
 
     float hourRadius = radius * 0.7f;
     float hourAngle = mRtc.getClockHourAngle();
-    drawLine (false, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
+    drawLine (eInvert, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
 
     float minuteRadius = radius * 0.8f;
     float minuteAngle = mRtc.getClockMinuteAngle();
-    drawLine (false, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
+    drawLine (eInvert, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
 
     float secondRadius = radius * 0.9f;
     float secondAngle = mRtc.getClockSecondAngle();
-    drawLine (false, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
+    drawLine (eInvert, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
     }
   //}}}
   //{{{
@@ -982,7 +988,7 @@ private:
     int valueIndex = getFrameNum() - kMaxValues;
     for (int i = 0; i < kMaxValues; i++) {
       int16_t len = valueIndex > 0 ? (kMaxLen * (mValues[valueIndex % kMaxValues] - mMinValue))  / (mMaxValue - mMinValue) : 0;
-      fillRect (false, cRect (i, getHeight()-len, i+1, getHeight()));
+      fillRect (eInvert, cRect (i, getHeight()-len, i+1, getHeight()));
       valueIndex++;
       }
     }
