@@ -275,6 +275,16 @@ static void SPI_CloseTx_ISR (SPI_HandleTypeDef *hspi) {
 //}}}
 
 //{{{
+static void SPI_RxISR_8BIT (struct __SPI_HandleTypeDef *hspi) {
+
+  *hspi->pRxBuffPtr++ = (*(__IO uint8_t *)&hspi->Instance->DR);
+  hspi->RxXferCount--;
+
+  if (hspi->RxXferCount == 0U)
+    SPI_CloseRx_ISR(hspi);
+  }
+//}}}
+//{{{
 static void SPI_TxISR_8BIT (struct __SPI_HandleTypeDef *hspi) {
 
   *(__IO uint8_t *)&hspi->Instance->DR = (*hspi->pTxBuffPtr++);
@@ -372,16 +382,6 @@ static void SPI_2linesTxISR_16BIT (struct __SPI_HandleTypeDef *hspi) {
     if (hspi->RxXferCount == 0U)
       SPI_CloseRxTx_ISR(hspi);
     }
-  }
-//}}}
-//{{{
-static void SPI_RxISR_8BIT (struct __SPI_HandleTypeDef *hspi) {
-
-  *hspi->pRxBuffPtr++ = (*(__IO uint8_t *)&hspi->Instance->DR);
-  hspi->RxXferCount--;
-
-  if (hspi->RxXferCount == 0U)
-    SPI_CloseRx_ISR(hspi);
   }
 //}}}
 //{{{
@@ -642,10 +642,10 @@ __weak void HAL_SPI_AbortCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); 
 //{{{
 HAL_StatusTypeDef HAL_SPI_Init (SPI_HandleTypeDef *hspi) {
 
-  hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi->State = HAL_SPI_STATE_BUSY;
+  hspi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
 
-  __HAL_SPI_DISABLE(hspi);
+  __HAL_SPI_DISABLE (hspi);
 
   // Configure SPI Mode, Communication Mode, Data size, Clock polarity and phase, NSS management
   // Communication speed, First bit and CRC calculation state */
@@ -676,7 +676,6 @@ HAL_StatusTypeDef HAL_SPI_Transmit (SPI_HandleTypeDef *hspi, uint8_t *pData, uin
 
   uint32_t tickstart = 0U;
   HAL_StatusTypeDef errorcode = HAL_OK;
-
 
   // Set the transaction information
   hspi->State       = HAL_SPI_STATE_BUSY_TX;
@@ -778,14 +777,14 @@ error:
   }
 //}}}
 //{{{
-HAL_StatusTypeDef HAL_SPI_Receive (SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout) { 
+HAL_StatusTypeDef HAL_SPI_Receive (SPI_HandleTypeDef *hspi, uint8_t *pData, uint16_t Size, uint32_t Timeout) {
 
   uint32_t tickstart = 0U;
   HAL_StatusTypeDef errorcode = HAL_OK;
 
-  if((hspi->Init.Mode == SPI_MODE_MASTER) && (hspi->Init.Direction == SPI_DIRECTION_2LINES)) {
-     hspi->State = HAL_SPI_STATE_BUSY_RX;
-     /* Call transmit-receive function to send Dummy data on Tx line and generate clock on CLK line */
+  if ((hspi->Init.Mode == SPI_MODE_MASTER) && (hspi->Init.Direction == SPI_DIRECTION_2LINES)) {
+    hspi->State = HAL_SPI_STATE_BUSY_RX;
+    // Call transmit-receive function to send Dummy data on Tx line and generate clock on CLK line */
     return HAL_SPI_TransmitReceive(hspi,pData,pData,Size,Timeout);
     }
 
@@ -854,7 +853,7 @@ HAL_StatusTypeDef HAL_SPI_Receive (SPI_HandleTypeDef *hspi, uint8_t *pData, uint
     }
 
   // Check the end of the transaction */
-  if ((hspi->Init.Mode == SPI_MODE_MASTER)&&((hspi->Init.Direction == SPI_DIRECTION_1LINE)||(hspi->Init.Direction == SPI_DIRECTION_2LINES_RXONLY))) 
+  if ((hspi->Init.Mode == SPI_MODE_MASTER)&&((hspi->Init.Direction == SPI_DIRECTION_1LINE)||(hspi->Init.Direction == SPI_DIRECTION_2LINES_RXONLY)))
     __HAL_SPI_DISABLE(hspi);
   if (hspi->ErrorCode != HAL_SPI_ERROR_NONE)
     errorcode = HAL_ERROR;
@@ -865,51 +864,35 @@ error :
   }
 //}}}
 //{{{
-/**
-  * @brief  Transmit and Receive an amount of data in blocking mode.
-  * @param  hspi pointer to a SPI_HandleTypeDef structure that contains
-  *               the configuration information for SPI module.
-  * @param  pTxData pointer to transmission data buffer
-  * @param  pRxData pointer to reception data buffer
-  * @param  Size amount of data to be sent and received
-  * @param  Timeout Timeout duration
-  * @retval HAL status
-  */
-HAL_StatusTypeDef HAL_SPI_TransmitReceive (SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size, uint32_t Timeout)
-{
+HAL_StatusTypeDef HAL_SPI_TransmitReceive (SPI_HandleTypeDef *hspi, uint8_t *pTxData, uint8_t *pRxData, uint16_t Size, uint32_t Timeout) {
+
   uint32_t tmp = 0U, tmp1 = 0U;
-#if (USE_SPI_CRC != 0U)
-  __IO uint16_t tmpreg1 = 0U;
-#endif /* USE_SPI_CRC */
   uint32_t tickstart = 0U;
-  /* Variable used to alternate Rx and Tx during transfer */
+
+  // Variable used to alternate Rx and Tx during transfer */
   uint32_t txallowed = 1U;
   HAL_StatusTypeDef errorcode = HAL_OK;
 
-  /* Init tickstart for timeout management*/
+  // Init tickstart for timeout management*/
   tickstart = HAL_GetTick();
 
   tmp  = hspi->State;
   tmp1 = hspi->Init.Mode;
 
   if(!((tmp == HAL_SPI_STATE_READY) || \
-    ((tmp1 == SPI_MODE_MASTER) && (hspi->Init.Direction == SPI_DIRECTION_2LINES) && (tmp == HAL_SPI_STATE_BUSY_RX))))
-  {
+    ((tmp1 == SPI_MODE_MASTER) && (hspi->Init.Direction == SPI_DIRECTION_2LINES) && (tmp == HAL_SPI_STATE_BUSY_RX)))) {
     errorcode = HAL_BUSY;
     goto error;
-  }
+    }
 
   if((pTxData == NULL) || (pRxData == NULL) || (Size == 0))
-  {
-    errorcode = HAL_ERROR;
+  { errorcode = HAL_ERROR;
     goto error;
-  }
+    }
 
-  /* Don't overwrite in case of HAL_SPI_STATE_BUSY_RX */
+  // Don't overwrite in case of HAL_SPI_STATE_BUSY_RX */
   if(hspi->State == HAL_SPI_STATE_READY)
-  {
     hspi->State = HAL_SPI_STATE_BUSY_TX_RX;
-  }
 
   /* Set the transaction information */
   hspi->ErrorCode   = HAL_SPI_ERROR_NONE;
@@ -920,117 +903,97 @@ HAL_StatusTypeDef HAL_SPI_TransmitReceive (SPI_HandleTypeDef *hspi, uint8_t *pTx
   hspi->TxXferCount = Size;
   hspi->TxXferSize  = Size;
 
-  /*Init field not used in handle to zero */
+  //Init field not used in handle to zero */
   hspi->RxISR       = NULL;
   hspi->TxISR       = NULL;
 
-  /* Check if the SPI is already enabled */
+  // Check if the SPI is already enabled */
   if((hspi->Instance->CR1 &SPI_CR1_SPE) != SPI_CR1_SPE)
-  {
-    /* Enable SPI peripheral */
     __HAL_SPI_ENABLE(hspi);
-  }
 
-  /* Transmit and Receive data in 16 Bit mode */
-  if(hspi->Init.DataSize == SPI_DATASIZE_16BIT)
-  {
-    if((hspi->Init.Mode == SPI_MODE_SLAVE) || (hspi->TxXferCount == 0x01U))
-    {
+  // Transmit and Receive data in 16 Bit mode */
+  if(hspi->Init.DataSize == SPI_DATASIZE_16BIT) {
+    if((hspi->Init.Mode == SPI_MODE_SLAVE) || (hspi->TxXferCount == 0x01U)) {
       hspi->Instance->DR = *((uint16_t *)pTxData);
       pTxData += sizeof(uint16_t);
       hspi->TxXferCount--;
     }
-    while ((hspi->TxXferCount > 0U) || (hspi->RxXferCount > 0U))
-    {
-      /* Check TXE flag */
-      if(txallowed && (hspi->TxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE)))
-      {
+    while ((hspi->TxXferCount > 0U) || (hspi->RxXferCount > 0U)) {
+      // Check TXE flag */
+      if(txallowed && (hspi->TxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE))) {
         hspi->Instance->DR = *((uint16_t *)pTxData);
         pTxData += sizeof(uint16_t);
         hspi->TxXferCount--;
-        /* Next Data is a reception (Rx). Tx not allowed */
+        // Next Data is a reception (Rx). Tx not allowed */
         txallowed = 0U;
+        }
 
-      }
-
-      /* Check RXNE flag */
-      if((hspi->RxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_RXNE)))
-      {
+      // Check RXNE flag */
+      if((hspi->RxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_RXNE))) {
         *((uint16_t *)pRxData) = hspi->Instance->DR;
         pRxData += sizeof(uint16_t);
         hspi->RxXferCount--;
-        /* Next Data is a Transmission (Tx). Tx is allowed */
+        // Next Data is a Transmission (Tx). Tx is allowed */
         txallowed = 1U;
-      }
-      if((Timeout != HAL_MAX_DELAY) && ((HAL_GetTick()-tickstart) >=  Timeout))
-      {
+        }
+      if((Timeout != HAL_MAX_DELAY) && ((HAL_GetTick()-tickstart) >=  Timeout)) {
         errorcode = HAL_TIMEOUT;
         goto error;
+        }
       }
     }
-  }
-  /* Transmit and Receive data in 8 Bit mode */
-  else
-  {
-    if((hspi->Init.Mode == SPI_MODE_SLAVE) || (hspi->TxXferCount == 0x01U))
-    {
+
+  // Transmit and Receive data in 8 Bit mode */
+  else {
+    if((hspi->Init.Mode == SPI_MODE_SLAVE) || (hspi->TxXferCount == 0x01U)) {
       *((__IO uint8_t*)&hspi->Instance->DR) = (*pTxData);
       pTxData += sizeof(uint8_t);
       hspi->TxXferCount--;
-    }
-    while((hspi->TxXferCount > 0U) || (hspi->RxXferCount > 0U))
-    {
-      /* check TXE flag */
-      if(txallowed && (hspi->TxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE)))
-      {
+      }
+    while((hspi->TxXferCount > 0U) || (hspi->RxXferCount > 0U)) {
+      // check TXE flag */
+      if(txallowed && (hspi->TxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_TXE))) {
         *(__IO uint8_t *)&hspi->Instance->DR = (*pTxData++);
         hspi->TxXferCount--;
         /* Next Data is a reception (Rx). Tx not allowed */
         txallowed = 0U;
+        }
 
-      }
-
-      /* Wait until RXNE flag is reset */
-      if((hspi->RxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_RXNE)))
-      {
+      // Wait until RXNE flag is reset */
+      if((hspi->RxXferCount > 0U) && (__HAL_SPI_GET_FLAG(hspi, SPI_FLAG_RXNE))) {
         (*(uint8_t *)pRxData++) = hspi->Instance->DR;
         hspi->RxXferCount--;
-        /* Next Data is a Transmission (Tx). Tx is allowed */
+        // Next Data is a Transmission (Tx). Tx is allowed */
         txallowed = 1U;
-      }
-      if((Timeout != HAL_MAX_DELAY) && ((HAL_GetTick()-tickstart) >=  Timeout))
-      {
+        }
+      if((Timeout != HAL_MAX_DELAY) && ((HAL_GetTick()-tickstart) >=  Timeout)) {
         errorcode = HAL_TIMEOUT;
         goto error;
+        }
       }
     }
-  }
 
-  /* Wait until TXE flag */
-  if(SPI_WaitFlagStateUntilTimeout(hspi, SPI_FLAG_TXE, SET, Timeout, tickstart) != HAL_OK)
-  {
+  // Wait until TXE flag */
+  if(SPI_WaitFlagStateUntilTimeout(hspi, SPI_FLAG_TXE, SET, Timeout, tickstart) != HAL_OK) {
     errorcode = HAL_TIMEOUT;
     goto error;
-  }
+    }
 
-  /* Check Busy flag */
-  if(SPI_CheckFlag_BSY(hspi, Timeout, tickstart) != HAL_OK)
-  {
+  // Check Busy flag */
+  if (SPI_CheckFlag_BSY(hspi, Timeout, tickstart) != HAL_OK) {
     errorcode = HAL_ERROR;
     hspi->ErrorCode = HAL_SPI_ERROR_FLAG;
     goto error;
-  }
+    }
 
-  /* Clear overrun flag in 2 Lines communication mode because received is not read */
-  if(hspi->Init.Direction == SPI_DIRECTION_2LINES)
-  {
+  // Clear overrun flag in 2 Lines communication mode because received is not read */
+  if (hspi->Init.Direction == SPI_DIRECTION_2LINES)
     __HAL_SPI_CLEAR_OVRFLAG(hspi);
-  }
 
 error :
   hspi->State = HAL_SPI_STATE_READY;
   return errorcode;
-}
+  }
 //}}}
 
 //{{{
