@@ -94,20 +94,20 @@ public:
 
     // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
     SPI_HandleTypeDef SPI_Handle;
-    SpiHandle.Instance = SPI2;
-    SpiHandle.Init.Mode = SPI_MODE_MASTER;
-    SpiHandle.Init.Direction = SPI_DIRECTION_2LINES;
-    //SpiHandle.Init.Direction = SPI_DIRECTION_1LINE;
-    SpiHandle.Init.DataSize = SPI_DATASIZE_8BIT;
-    SpiHandle.Init.CLKPolarity = SPI_POLARITY_LOW; // SPI mode0
-    SpiHandle.Init.CLKPhase = SPI_PHASE_1EDGE;     // SPI mode0
-    SpiHandle.Init.NSS = SPI_NSS_SOFT;
-    SpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // 168mHz/2 / 8 = 10.5mHz
-    SpiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    SpiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
-    SpiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    SpiHandle.Init.CRCPolynomial = 7;
-    HAL_SPI_Init (&SpiHandle);
+    mSpiHandle.Instance = SPI2;
+    mSpiHandle.Init.Mode = SPI_MODE_MASTER;
+    mSpiHandle.Init.Direction = SPI_DIRECTION_2LINES;
+    //mSpiHandle.Init.Direction = SPI_DIRECTION_1LINE;
+    mSpiHandle.Init.DataSize = SPI_DATASIZE_8BIT;
+    mSpiHandle.Init.CLKPolarity = SPI_POLARITY_LOW; // SPI mode0
+    mSpiHandle.Init.CLKPhase = SPI_PHASE_1EDGE;     // SPI mode0
+    mSpiHandle.Init.NSS = SPI_NSS_SOFT;
+    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8; // 168mHz/2 / 8 = 10.5mHz
+    mSpiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    mSpiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
+    mSpiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    mSpiHandle.Init.CRCPolynomial = 7;
+    HAL_SPI_Init (&mSpiHandle);
 
     // config tx dma
     hdma_tx.Instance                 = DMA1_Stream4;
@@ -124,7 +124,7 @@ public:
     hdma_tx.Init.MemBurst            = DMA_MBURST_INC4;
     hdma_tx.Init.PeriphBurst         = DMA_PBURST_INC4;
     HAL_DMA_Init (&hdma_tx);
-    __HAL_LINKDMA (&SpiHandle, hdmatx, hdma_tx);
+    __HAL_LINKDMA (&mSpiHandle, hdmatx, hdma_tx);
 
     HAL_NVIC_SetPriority (DMA1_Stream4_IRQn, 0, 1);
     HAL_NVIC_EnableIRQ (DMA1_Stream4_IRQn);
@@ -155,26 +155,24 @@ public:
   //}}}
 
   static const uint16_t getWidth() { return 400; }
-  static const uint16_t getWidthBytes() { return getWidth() / 8; }
   static const uint16_t getHeight() { return 240; }
   static cPoint getCentre() { return cPoint (getWidth()/2, getHeight()/2); }
 
   int getFrameNum() { return mFrameNum; }
+
   //{{{
   void clear (bool white) {
 
-    auto framePtr = mFrameBuf + 1 + 1;
+    // point to first line pixel bytes
+    auto framePtr = mFrameBuf + 2;
     for (int y = 0; y < getHeight(); y++) {
-      memset (framePtr, white ? 0xFF : 0, getWidthBytes());
+      memset (framePtr, white ? 0xFF : 0, getWidth()/8);
       framePtr += getPitch();
       }
     }
   //}}}
   //{{{
   void fillRect (bool white, cRect rect) {
-
-    const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
-    const uint8_t  kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
     // clip
     if (rect.left < 0)
@@ -195,7 +193,7 @@ public:
     if (firstByte == lastByte) {
       // simple single x byte case
       uint8_t mask = kFirstMask[rect.left & 7] & kLastMask[(rect.right-1) & 7];
-      auto framePtr = mFrameBuf + 1 + (rect.top * getPitch()) + 1 + firstByte;
+      auto framePtr = getFramePtr (rect.top) + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
           *framePtr ^= mask;
         framePtr += getPitch();
@@ -206,7 +204,7 @@ public:
       uint8_t firstMask = kFirstMask[rect.left & 7];
       uint8_t lastMask = kLastMask[(rect.right-1) & 7];
 
-      auto framePtr = mFrameBuf + 1 + (rect.top * getPitch()) + 1 + firstByte;
+      auto framePtr = getFramePtr (rect.top) + firstByte + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
         uint8_t byte = firstByte;
         *framePtr++ ^= firstMask;
@@ -244,7 +242,7 @@ public:
              yPix < rect.top + font->height - fontChar->top + fontChar->height && yPix < getHeight(); yPix++) {
 
           int16_t x = rect.left + fontChar->left;
-          auto framePtr = mFrameBuf + 1 + (yPix * getPitch()) + 1 + (x / 8);
+          auto framePtr = getFramePtr (yPix) + x/8;
 
           if (true) {
             int16_t charBits = fontChar->width;
@@ -587,15 +585,13 @@ public:
   //}}}
   //{{{
   void present() {
+  // commandByte | 240 * (lineByte | 50bytes,400pixels | paddingByte 0) | paddingByte 0
 
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    //  lines - lineByte | 50 bytes 400 bits | padding 0
-    auto result = HAL_SPI_Transmit (&SpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100);
-    //while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY) {}
-
-    // wait for all sent
+    auto result = HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100);
+    //while (HAL_SPI_GetState(&mSpiHandle) != HAL_SPI_STATE_READY) {}
     //while (SPI2->SR & SPI_FLAG_BSY);
 
     // CS lo
@@ -605,15 +601,19 @@ public:
     }
   //}}}
 
-  SPI_HandleTypeDef SpiHandle;
+  SPI_HandleTypeDef mSpiHandle;
 
 private:
-  static const uint16_t getPitch() { return (400 / 8) + 2; }
+  const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
+  const uint8_t  kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
+
+  uint16_t getPitch() { return 2 + getWidth()/8; }
+  uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }
 
   //{{{
   void drawPix (bool white, uint16_t x, uint16_t y) {
 
-    auto framePtr = mFrameBuf + 1 + (y * getPitch()) + 1 + (x / 8);
+    auto framePtr = getFramePtr (y) + x/8;
     uint8_t mask = 0x80 >> (x & 7);
     *framePtr++ ^= mask;
     }
@@ -656,27 +656,27 @@ public:
     hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
     hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
     HAL_DMA_Init (&hdma_adc);
-    __HAL_LINKDMA (&AdcHandle, DMA_Handle, hdma_adc);
+    __HAL_LINKDMA (&mAdcHandle, DMA_Handle, hdma_adc);
 
     // NVIC configuration for DMA transfer complete interrupt
     HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
     //}}}
 
-    AdcHandle.Instance                   = ADC1;
-    AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
-    AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
-    AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
-    AdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
-    AdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
-    AdcHandle.Init.NbrOfDiscConversion   = 0;
-    AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
-    AdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
-    AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    AdcHandle.Init.NbrOfConversion       = 1;
-    AdcHandle.Init.DMAContinuousRequests = ENABLE;
-    AdcHandle.Init.EOCSelection          = DISABLE;
-    HAL_ADC_Init (&AdcHandle);
+    mAdcHandle.Instance                   = ADC1;
+    mAdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
+    mAdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
+    mAdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
+    mAdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
+    mAdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
+    mAdcHandle.Init.NbrOfDiscConversion   = 0;
+    mAdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
+    mAdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
+    mAdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+    mAdcHandle.Init.NbrOfConversion       = 1;
+    mAdcHandle.Init.DMAContinuousRequests = ENABLE;
+    mAdcHandle.Init.EOCSelection          = DISABLE;
+    HAL_ADC_Init (&mAdcHandle);
 
     ADC_ChannelConfTypeDef sConfig;
     //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
@@ -692,23 +692,23 @@ public:
     //sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
     //sConfig.Offset = 0;
 
-    HAL_ADC_ConfigChannel (&AdcHandle, &sConfig);
+    HAL_ADC_ConfigChannel (&mAdcHandle, &sConfig);
     }
   //}}}
   //{{{
   void start() {
-    HAL_ADC_Start (&AdcHandle);
+    HAL_ADC_Start (&mAdcHandle);
     }
   //}}}
 
   void poll() {
-    HAL_ADC_PollForConversion (&AdcHandle, 100);
+    HAL_ADC_PollForConversion (&mAdcHandle, 100);
     }
   uint32_t getValue() {
-    return HAL_ADC_GetValue (&AdcHandle);
+    return HAL_ADC_GetValue (&mAdcHandle);
     }
 
-  ADC_HandleTypeDef AdcHandle;
+  ADC_HandleTypeDef mAdcHandle;
 
 private:
   };
@@ -744,16 +744,17 @@ public:
     __HAL_RTC_RESET_HANDLE_STATE (&rtcHandle);
     result = HAL_RTC_Init (&rtcHandle);
 
-    std::string time = __TIME__; // hh:mm:ss      - 8
-    std::string date = __DATE__; // dd:mmm:yyyy   - 11
-    int hour = (time[0]  - 0x30) * 10 + (time[1] -0x30);
-    int min = (time[3] - 0x30) * 10 + (time[4] -0x30);
-    int sec = (time[6] - 0x30) * 10 + (time[7] -0x30);
-    int day = ((date[4] == ' ') ? 0 : date[4] - 0x30) * 10 + (date[5] -0x30);
-    int year = (date[9] - 0x30) * 10 + (date[10] -0x30);
+    // parse buildTime, buildDate strings
+    // time hh:mm:ss      - 8
+    // date dd:mmm:yyyy   - 11
+    int hour = (mBuildTime[0]  - 0x30) * 10 + (mBuildTime[1] -0x30);
+    int min = (mBuildTime[3] - 0x30) * 10 + (mBuildTime[4] -0x30);
+    int sec = (mBuildTime[6] - 0x30) * 10 + (mBuildTime[7] -0x30);
+    int day = ((mBuildDate[4] == ' ') ? 0 : mBuildDate[4] - 0x30) * 10 + (mBuildDate[5] -0x30);
+    int year = (mBuildDate[9] - 0x30) * 10 + (mBuildDate[10] -0x30);
     int mon = 0;
     for (int i = 0; i < 12; i++)
-      if ((date[0] == *kMonth[i]) && (date[1] == *(kMonth[i]+1)) && (date[2] == *(kMonth[i]+2))) {
+      if ((mBuildDate[0] == *kMonth[i]) && (mBuildDate[1] == *(kMonth[i]+1)) && (mBuildDate[2] == *(kMonth[i]+2))) {
         mon = i;
         break;
         }
@@ -785,7 +786,6 @@ public:
       //HAL_RTCEx_BKUPWrite (&rtcHandle, RTC_BKP_DR0, 0x32F2);
       }
       //}}}
-    // __HAL_RCC_CLEAR_RESET_FLAGS();
     }
   //}}}
 
@@ -806,25 +806,22 @@ public:
   //{{{
   float getClockHourAngle() {
 
-    RTC_TimeTypeDef rtcTime;
-    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
-    return (1.f - (rtcTime.Hours / 6.f)) * kPi;
+    HAL_RTC_GetTime (&rtcHandle, &mRtcTime, RTC_FORMAT_BIN);
+    return (1.f - ((mRtcTime.Hours + (mRtcTime.Minutes / 60.f)) / 6.f)) * kPi;
     }
   //}}}
   //{{{
   float getClockMinuteAngle() {
 
-    RTC_TimeTypeDef rtcTime;
-    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
-    return (1.f - (rtcTime.Minutes / 30.f)) * kPi;
+    HAL_RTC_GetTime (&rtcHandle, &mRtcTime, RTC_FORMAT_BIN);
+    return (1.f - ((mRtcTime.Minutes + (mRtcTime.Seconds / 60.f))/ 30.f)) * kPi;
     }
   //}}}
   //{{{
   float getClockSecondAngle() {
 
-    RTC_TimeTypeDef rtcTime;
-    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
-    return (1.f - (rtcTime.Seconds / 30.f)) * kPi;
+    HAL_RTC_GetTime (&rtcHandle, &mRtcTime, RTC_FORMAT_BIN);
+    return (1.f - (mRtcTime.Seconds / 30.f)) * kPi;
     }
   //}}}
 
@@ -832,21 +829,23 @@ private:
   const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
   RTC_HandleTypeDef rtcHandle;
+  RTC_TimeTypeDef mRtcTime;
+  RTC_DateTypeDef mRtcDate;
+  std::string mBuildTime = __TIME__;
+  std::string mBuildDate = __DATE__;
   };
 //}}}
 
 //{{{
 class cApp : public cLcd {
 public:
+  cApp (bool pinReset, bool powerOnReset) : mPinReset(pinReset), mPowerOnReset(powerOnReset) {}
   //{{{
   void init() {
 
     cLcd::init();
     mAdc.init();
     mRtc.init();
-
-    mPinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET;
-    mPowerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET;
     }
   //}}}
   //{{{
@@ -877,7 +876,7 @@ public:
       clear (true);
       drawString (false, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
                               dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3) + "v " +
-                              dec(ticks - lastTicks) + " " + 
+                              dec(ticks - lastTicks) + " " +
                               (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
                        cRect (0, 0, cLcd::getWidth(), 20));
       lastTicks = ticks;
@@ -922,7 +921,7 @@ private:
     int valueIndex = getFrameNum() - kMaxValues;
     for (int i = 0; i < kMaxValues; i++) {
       int16_t len = valueIndex > 0 ? (kMaxLen * (mValues[valueIndex % kMaxValues] - mMinValue))  / (mMaxValue - mMinValue) : 0;
-      fillRect (false, cRect (i, cLcd::getHeight()-len, i+1,  cLcd::getHeight()));
+      fillRect (false, cRect (i, getHeight()-len, i+1, getHeight()));
       valueIndex++;
       }
     }
@@ -932,8 +931,8 @@ private:
   static const int kMaxLen = 220;
 
   cRtc mRtc;
-  bool mPowerOnReset = false;
-  bool mPinReset = false;
+  bool mPowerOnReset;
+  bool mPinReset;
 
   float averageVdd = 0;
 
@@ -947,17 +946,20 @@ cApp* cApp::mApp = nullptr;
 //{{{
 extern "C" {
   void SysTick_Handler() { HAL_IncTick(); }
-  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&cApp::mApp->SpiHandle); }
-  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->SpiHandle.hdmatx); }
-  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->mAdc.AdcHandle.DMA_Handle); }
+  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&cApp::mApp->mSpiHandle); }
+  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->mSpiHandle.hdmatx); }
+  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->mAdc.mAdcHandle.DMA_Handle); }
   }
 //}}}
 
 int main() {
 
   HAL_Init();
+  bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET;
+  bool powerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET;
+  __HAL_RCC_CLEAR_RESET_FLAGS();
 
-  cApp::mApp = new cApp();
+  cApp::mApp = new cApp (pinReset, powerOnReset);
   cApp::mApp->init();
   cApp::mApp->run();
 
