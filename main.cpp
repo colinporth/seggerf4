@@ -766,6 +766,10 @@ public:
       //{{{  set clockDateTime from buildDateTime
       printf ("cRtc::init set clockDateTime < buildDateTime %d < %d\n", clockDateTime, buildDateTime);
 
+      mRtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
+      mRtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+      mRtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
+
       buildDateTime += 7;
       mRtcTime.Seconds = buildDateTime % 60;
       buildDateTime /= 60;
@@ -773,20 +777,16 @@ public:
       buildDateTime /= 60;
       mRtcTime.Hours = buildDateTime % 24;
 
-      mRtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
-      mRtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-      mRtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
-      setTime (&mRtcHandle, &mRtcTime);
-
       buildDateTime /= 24;
       mRtcDate.Date = buildDateTime % 31;
       buildDateTime /= 31;
       mRtcDate.Month = buildDateTime % 12;
       buildDateTime /= 12;
       mRtcDate.Year = buildDateTime;
-      mRtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;
-      setDate (&mRtcHandle, &mRtcDate);
 
+      mRtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;  // wrong
+
+      setDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
       // Writes a data in a RTC Backup data Register0
       //HAL_RTCEx_BKUPWrite (&mRtcHandle, RTC_BKP_DR0, 0x32F2);
       }
@@ -877,7 +877,7 @@ private:
   //}}}
 
   //{{{
-  void setTime (RTC_HandleTypeDef* hrtc, RTC_TimeTypeDef* sTime) {
+  void setDateTime (RTC_HandleTypeDef* hrtc, RTC_DateTypeDef* date, RTC_TimeTypeDef* time) {
 
     __HAL_RTC_WRITEPROTECTION_DISABLE (hrtc);
 
@@ -885,20 +885,30 @@ private:
     if (RTC_EnterInitMode (hrtc) == HAL_OK) {
       __HAL_RTC_WRITEPROTECTION_DISABLE (hrtc);
       if ((RTC->CR & RTC_CR_FMT) == (uint32_t)RESET)
-        sTime->TimeFormat = 0x00U;
+        time->TimeFormat = 0x00U;
+
+      if ((date->Month & 0x10U) == 0x10U)
+        date->Month = (uint8_t)((date->Month & (uint8_t)~(0x10U)) + (uint8_t)0x0AU);
+
+      // Set the RTC_DR register
+      uint32_t tmp = ((uint32_t)byteToBcd2(date->Year) << 16U) |
+                     ((uint32_t)byteToBcd2(date->Month) << 8U) |
+                     ((uint32_t)byteToBcd2(date->Date))        |
+                     ((uint32_t)date->WeekDay << 13U);
+      RTC->DR = (uint32_t)(tmp & RTC_DR_RESERVED_MASK);
 
       // Set the RTC_TR register
-      uint32_t tmpreg = (uint32_t)(((uint32_t)byteToBcd2(sTime->Hours) << 16U) |
-                       ((uint32_t)byteToBcd2(sTime->Minutes) << 8U) |
-                       ((uint32_t)byteToBcd2(sTime->Seconds)) |
-                        (((uint32_t)sTime->TimeFormat) << 16U));
-      RTC->TR = (uint32_t)(tmpreg & RTC_TR_RESERVED_MASK);
+      tmp = (uint32_t)(((uint32_t)byteToBcd2(time->Hours) << 16U) |
+                       ((uint32_t)byteToBcd2(time->Minutes) << 8U) |
+                       ((uint32_t)byteToBcd2(time->Seconds)) |
+                      (((uint32_t)time->TimeFormat) << 16U));
+      RTC->TR = (uint32_t)(tmp & RTC_TR_RESERVED_MASK);
 
       // Clear the bits to be configured
       RTC->CR &= (uint32_t)~RTC_CR_BCK;
 
       // Configure the RTC_CR register
-      RTC->CR |= (uint32_t)(sTime->DayLightSaving | sTime->StoreOperation);
+      RTC->CR |= (uint32_t)(time->DayLightSaving | time->StoreOperation);
 
       // Exit Initialization mode
       RTC->ISR &= (uint32_t)~RTC_ISR_INIT;
@@ -906,33 +916,6 @@ private:
       // If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed
       if ((RTC->CR & RTC_CR_BYPSHAD) == RESET)
         if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK){}
-      }
-
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
-    }
-  //}}}
-  //{{{
-  void setDate (RTC_HandleTypeDef* hrtc, RTC_DateTypeDef* sDate) {
-
-    __HAL_RTC_WRITEPROTECTION_DISABLE(hrtc);
-
-    if (RTC_EnterInitMode(hrtc) == HAL_OK) {
-      if ((sDate->Month & 0x10U) == 0x10U)
-        sDate->Month = (uint8_t)((sDate->Month & (uint8_t)~(0x10U)) + (uint8_t)0x0AU);
-
-      // Set the RTC_DR register
-      uint32_t datetmpreg = ((uint32_t)byteToBcd2(sDate->Year) << 16U) |
-                            ((uint32_t)byteToBcd2(sDate->Month) << 8U) |
-                            ((uint32_t)byteToBcd2(sDate->Date))        |
-                            ((uint32_t)sDate->WeekDay << 13U);
-      RTC->DR = (uint32_t)(datetmpreg & RTC_DR_RESERVED_MASK);
-
-      // Exit Initialization mode
-      RTC->ISR &= (uint32_t)~RTC_ISR_INIT;
-
-      // If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed
-      if ((RTC->CR & RTC_CR_BYPSHAD) == RESET)
-        if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK) {}
       }
 
     __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
