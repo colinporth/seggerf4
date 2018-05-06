@@ -29,55 +29,46 @@
 //}}}
 const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-SPI_HandleTypeDef SpiHandle;
 DMA_HandleTypeDef hdma_tx;
 ADC_HandleTypeDef AdcHandle;
 DMA_HandleTypeDef hdma_adc;
 
 //{{{
-extern "C" {
-  void SysTick_Handler() { HAL_IncTick(); }
-  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (AdcHandle.DMA_Handle); }
-  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (SpiHandle.hdmatx); }
-  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&SpiHandle); }
-  //{{{
-  void HAL_ADC_MspInit (ADC_HandleTypeDef* hadc) {
+void adcInit() {
 
-    __HAL_RCC_ADC1_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    //__HAL_RCC_DMA2_CLK_ENABLE();
+  AdcHandle.Instance                   = ADC1;
+  AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
+  AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
+  AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
+  AdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
+  AdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
+  AdcHandle.Init.NbrOfDiscConversion   = 0;
+  AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
+  AdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
+  AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+  AdcHandle.Init.NbrOfConversion       = 1;
+  AdcHandle.Init.DMAContinuousRequests = ENABLE;
+  AdcHandle.Init.EOCSelection          = DISABLE;
+  HAL_ADC_Init (&AdcHandle);
 
-    // ADC Channel GPIO pin configuration
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  ADC_ChannelConfTypeDef sConfig;
+  //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+  //sConfig.Channel = ADC_CHANNEL_VBAT;
+  //sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Channel      = ADC_CHANNEL_1;
+  sConfig.Rank         = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
+  sConfig.Offset       = 0;
 
-    // Set the parameters to be configured
-    hdma_adc.Instance = DMA2_Stream0;
-    hdma_adc.Init.Channel  = DMA_CHANNEL_2;
-    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_adc.Init.Mode = DMA_CIRCULAR;
-    hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-    hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
-    hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init (&hdma_adc);
-    __HAL_LINKDMA (hadc, DMA_Handle, hdma_adc);
+  //Configure ADC Temperature Sensor Channel
+  //sConfig.Rank = 1;
+  //sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
+  //sConfig.Offset = 0;
 
-    // NVIC configuration for DMA transfer complete interrupt
-    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
-    }
-  //}}}
+  HAL_ADC_ConfigChannel (&AdcHandle, &sConfig);
   }
 //}}}
+
 //{{{
 class cLcd {
 public:
@@ -183,6 +174,7 @@ public:
     SPI2->CR1 |= SPI_CR1_SPE;
     //}}}
 
+    // init frameBuf command : 240 * (lineByte:15bytes:padding) : padding
     mFrameBuf [0] = commandByte;
     memset (mFrameBuf+1, 0, (getPitch() * getHeight()) + 1);
     for (uint16_t y = 0; y < getHeight(); y++) {
@@ -651,6 +643,8 @@ public:
     }
   //}}}
 
+  SPI_HandleTypeDef SpiHandle;
+
 private:
   static const uint16_t getPitch() { return (400 / 8) + 2; }
 
@@ -668,210 +662,277 @@ private:
   };
 //}}}
 //{{{
-void adcInit() {
+class cRtc {
+public:
+  //{{{
+  void init() {
 
-  AdcHandle.Instance                   = ADC1;
-  AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
-  AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
-  AdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
-  AdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
-  AdcHandle.Init.NbrOfDiscConversion   = 0;
-  AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
-  AdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
-  AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-  AdcHandle.Init.NbrOfConversion       = 1;
-  AdcHandle.Init.DMAContinuousRequests = ENABLE;
-  AdcHandle.Init.EOCSelection          = DISABLE;
-  HAL_ADC_Init (&AdcHandle);
+    // Configue LSE as RTC clock source
+    RCC_OscInitTypeDef rccOscInitStruct;
+    rccOscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
+    rccOscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+    rccOscInitStruct.LSEState = RCC_LSE_ON;
+    rccOscInitStruct.LSIState = RCC_LSI_OFF;
+    auto result = HAL_RCC_OscConfig (&rccOscInitStruct);
 
-  ADC_ChannelConfTypeDef sConfig;
-  //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-  //sConfig.Channel = ADC_CHANNEL_VBAT;
-  //sConfig.Channel = ADC_CHANNEL_VREFINT;
-  sConfig.Channel      = ADC_CHANNEL_1;
-  sConfig.Rank         = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
-  sConfig.Offset       = 0;
+    RCC_PeriphCLKInitTypeDef periphClkInitStruct;
+    periphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+    periphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+    result = HAL_RCCEx_PeriphCLKConfig (&periphClkInitStruct);
+    __HAL_RCC_RTC_ENABLE();
 
-  //Configure ADC Temperature Sensor Channel
-  //sConfig.Rank = 1;
-  //sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
-  //sConfig.Offset = 0;
+    // Configure LSE RTC prescaler and RTC data registers
+    rtcHandle.Instance = RTC;
+    rtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
+    rtcHandle.Init.AsynchPrediv = 0x7F;
+    rtcHandle.Init.SynchPrediv = 0x00FF;
+    rtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
+    rtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+    rtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+    __HAL_RTC_RESET_HANDLE_STATE (&rtcHandle);
+    result = HAL_RTC_Init (&rtcHandle);
 
-  HAL_ADC_ConfigChannel (&AdcHandle, &sConfig);
-  }
-//}}}
-
-const int kMaxValues = 400;
-const int kMaxLen = 220;
-uint32_t values[kMaxValues];
-int main() {
-
-  HAL_Init();
-  adcInit();
-  auto lcd = new cLcd();
-  lcd->init();
-
-  //{{{  rtc config
-  // Configue LSE as RTC clock source
-  RCC_OscInitTypeDef rccOscInitStruct;
-  rccOscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
-  rccOscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  rccOscInitStruct.LSEState = RCC_LSE_ON;
-  rccOscInitStruct.LSIState = RCC_LSI_OFF;
-  auto result = HAL_RCC_OscConfig (&rccOscInitStruct);
-
-  RCC_PeriphCLKInitTypeDef periphClkInitStruct;
-  periphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
-  periphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
-  result = HAL_RCCEx_PeriphCLKConfig (&periphClkInitStruct);
-  __HAL_RCC_RTC_ENABLE();
-
-  // Configure LSE RTC prescaler and RTC data registers
-  // RTC configured as follow:
-  //  - Hour Format    = Format 24
-  //  - Asynch Prediv  = Value according to source clock
-  //  - Synch Prediv   = Value according to source clock
-  //  - OutPut         = Output Disable
-  //  - OutPutPolarity = High Polarity
-  //  - OutPutType     = Open Drain */
-  RTC_HandleTypeDef rtcHandle;
-  rtcHandle.Instance = RTC;
-  rtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
-  rtcHandle.Init.AsynchPrediv = 0x7F;
-  rtcHandle.Init.SynchPrediv = 0x00FF;
-  rtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
-  rtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-  rtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-  __HAL_RTC_RESET_HANDLE_STATE (&rtcHandle);
-  result = HAL_RTC_Init (&rtcHandle);
-
-  std::string time = __TIME__; // hh:mm:ss      - 8
-  std::string date = __DATE__; // dd:mmm:yyyy   - 11
-  int hour = (time[0]  - 0x30) * 10 + (time[1] -0x30);
-  int min = (time[3] - 0x30) * 10 + (time[4] -0x30);
-  int sec = (time[6] - 0x30) * 10 + (time[7] -0x30);
-  int day = ((date[4] == ' ') ? 0 : date[4] - 0x30) * 10 + (date[5] -0x30);
-  int year = (date[9] - 0x30) * 10 + (date[10] -0x30);
-  int mon = 0;
-  for (int i = 0; i < 12; i++)
-    if ((date[0] == *kMonth[i]) && (date[1] == *(kMonth[i]+1)) && (date[2] == *(kMonth[i]+2))) {
-      mon = i;
-      break;
-      }
-
-  RTC_TimeTypeDef rtcTime;
-  HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
-  RTC_DateTypeDef rtcDate;
-  HAL_RTC_GetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
-
-  if ((rtcTime.Hours * 3600 + rtcTime.Minutes * 60 + rtcTime.Seconds) < (hour * 3600 + min * 60 + sec)) {
-    //{{{  set date time
-    rtcDate.Date = day;
-    rtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;
-    rtcDate.Month = mon;
-    rtcDate.Year = year;
-    result = HAL_RTC_SetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
-
-    // set Time 02:00:00
-    rtcTime.Hours = hour;
-    rtcTime.Minutes = min;
-    rtcTime.Seconds = sec;
-    rtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
-    rtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-    rtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    result = HAL_RTC_SetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
-
-    // Writes a data in a RTC Backup data Register0
-    //HAL_RTCEx_BKUPWrite (&rtcHandle, RTC_BKP_DR0, 0x32F2);
-    }
-    //}}}
-  else {
-    //{{{  time ok
-    //  check reset flags
-    // Check if the Power On Reset flag is set
-    if (__HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET) {
-      // Power on reset
-      }
-    if(__HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET) {
-      // Check if Pin Reset flag is set
-      }
-
-    // Clear Reset Flag
-    __HAL_RCC_CLEAR_RESET_FLAGS();
-    }
-    //}}}
-  // Check if Data stored in BackUp register0: No Need to reconfigure RTC#, Read the BackUp Register 0 Data
-  //}}}
-  HAL_ADC_Start (&AdcHandle);
-
-  float averageVdd = 0;
-  uint32_t minValue = 4096;
-  uint32_t maxValue = 0;
-
-  auto lastTicks = HAL_GetTick();
-  while (1) {
-    HAL_ADC_PollForConversion (&AdcHandle, 100);
-    auto value = HAL_ADC_GetValue (&AdcHandle);
-    values[lcd->getFrameNum() % kMaxValues] = value;
-    if (value < minValue)
-      minValue = value;
-    if (value > maxValue)
-      maxValue = value;
-
-    //auto vdd = 1000.f * 1.2f / (value / 4096.f);
-    auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
-
-    if (averageVdd == 0.f)
-      averageVdd = vdd;
-    else
-      averageVdd = ((averageVdd * 99.f) + vdd) / 100.f;
-
-    auto ticks = HAL_GetTick();
-
-    lcd->clear (true);
-    lcd->drawString (false, dec(minValue) + "min " + dec(value)    + " " + dec(maxValue) + "max " +
-                            dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3) + "v " +
-                            dec(ticks - lastTicks),
-                     cRect (0, 0, cLcd::getWidth(), 20));
-    lastTicks = ticks;
+    std::string time = __TIME__; // hh:mm:ss      - 8
+    std::string date = __DATE__; // dd:mmm:yyyy   - 11
+    int hour = (time[0]  - 0x30) * 10 + (time[1] -0x30);
+    int min = (time[3] - 0x30) * 10 + (time[4] -0x30);
+    int sec = (time[6] - 0x30) * 10 + (time[7] -0x30);
+    int day = ((date[4] == ' ') ? 0 : date[4] - 0x30) * 10 + (date[5] -0x30);
+    int year = (date[9] - 0x30) * 10 + (date[10] -0x30);
+    int mon = 0;
+    for (int i = 0; i < 12; i++)
+      if ((date[0] == *kMonth[i]) && (date[1] == *(kMonth[i]+1)) && (date[2] == *(kMonth[i]+2))) {
+        mon = i;
+        break;
+        }
 
     RTC_TimeTypeDef rtcTime;
     HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
     RTC_DateTypeDef rtcDate;
     HAL_RTC_GetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
-    lcd->drawString (false, dec(rtcTime.Hours,2) + ":" + dec(rtcTime.Minutes,2) + ":" + dec(rtcTime.Seconds,2) + " " +
-                            kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4) + " " +
-                            dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction),
-                     cRect (0, 20, cLcd::getWidth(), 40));
-    //lcd->drawString (false, time + " " + date, cRect (0, 40, cLcd::getWidth(), 60));
 
-    cPoint centre = { 400-42, 42 };
-    int16_t radius = 40;
-    lcd->drawCircle (false, centre, radius);
+    if ((rtcDate.Year*31*12 + rtcDate.Month*31 + rtcDate.Date) < (year*31*12 + mon*31 + day) &&
+        (rtcTime.Hours*60*60 + rtcTime.Minutes*60 + rtcTime.Seconds) < (hour*60*60 + min*60 + sec)) {
+      //{{{  set date time
+      rtcDate.Date = day;
+      rtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;
+      rtcDate.Month = mon;
+      rtcDate.Year = year;
+      result = HAL_RTC_SetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
 
-    float hourRad = radius * 0.7f;
-    float hourAng = (1.f - (rtcTime.Hours / 6.f)) * kPi;
-    lcd->drawLine (false, centre, centre + cPoint (int16_t(hourRad * sin (hourAng)), int16_t(hourRad * cos (hourAng))));
+      // set Time 02:00:00
+      rtcTime.Hours = hour;
+      rtcTime.Minutes = min;
+      rtcTime.Seconds = sec;
+      rtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
+      rtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+      rtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
+      result = HAL_RTC_SetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
 
-    float minRad = radius * 0.8f;
-    float minAng = (1.f - (rtcTime.Minutes / 30.f)) * kPi;
-    lcd->drawLine (false, centre, centre + cPoint (int16_t(minRad * sin (minAng)), int16_t(minRad * cos (minAng))));
-
-    float secRad = radius * 0.9f;
-    float secAng = (1.f - (rtcTime.Seconds / 30.f)) * kPi;
-    lcd->drawLine (false, centre, centre + cPoint (int16_t(secRad * sin (secAng)), int16_t(secRad * cos (secAng))));
-
-    int valueIndex = lcd->getFrameNum() - kMaxValues;
-    for (int i = 0; i < kMaxValues; i++) {
-      int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
-      lcd->fillRect (false, cRect (i, cLcd:: getHeight()-len, i+1,  cLcd::getHeight()));
-      valueIndex++;
+      // Writes a data in a RTC Backup data Register0
+      //HAL_RTCEx_BKUPWrite (&rtcHandle, RTC_BKP_DR0, 0x32F2);
       }
+      //}}}
+    else {
+      //{{{  time ok
+      //  check reset flags
+      // Check if the Power On Reset flag is set
+      if (__HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET) {
+        // Power on reset
+        }
+      if(__HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET) {
+        // Check if Pin Reset flag is set
+        }
 
-    lcd->present();
+      // Clear Reset Flag
+      __HAL_RCC_CLEAR_RESET_FLAGS();
+      }
+      //}}}
     }
+  //}}}
+
+  //{{{
+  std::string getTimeStr() {
+
+    RTC_TimeTypeDef rtcTime;
+    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+
+    RTC_DateTypeDef rtcDate;
+    HAL_RTC_GetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
+
+    return dec(rtcTime.Hours,2) + ":" + dec(rtcTime.Minutes,2) + ":" + dec(rtcTime.Seconds,2) + " " +
+           kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4) + " " +
+           dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction);
+    }
+  //}}}
+  //{{{
+  float getClockHourAngle() {
+
+    RTC_TimeTypeDef rtcTime;
+    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+    return (1.f - (rtcTime.Hours / 6.f)) * kPi;
+    }
+  //}}}
+  //{{{
+  float getClockMinuteAngle() {
+
+    RTC_TimeTypeDef rtcTime;
+    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+    return (1.f - (rtcTime.Minutes / 30.f)) * kPi;
+    }
+  //}}}
+  //{{{
+  float getClockSecondAngle() {
+
+    RTC_TimeTypeDef rtcTime;
+    HAL_RTC_GetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+    return (1.f - (rtcTime.Seconds / 30.f)) * kPi;
+    }
+  //}}}
+
+private:
+  RTC_HandleTypeDef rtcHandle;
+  };
+//}}}
+//{{{
+class cApp : public cLcd {
+public:
+  //{{{
+  void init() {
+    adcInit();
+    cLcd::init();
+    mRtc.init();
+    }
+  //}}}
+  //{{{
+  void run() {
+
+    auto lastTicks = HAL_GetTick();
+    while (1) {
+      HAL_ADC_PollForConversion (&AdcHandle, 100);
+      auto value = HAL_ADC_GetValue (&AdcHandle);
+      values[getFrameNum() % kMaxValues] = value;
+      if (value < minValue)
+        minValue = value;
+      if (value > maxValue)
+        maxValue = value;
+
+      //auto vdd = 1000.f * 1.2f / (value / 4096.f);
+      auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
+
+      if (averageVdd == 0.f)
+        averageVdd = vdd;
+      else
+        averageVdd = ((averageVdd * 99.f) + vdd) / 100.f;
+
+      auto ticks = HAL_GetTick();
+
+      clear (true);
+      drawString (false, dec(minValue) + "min " + dec(value)    + " " + dec(maxValue) + "max " +
+                              dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3) + "v " +
+                              dec(ticks - lastTicks),
+                       cRect (0, 0, cLcd::getWidth(), 20));
+      lastTicks = ticks;
+
+      drawString (false, mRtc.getTimeStr(), cRect (0, 20, cLcd::getWidth(), 40));
+
+      cPoint centre = { 400-42, 42 };
+      int16_t radius = 40;
+      drawCircle (false, centre, radius);
+
+      float hourRadius = radius * 0.7f;
+      float hourAngle = mRtc.getClockHourAngle();
+      drawLine (false, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
+
+      float minuteRadius = radius * 0.8f;
+      float minuteAngle = mRtc.getClockMinuteAngle();
+      drawLine (false, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
+
+      float secondRadius = radius * 0.9f;
+      float secondAngle = mRtc.getClockSecondAngle();
+      drawLine (false, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
+
+      int valueIndex = getFrameNum() - kMaxValues;
+      for (int i = 0; i < kMaxValues; i++) {
+        int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
+        fillRect (false, cRect (i, cLcd::getHeight()-len, i+1,  cLcd::getHeight()));
+        valueIndex++;
+        }
+
+      present();
+      }
+    }
+  //}}}
+  static cApp* mApp;
+
+private:
+  static const int kMaxValues = 400;
+  static const int kMaxLen = 220;
+
+  cRtc mRtc;
+
+  float averageVdd = 0;
+
+  uint32_t minValue = 4096;
+  uint32_t maxValue = 0;
+  uint32_t values[kMaxValues];
+  };
+//}}}
+cApp* cApp::mApp = nullptr;
+
+//{{{
+extern "C" {
+  void SysTick_Handler() { HAL_IncTick(); }
+  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (AdcHandle.DMA_Handle); }
+  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->SpiHandle.hdmatx); }
+  void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&cApp::mApp->SpiHandle); }
+  //{{{
+  void HAL_ADC_MspInit (ADC_HandleTypeDef* hadc) {
+
+    __HAL_RCC_ADC1_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    //__HAL_RCC_DMA2_CLK_ENABLE();
+
+    // ADC Channel GPIO pin configuration
+    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // Set the parameters to be configured
+    hdma_adc.Instance = DMA2_Stream0;
+    hdma_adc.Init.Channel  = DMA_CHANNEL_2;
+    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_adc.Init.Mode = DMA_CIRCULAR;
+    hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    HAL_DMA_Init (&hdma_adc);
+    __HAL_LINKDMA (hadc, DMA_Handle, hdma_adc);
+
+    // NVIC configuration for DMA transfer complete interrupt
+    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
+    }
+  //}}}
+  }
+//}}}
+
+int main() {
+
+  HAL_Init();
+  HAL_ADC_Start (&AdcHandle);
+
+  cApp::mApp = new cApp();
+  cApp::mApp->init();
+  cApp::mApp->run();
 
   return 0;
   }
