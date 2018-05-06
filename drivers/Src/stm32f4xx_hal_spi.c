@@ -1,11 +1,7 @@
 //{{{
 /**
-    [..]
-      The SPI HAL driver can be used as follows:
-
       (#) Declare a SPI_HandleTypeDef handle structure, for example:
           SPI_HandleTypeDef  hspi;
-
       (#)Initialize the SPI low level resources by implementing the HAL_SPI_MspInit() API:
           (##) Enable the SPIx interface clock
           (##) SPI pins configuration
@@ -21,14 +17,11 @@
               (+++) Configure the DMA Tx or Rx stream
               (+++) Associate the initialized hdma_tx handle to the hspi DMA Tx or Rx handle
               (+++) Configure the priority and enable the NVIC for the transfer complete interrupt on the DMA Tx or Rx stream
-
       (#) Program the Mode, BidirectionalMode , Data size, Baudrate Prescaler, NSS
           management, Clock polarity and phase, FirstBit and CRC configuration in the hspi Init structure.
-
       (#) Initialize the SPI registers by calling the HAL_SPI_Init() API:
           (++) This API configures also the low level Hardware GPIO, CLOCK, CORTEX...etc)
               by calling the customized HAL_SPI_MspInit() API.
-     [..]
        Circular mode restriction:
       (#) The DMA circular mode cannot be used when the SPI is configured in these modes:
           (##) Master 2Lines RxOnly
@@ -36,7 +29,6 @@
       (#) The CRC feature is not managed when the DMA circular mode is enabled
       (#) When the SPI DMA Pause/Stop features are used, we must use the following APIs
           the HAL_SPI_DMAPause()/ HAL_SPI_DMAStop() only under the SPI callbacks
-     [..]
        Master Receive mode restriction:
       (#) In Master unidirectional receive-only mode (MSTR =1, BIDIMODE=0, RXONLY=0) or
           bidirectional receive mode (MSTR=1, BIDIMODE=1, BIDIOE=0), to ensure that the SPI
@@ -97,7 +89,6 @@
     |    X    |----------------|----------|----------|-----------|----------|-----------|----------|
     |         |       DMA      | Fpclk/2  | Fpclk/2  |     NA    |    NA    | Fpclk/2   | Fpclk/128|
     +----------------------------------------------------------------------------------------------+
-     [..]
        (@) The max SPI frequency depend on SPI data size (8bits, 16bits),
            SPI mode(2 Lines fullduplex, 2 lines RxOnly, 1 line TX/RX) and Process mode (Polling, IT, DMA).
        (@)
@@ -108,8 +99,7 @@
     This subsection provides a set of functions allowing to manage the SPI
     data transfers.
 
-    [..] The SPI supports master and slave mode :
-
+    The SPI supports master and slave mode :
     (#) There are two modes of transfer:
        (++) Blocking mode: The communication is performed in polling mode.
             The HAL status of all data processing is returned by the same function
@@ -130,6 +120,15 @@
 #include "stm32f4xx_hal.h"
 
 #define SPI_DEFAULT_TIMEOUT 100U
+
+__weak void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_RxCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_TxRxCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_RxHalfCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_TxHalfCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_TxRxHalfCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_ErrorCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
+__weak void HAL_SPI_AbortCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
 
 //{{{
 static HAL_StatusTypeDef SPI_WaitFlagStateUntilTimeout (SPI_HandleTypeDef *hspi, uint32_t Flag, uint32_t State, uint32_t Timeout, uint32_t Tickstart) {
@@ -516,7 +515,7 @@ static void SPI_DMATransmitReceiveCplt (DMA_HandleTypeDef *hdma) {
 static void SPI_DMAHalfTransmitCplt (DMA_HandleTypeDef *hdma) {
 
   SPI_HandleTypeDef* hspi = ( SPI_HandleTypeDef* )((DMA_HandleTypeDef* )hdma)->Parent;
-  HAL_SPI_TxHalfCpltCallback(hspi);
+  HAL_SPI_TxHalfCpltCallback (hspi);
   }
 //}}}
 //{{{
@@ -630,14 +629,6 @@ static void SPI_DMARxAbortCallback (DMA_HandleTypeDef *hdma) {
   HAL_SPI_AbortCpltCallback(hspi);
   }
 //}}}
-
-__weak void HAL_SPI_TxCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
-__weak void HAL_SPI_RxCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
-__weak void HAL_SPI_TxRxCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
-__weak void HAL_SPI_RxHalfCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
-__weak void HAL_SPI_TxRxHalfCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
-__weak void HAL_SPI_ErrorCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
-__weak void HAL_SPI_AbortCpltCallback (SPI_HandleTypeDef *hspi) { UNUSED(hspi); }
 
 //{{{
 HAL_StatusTypeDef HAL_SPI_Init (SPI_HandleTypeDef *hspi) {

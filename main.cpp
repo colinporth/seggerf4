@@ -87,6 +87,7 @@ public:
     HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
 
     __HAL_RCC_SPI2_CLK_ENABLE();
+    __HAL_RCC_DMA1_CLK_ENABLE();
 
     // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
     SPI_HandleTypeDef SPI_Handle;
@@ -591,10 +592,12 @@ public:
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    if (HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100))
+    //if (HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100))
+    if (HAL_SPI_Transmit_DMA (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1))
       printf ("HAL_SPI_Transmit failed\n");
-    //while (HAL_SPI_GetState(&mSpiHandle) != HAL_SPI_STATE_READY) {}
-    //while (SPI2->SR & SPI_FLAG_BSY);
+    while (HAL_SPI_GetState (&mSpiHandle) != HAL_SPI_STATE_READY) {
+      HAL_Delay(1);
+      }
 
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
