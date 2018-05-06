@@ -27,47 +27,9 @@
 #define POLY_Y(Z)  ((int32_t)((points + Z)->y))
 #define ABS(X)     ((X) > 0 ? (X) : -(X))
 //}}}
-const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 DMA_HandleTypeDef hdma_tx;
-ADC_HandleTypeDef AdcHandle;
 DMA_HandleTypeDef hdma_adc;
-
-//{{{
-void adcInit() {
-
-  AdcHandle.Instance                   = ADC1;
-  AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
-  AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
-  AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
-  AdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
-  AdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
-  AdcHandle.Init.NbrOfDiscConversion   = 0;
-  AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
-  AdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
-  AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-  AdcHandle.Init.NbrOfConversion       = 1;
-  AdcHandle.Init.DMAContinuousRequests = ENABLE;
-  AdcHandle.Init.EOCSelection          = DISABLE;
-  HAL_ADC_Init (&AdcHandle);
-
-  ADC_ChannelConfTypeDef sConfig;
-  //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-  //sConfig.Channel = ADC_CHANNEL_VBAT;
-  //sConfig.Channel = ADC_CHANNEL_VREFINT;
-  sConfig.Channel      = ADC_CHANNEL_1;
-  sConfig.Rank         = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
-  sConfig.Offset       = 0;
-
-  //Configure ADC Temperature Sensor Channel
-  //sConfig.Rank = 1;
-  //sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
-  //sConfig.Offset = 0;
-
-  HAL_ADC_ConfigChannel (&AdcHandle, &sConfig);
-  }
-//}}}
 
 //{{{
 class cLcd {
@@ -662,6 +624,96 @@ private:
   };
 //}}}
 //{{{
+class cAdc {
+public:
+  //{{{
+  void init() {
+
+    //{{{  config adc gpio
+    __HAL_RCC_ADC1_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    //__HAL_RCC_DMA2_CLK_ENABLE();
+
+    // ADC Channel GPIO pin configuration
+    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // Set the parameters to be configured
+    hdma_adc.Instance = DMA2_Stream0;
+    hdma_adc.Init.Channel  = DMA_CHANNEL_2;
+    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_adc.Init.Mode = DMA_CIRCULAR;
+    hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    HAL_DMA_Init (&hdma_adc);
+    __HAL_LINKDMA (&AdcHandle, DMA_Handle, hdma_adc);
+
+    // NVIC configuration for DMA transfer complete interrupt
+    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
+    //}}}
+
+    AdcHandle.Instance                   = ADC1;
+    AdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
+    AdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
+    AdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
+    AdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
+    AdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
+    AdcHandle.Init.NbrOfDiscConversion   = 0;
+    AdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
+    AdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
+    AdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
+    AdcHandle.Init.NbrOfConversion       = 1;
+    AdcHandle.Init.DMAContinuousRequests = ENABLE;
+    AdcHandle.Init.EOCSelection          = DISABLE;
+    HAL_ADC_Init (&AdcHandle);
+
+    ADC_ChannelConfTypeDef sConfig;
+    //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    //sConfig.Channel = ADC_CHANNEL_VBAT;
+    //sConfig.Channel = ADC_CHANNEL_VREFINT;
+    sConfig.Channel      = ADC_CHANNEL_1;
+    sConfig.Rank         = 1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
+    sConfig.Offset       = 0;
+
+    //Configure ADC Temperature Sensor Channel
+    //sConfig.Rank = 1;
+    //sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
+    //sConfig.Offset = 0;
+
+    HAL_ADC_ConfigChannel (&AdcHandle, &sConfig);
+    }
+  //}}}
+  //{{{
+  void start() {
+    HAL_ADC_Start (&AdcHandle);
+    }
+  //}}}
+
+  void poll() {
+    HAL_ADC_PollForConversion (&AdcHandle, 100);
+    }
+  uint32_t getValue() {
+    return HAL_ADC_GetValue (&AdcHandle);
+    }
+
+  ADC_HandleTypeDef AdcHandle;
+
+private:
+  };
+//}}}
+//{{{
 class cRtc {
 public:
   //{{{
@@ -733,21 +785,7 @@ public:
       //HAL_RTCEx_BKUPWrite (&rtcHandle, RTC_BKP_DR0, 0x32F2);
       }
       //}}}
-    else {
-      //{{{  time ok
-      //  check reset flags
-      // Check if the Power On Reset flag is set
-      if (__HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET) {
-        // Power on reset
-        }
-      if(__HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET) {
-        // Check if Pin Reset flag is set
-        }
-
-      // Clear Reset Flag
-      __HAL_RCC_CLEAR_RESET_FLAGS();
-      }
-      //}}}
+    // __HAL_RCC_CLEAR_RESET_FLAGS();
     }
   //}}}
 
@@ -791,31 +829,40 @@ public:
   //}}}
 
 private:
+  const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
   RTC_HandleTypeDef rtcHandle;
   };
 //}}}
+
 //{{{
 class cApp : public cLcd {
 public:
   //{{{
   void init() {
-    adcInit();
+
     cLcd::init();
+    mAdc.init();
     mRtc.init();
+
+    mPinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET;
+    mPowerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET;
     }
   //}}}
   //{{{
   void run() {
 
     auto lastTicks = HAL_GetTick();
-    while (1) {
-      HAL_ADC_PollForConversion (&AdcHandle, 100);
-      auto value = HAL_ADC_GetValue (&AdcHandle);
-      values[getFrameNum() % kMaxValues] = value;
-      if (value < minValue)
-        minValue = value;
-      if (value > maxValue)
-        maxValue = value;
+
+    mAdc.start();
+    while (true) {
+      mAdc.poll();
+      auto value = mAdc.getValue();
+      mValues[getFrameNum() % kMaxValues] = value;
+      if (value < mMinValue)
+        mMinValue = value;
+      if (value > mMaxValue)
+        mMaxValue = value;
 
       //auto vdd = 1000.f * 1.2f / (value / 4096.f);
       auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
@@ -828,54 +875,71 @@ public:
       auto ticks = HAL_GetTick();
 
       clear (true);
-      drawString (false, dec(minValue) + "min " + dec(value)    + " " + dec(maxValue) + "max " +
+      drawString (false, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
                               dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3) + "v " +
-                              dec(ticks - lastTicks),
+                              dec(ticks - lastTicks) + " " + 
+                              (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
                        cRect (0, 0, cLcd::getWidth(), 20));
       lastTicks = ticks;
 
       drawString (false, mRtc.getTimeStr(), cRect (0, 20, cLcd::getWidth(), 40));
 
-      cPoint centre = { 400-42, 42 };
-      int16_t radius = 40;
-      drawCircle (false, centre, radius);
-
-      float hourRadius = radius * 0.7f;
-      float hourAngle = mRtc.getClockHourAngle();
-      drawLine (false, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
-
-      float minuteRadius = radius * 0.8f;
-      float minuteAngle = mRtc.getClockMinuteAngle();
-      drawLine (false, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
-
-      float secondRadius = radius * 0.9f;
-      float secondAngle = mRtc.getClockSecondAngle();
-      drawLine (false, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
-
-      int valueIndex = getFrameNum() - kMaxValues;
-      for (int i = 0; i < kMaxValues; i++) {
-        int16_t len = valueIndex > 0 ? (kMaxLen * (values[valueIndex % kMaxValues] - minValue))  / (maxValue - minValue) : 0;
-        fillRect (false, cRect (i, cLcd::getHeight()-len, i+1,  cLcd::getHeight()));
-        valueIndex++;
-        }
+      drawClock();
+      drawValues();
 
       present();
       }
     }
   //}}}
+
   static cApp* mApp;
+  cAdc mAdc;
 
 private:
+  //{{{
+  void drawClock() {
+
+    cPoint centre = { 400-42, 42 };
+    int16_t radius = 40;
+    drawCircle (false, centre, radius);
+
+    float hourRadius = radius * 0.7f;
+    float hourAngle = mRtc.getClockHourAngle();
+    drawLine (false, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
+
+    float minuteRadius = radius * 0.8f;
+    float minuteAngle = mRtc.getClockMinuteAngle();
+    drawLine (false, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
+
+    float secondRadius = radius * 0.9f;
+    float secondAngle = mRtc.getClockSecondAngle();
+    drawLine (false, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
+    }
+  //}}}
+  //{{{
+  void drawValues() {
+
+    int valueIndex = getFrameNum() - kMaxValues;
+    for (int i = 0; i < kMaxValues; i++) {
+      int16_t len = valueIndex > 0 ? (kMaxLen * (mValues[valueIndex % kMaxValues] - mMinValue))  / (mMaxValue - mMinValue) : 0;
+      fillRect (false, cRect (i, cLcd::getHeight()-len, i+1,  cLcd::getHeight()));
+      valueIndex++;
+      }
+    }
+  //}}}
+
   static const int kMaxValues = 400;
   static const int kMaxLen = 220;
 
   cRtc mRtc;
+  bool mPowerOnReset = false;
+  bool mPinReset = false;
 
   float averageVdd = 0;
 
-  uint32_t minValue = 4096;
-  uint32_t maxValue = 0;
-  uint32_t values[kMaxValues];
+  uint32_t mMinValue = 4096;
+  uint32_t mMaxValue = 0;
+  uint32_t mValues[kMaxValues];
   };
 //}}}
 cApp* cApp::mApp = nullptr;
@@ -883,52 +947,15 @@ cApp* cApp::mApp = nullptr;
 //{{{
 extern "C" {
   void SysTick_Handler() { HAL_IncTick(); }
-  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (AdcHandle.DMA_Handle); }
-  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->SpiHandle.hdmatx); }
   void SPI2_IRQHandler() { HAL_SPI_IRQHandler (&cApp::mApp->SpiHandle); }
-  //{{{
-  void HAL_ADC_MspInit (ADC_HandleTypeDef* hadc) {
-
-    __HAL_RCC_ADC1_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    //__HAL_RCC_DMA2_CLK_ENABLE();
-
-    // ADC Channel GPIO pin configuration
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    // Set the parameters to be configured
-    hdma_adc.Instance = DMA2_Stream0;
-    hdma_adc.Init.Channel  = DMA_CHANNEL_2;
-    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_adc.Init.Mode = DMA_CIRCULAR;
-    hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-    hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
-    hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init (&hdma_adc);
-    __HAL_LINKDMA (hadc, DMA_Handle, hdma_adc);
-
-    // NVIC configuration for DMA transfer complete interrupt
-    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
-    }
-  //}}}
+  void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->SpiHandle.hdmatx); }
+  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->mAdc.AdcHandle.DMA_Handle); }
   }
 //}}}
 
 int main() {
 
   HAL_Init();
-  HAL_ADC_Start (&AdcHandle);
 
   cApp::mApp = new cApp();
   cApp::mApp->init();
