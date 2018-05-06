@@ -37,8 +37,6 @@
 #define INSTRUCTION_CACHE_ENABLE     1U
 #define DATA_CACHE_ENABLE            1U
 
-#define USE_SPI_CRC                  1U
-
 //{{{  module enabled includes
 #ifdef HAL_RCC_MODULE_ENABLED
   #include "stm32f4xx_hal_rcc.h"

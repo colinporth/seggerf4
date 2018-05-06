@@ -35,18 +35,16 @@ public:
   //{{{
   void init() {
 
-    //  config CS, DISP - GPIOB
+    // config CS, DISP - GPIOB
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
+    // CS, DISP init lo
     GPIO_InitTypeDef GPIO_InitStruct;
     GPIO_InitStruct.Pin = CS_PIN | DISP_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
     HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
-
-    // disable CS, DISP lo
-    GPIOB->BSRR = (CS_PIN | DISP_PIN) << 16;
 
     __HAL_RCC_TIM2_CLK_ENABLE();
     //{{{  config VCOM GPIOB as TIM2 CH4
