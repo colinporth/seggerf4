@@ -57,29 +57,29 @@ public:
     //}}}
     //{{{  init timer timHandle
     TIM_HandleTypeDef timHandle;
-
     timHandle.Instance = TIM2;
     timHandle.Init.Period = 10000 - 1;
     uint32_t uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
     timHandle.Init.Prescaler = uwPrescalerValue;
     timHandle.Init.ClockDivision = 0;
     timHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
-
-    auto result = HAL_TIM_Base_Init (&timHandle);
+    if (HAL_TIM_Base_Init (&timHandle))
+      printf ("HAL_TIM_Base_Init failed\n");
     //}}}
     //{{{  init timer timOcInit
-    TIM_OC_InitTypeDef timOcIn;
-    timOcIn.OCMode       = TIM_OCMODE_PWM1;
-    timOcIn.OCPolarity   = TIM_OCPOLARITY_HIGH;
-    timOcIn.OCFastMode   = TIM_OCFAST_DISABLE;
-    timOcIn.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
-    timOcIn.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-    timOcIn.OCIdleState  = TIM_OCIDLESTATE_RESET;
-    timOcIn.Pulse = 10000 /2;
-
-    result = HAL_TIM_PWM_ConfigChannel (&timHandle, &timOcIn, TIM_CHANNEL_4);
+    TIM_OC_InitTypeDef timOcInit;
+    timOcInit.OCMode       = TIM_OCMODE_PWM1;
+    timOcInit.OCPolarity   = TIM_OCPOLARITY_HIGH;
+    timOcInit.OCFastMode   = TIM_OCFAST_DISABLE;
+    timOcInit.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+    timOcInit.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+    timOcInit.OCIdleState  = TIM_OCIDLESTATE_RESET;
+    timOcInit.Pulse = 10000 /2;
+    if (HAL_TIM_PWM_ConfigChannel (&timHandle, &timOcInit, TIM_CHANNEL_4))
+      printf ("HAL_TIM_PWM_ConfigChannel failed\n");
     //}}}
-    result = HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_4);
+    if (HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_4))
+      printf ("HAL_TIM_PWM_Start failed\n");
 
     //{{{  config SPI2 tx
     // config SPI2 GPIOB
@@ -589,7 +589,8 @@ public:
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    auto result = HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100);
+    if (HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100))
+      printf ("HAL_SPI_Transmit failed\n");
     //while (HAL_SPI_GetState(&mSpiHandle) != HAL_SPI_STATE_READY) {}
     //while (SPI2->SR & SPI_FLAG_BSY);
 
@@ -715,12 +716,14 @@ public:
     rccOscInitStruct.PLL.PLLState = RCC_PLL_NONE;
     rccOscInitStruct.LSEState = RCC_LSE_ON;
     rccOscInitStruct.LSIState = RCC_LSI_OFF;
-    auto result = HAL_RCC_OscConfig (&rccOscInitStruct);
+    if (HAL_RCC_OscConfig (&rccOscInitStruct))
+      printf ("HAL_RCC_OscConfig failed\n");
 
     RCC_PeriphCLKInitTypeDef periphClkInitStruct;
     periphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
     periphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
-    result = HAL_RCCEx_PeriphCLKConfig (&periphClkInitStruct);
+    if (HAL_RCCEx_PeriphCLKConfig (&periphClkInitStruct))
+      printf ("HAL_RCCEx_PeriphCLKConfig failed\n");
     __HAL_RCC_RTC_ENABLE();
 
     // Configure LSE RTC prescaler and RTC data registers
@@ -732,7 +735,8 @@ public:
     rtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
     rtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
     __HAL_RTC_RESET_HANDLE_STATE (&rtcHandle);
-    result = HAL_RTC_Init (&rtcHandle);
+    if (HAL_RTC_Init (&rtcHandle))
+      printf ("HAL_RTC_Init failed\n");
 
     // parse buildTime, buildDate strings
     // time hh:mm:ss      - 8
@@ -765,7 +769,7 @@ public:
       rtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;
       rtcDate.Month = month;
       rtcDate.Year = year;
-      result = HAL_RTC_SetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
+      HAL_RTC_SetDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
 
       // set Time 02:00:00
       rtcTime.Hours = hours;
@@ -774,7 +778,7 @@ public:
       rtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
       rtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
       rtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
-      result = HAL_RTC_SetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+      HAL_RTC_SetTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
 
       // Writes a data in a RTC Backup data Register0
       //HAL_RTCEx_BKUPWrite (&rtcHandle, RTC_BKP_DR0, 0x32F2);
@@ -783,20 +787,6 @@ public:
     }
   //}}}
 
-  //{{{
-  std::string getTimeString() {
-
-    RTC_TimeTypeDef rtcTime;
-    getTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
-
-    RTC_DateTypeDef rtcDate;
-    getDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
-
-    return dec(rtcTime.Hours,2) + ":" + dec(rtcTime.Minutes,2) + ":" + dec(rtcTime.Seconds,2) + " " +
-           kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4) + " " +
-           dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction);
-    }
-  //}}}
   //{{{
   float getClockHourAngle() {
 
@@ -816,6 +806,20 @@ public:
 
     getTime (&rtcHandle, &mRtcTime, RTC_FORMAT_BIN);
     return (1.f - (mRtcTime.Seconds / 30.f)) * kPi;
+    }
+  //}}}
+  //{{{
+  std::string getClockTimeString() {
+
+    RTC_TimeTypeDef rtcTime;
+    getTime (&rtcHandle, &rtcTime, RTC_FORMAT_BIN);
+
+    RTC_DateTypeDef rtcDate;
+    getDate (&rtcHandle, &rtcDate, RTC_FORMAT_BIN);
+
+    return dec(rtcTime.Hours,2) + ":" + dec(rtcTime.Minutes,2) + ":" + dec(rtcTime.Seconds,2) + " " +
+           kMonth[rtcDate.Month] + " " + dec(rtcDate.Date,2) + " " + dec(2000 + rtcDate.Year,4) + " " +
+           dec(rtcTime.SubSeconds) + " " + dec(rtcTime.SecondFraction);
     }
   //}}}
   //{{{
@@ -919,22 +923,22 @@ public:
       //auto vdd = 1000.f * 1.2f / (value / 4096.f);
       auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
 
-      if (averageVdd == 0.f)
-        averageVdd = vdd;
+      if (mAverageVdd == 0.f)
+        mAverageVdd = vdd;
       else
-        averageVdd = ((averageVdd * 99.f) + vdd) / 100.f;
+        mAverageVdd = ((mAverageVdd * 99.f) + vdd) / 100.f;
 
       auto ticks = HAL_GetTick();
 
       clear (true);
       drawString (false, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
-                         dec(int(averageVdd) / 1000) + "." + dec(int(averageVdd) % 1000, 3) + "v " +
+                         dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
                          dec(ticks - lastTicks) + " " +
                          (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
                        cRect (0, 0, cLcd::getWidth(), 20));
       lastTicks = ticks;
 
-      drawString (false, mRtc.getTimeString(), cRect (0, 20, cLcd::getWidth(), 40));
+      drawString (false, mRtc.getClockTimeString(), cRect (0, 20, cLcd::getWidth(), 40));
       drawString (false, mRtc.getBuildTimeString(), cRect (0, 40, cLcd::getWidth(), 60));
 
       drawClock();
@@ -984,8 +988,8 @@ private:
     }
   //}}}
 
-  static const int kMaxValues = 400;
   static const int kMaxLen = 220;
+  static const int kMaxValues = 400;
 
   cRtc mRtc;
   bool mPowerOnReset;
@@ -994,7 +998,7 @@ private:
   uint32_t mMinValue = 4096;
   uint32_t mMaxValue = 0;
   uint32_t mValues[kMaxValues];
-  float averageVdd = 0;
+  float mAverageVdd = 0;
   };
 //}}}
 cApp* cApp::mApp = nullptr;
@@ -1012,7 +1016,7 @@ extern "C" {
   void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->mAdc.mAdcHandle.DMA_Handle); }
   }
 //}}}
-                          
+
 int main() {
   printf ("main started\n");
 
@@ -1020,7 +1024,6 @@ int main() {
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST) != RESET;
   bool powerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST) != RESET;
   __HAL_RCC_CLEAR_RESET_FLAGS();
-
 
   printf ("start cApp pin:%d power:%d\n", pinReset, powerOnReset);
   cApp::mApp = new cApp (pinReset, powerOnReset);
