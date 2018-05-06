@@ -733,16 +733,26 @@ public:
     __HAL_RCC_RTC_ENABLE();
 
     // Configure LSE RTC prescaler and RTC data registers
-    mRtcHandle.Instance = RTC;
-    mRtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
-    mRtcHandle.Init.AsynchPrediv = 0x7F;
-    mRtcHandle.Init.SynchPrediv = 0x00FF;
-    mRtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
-    mRtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-    mRtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-    __HAL_RTC_RESET_HANDLE_STATE (&mRtcHandle);
-    if (HAL_RTC_Init (&mRtcHandle))
-      printf ("HAL_RTC_Init failed\n");
+    writeProtectDisable();
+    if (enterInitMode()) {
+      //{{{  init rtc
+      RTC->CR = RTC_HOURFORMAT_24;
+      RTC->PRER = (uint32_t)(0x00FF);
+      RTC->PRER |= (uint32_t)(0x7F << 16U);
+
+      // Exit Initialization mode
+      RTC->ISR &= (uint32_t)~RTC_ISR_INIT;
+
+      // If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed
+      if ((RTC->CR & RTC_CR_BYPSHAD) == RESET)
+        if (!waitForSynchro())
+          printf ("timeout waiting for synchro\n");
+
+      RTC->TAFCR &= (uint32_t)~RTC_TAFCR_ALARMOUTTYPE;
+      RTC->TAFCR |= (uint32_t)RTC_OUTPUT_TYPE_OPENDRAIN;
+      }
+      //}}}
+    writeProtectEnable();
 
     // parse buildTime, buildDate strings
     // time hh:mm:ss      - 8
@@ -759,37 +769,35 @@ public:
         break;
         }
 
-    getDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
-    uint32_t clockDateTime = ((((mRtcDate.Year*12 + mRtcDate.Month)*31 + mRtcDate.Date)*24 +
-                                 mRtcTime.Hours)*60 + mRtcTime.Minutes)*60 + mRtcTime.Seconds;
+    getDateTime();
+    uint32_t clockDateTime = ((((mDateTime.Year*12 + mDateTime.Month)*31 + mDateTime.Date)*24 +
+                                 mDateTime.Hours)*60 + mDateTime.Minutes)*60 + mDateTime.Seconds;
     uint32_t buildDateTime = ((((year*12 + month)*31 + date)*24 + hours)*60 + minutes)*60 + seconds;
     if (clockDateTime < buildDateTime+7) {
       //{{{  set clockDateTime from buildDateTime
       printf ("cRtc::init set clockDateTime < buildDateTime %d < %d\n", clockDateTime, buildDateTime);
 
-      mRtcTime.TimeFormat = RTC_HOURFORMAT12_AM;
-      mRtcTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-      mRtcTime.StoreOperation = RTC_STOREOPERATION_RESET;
+      mDateTime.TimeFormat = RTC_HOURFORMAT12_AM;
+      mDateTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+      mDateTime.StoreOperation = RTC_STOREOPERATION_RESET;
 
       buildDateTime += 7;
-      mRtcTime.Seconds = buildDateTime % 60;
+      mDateTime.Seconds = buildDateTime % 60;
       buildDateTime /= 60;
-      mRtcTime.Minutes = buildDateTime % 60;
+      mDateTime.Minutes = buildDateTime % 60;
       buildDateTime /= 60;
-      mRtcTime.Hours = buildDateTime % 24;
+      mDateTime.Hours = buildDateTime % 24;
 
       buildDateTime /= 24;
-      mRtcDate.Date = buildDateTime % 31;
+      mDateTime.Date = buildDateTime % 31;
       buildDateTime /= 31;
-      mRtcDate.Month = buildDateTime % 12;
+      mDateTime.Month = buildDateTime % 12;
       buildDateTime /= 12;
-      mRtcDate.Year = buildDateTime;
+      mDateTime.Year = buildDateTime;
 
-      mRtcDate.WeekDay = RTC_WEEKDAY_FRIDAY;  // wrong
+      mDateTime.WeekDay = RTC_WEEKDAY_FRIDAY;  // wrong
 
-      setDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
-      // Writes a data in a RTC Backup data Register0
-      //HAL_RTCEx_BKUPWrite (&mRtcHandle, RTC_BKP_DR0, 0x32F2);
+      setDateTime();
       }
       //}}}
     }
@@ -798,32 +806,32 @@ public:
   //{{{
   float getClockHourAngle() {
 
-    getDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
-    return (1.f - ((mRtcTime.Hours + (mRtcTime.Minutes / 60.f)) / 6.f)) * kPi;
+    getDateTime();
+    return (1.f - ((mDateTime.Hours + (mDateTime.Minutes / 60.f)) / 6.f)) * kPi;
     }
   //}}}
   //{{{
   float getClockMinuteAngle() {
 
-    getDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
-    return (1.f - ((mRtcTime.Minutes + (mRtcTime.Seconds / 60.f))/ 30.f)) * kPi;
+    getDateTime();
+    return (1.f - ((mDateTime.Minutes + (mDateTime.Seconds / 60.f))/ 30.f)) * kPi;
     }
   //}}}
   //{{{
   float getClockSecondAngle() {
 
-    getDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
-    return (1.f - (mRtcTime.Seconds / 30.f)) * kPi;
+    getDateTime();
+    return (1.f - (mDateTime.Seconds / 30.f)) * kPi;
     }
   //}}}
   //{{{
   std::string getClockTimeString() {
 
-    getDateTime (&mRtcHandle, &mRtcDate, &mRtcTime);
+    getDateTime();
 
-    return dec(mRtcTime.Hours,2) + ":" + dec(mRtcTime.Minutes,2) + ":" + dec(mRtcTime.Seconds,2) + " " +
-           kMonth[mRtcDate.Month] + " " + dec(mRtcDate.Date,2) + " " + dec(2000 + mRtcDate.Year,4) + " " +
-           dec(mRtcTime.SubSeconds) + " " + dec(mRtcTime.SecondFraction);
+    return dec(mDateTime.Hours,2) + ":" + dec(mDateTime.Minutes,2) + ":" + dec(mDateTime.Seconds,2) + " " +
+           kMonth[mDateTime.Month] + " " + dec(mDateTime.Date,2) + " " + dec(2000 + mDateTime.Year,4) + " " +
+           dec(mDateTime.SubSeconds) + " " + dec(mDateTime.SecondFraction);
     }
   //}}}
   //{{{
@@ -835,67 +843,64 @@ public:
 
 private:
   //{{{
-  void getDateTime (RTC_HandleTypeDef* hrtc, RTC_DateTypeDef* date, RTC_TimeTypeDef* time) {
+  void getDateTime() {
 
-    time->SubSeconds = RTC->SSR;
-    time->SecondFraction = RTC->PRER & RTC_PRER_PREDIV_S;
+    mDateTime.SubSeconds = RTC->SSR;
+    mDateTime.SecondFraction = RTC->PRER & RTC_PRER_PREDIV_S;
 
     uint32_t tr = RTC->TR;
-    time->TimeFormat = (tr & (RTC_TR_PM)) >> 16U;
-    time->Hours = bcd2ToByte ((tr & (RTC_TR_HT | RTC_TR_HU)) >> 16U);
-    time->Minutes = bcd2ToByte ((tr & (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);
-    time->Seconds = bcd2ToByte (tr & (RTC_TR_ST | RTC_TR_SU));
+    mDateTime.TimeFormat = (tr & (RTC_TR_PM)) >> 16U;
+    mDateTime.Hours = bcd2ToByte ((tr & (RTC_TR_HT | RTC_TR_HU)) >> 16U);
+    mDateTime.Minutes = bcd2ToByte ((tr & (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);
+    mDateTime.Seconds = bcd2ToByte (tr & (RTC_TR_ST | RTC_TR_SU));
 
     uint32_t dr = RTC->DR;
-    date->Year = bcd2ToByte ((dr & (RTC_DR_YT | RTC_DR_YU)) >> 16U);
-    date->WeekDay = (dr & (RTC_DR_WDU)) >> 13U;
-    date->Month = bcd2ToByte ((dr & (RTC_DR_MT | RTC_DR_MU)) >> 8U);
-    date->Date = bcd2ToByte (dr & (RTC_DR_DT | RTC_DR_DU));
+    mDateTime.Year = bcd2ToByte ((dr & (RTC_DR_YT | RTC_DR_YU)) >> 16U);
+    mDateTime.WeekDay = (dr & (RTC_DR_WDU)) >> 13U;
+    mDateTime.Month = bcd2ToByte ((dr & (RTC_DR_MT | RTC_DR_MU)) >> 8U);
+    mDateTime.Date = bcd2ToByte (dr & (RTC_DR_DT | RTC_DR_DU));
     }
   //}}}
   //{{{
-  void setDateTime (RTC_HandleTypeDef* hrtc, RTC_DateTypeDef* date, RTC_TimeTypeDef* time) {
+  void setDateTime() {
 
-    __HAL_RTC_WRITEPROTECTION_DISABLE (hrtc);
-
-    // Set Initialization mode
-    if (RTC_EnterInitMode (hrtc) == HAL_OK) {
-      __HAL_RTC_WRITEPROTECTION_DISABLE (hrtc);
+    writeProtectDisable();
+    if (enterInitMode()) {
       if ((RTC->CR & RTC_CR_FMT) == (uint32_t)RESET)
-        time->TimeFormat = 0x00U;
+        mDateTime.TimeFormat = 0x00U;
 
-      if ((date->Month & 0x10U) == 0x10U)
-        date->Month = (uint8_t)((date->Month & (uint8_t)~(0x10U)) + (uint8_t)0x0AU);
+      if ((mDateTime.Month & 0x10U) == 0x10U)
+        mDateTime.Month = (uint8_t)((mDateTime.Month & (uint8_t)~(0x10U)) + (uint8_t)0x0AU);
 
       // Set the RTC_DR register
-      uint32_t tmp = ((uint32_t)byteToBcd2(date->Year) << 16U) |
-                     ((uint32_t)byteToBcd2(date->Month) << 8U) |
-                     ((uint32_t)byteToBcd2(date->Date))        |
-                     ((uint32_t)date->WeekDay << 13U);
+      uint32_t tmp = ((uint32_t)byteToBcd2 (mDateTime.Year) << 16U) |
+                     ((uint32_t)byteToBcd2 (mDateTime.Month) << 8U) |
+                     ((uint32_t)byteToBcd2 (mDateTime.Date))        |
+                     ((uint32_t)mDateTime.WeekDay << 13U);
       RTC->DR = (uint32_t)(tmp & RTC_DR_RESERVED_MASK);
 
       // Set the RTC_TR register
-      tmp = (uint32_t)(((uint32_t)byteToBcd2(time->Hours) << 16U) |
-                       ((uint32_t)byteToBcd2(time->Minutes) << 8U) |
-                       ((uint32_t)byteToBcd2(time->Seconds)) |
-                      (((uint32_t)time->TimeFormat) << 16U));
+      tmp = (uint32_t)(((uint32_t)byteToBcd2 (mDateTime.Hours) << 16U) |
+                       ((uint32_t)byteToBcd2 (mDateTime.Minutes) << 8U) |
+                       ((uint32_t)byteToBcd2 (mDateTime.Seconds)) |
+                      (((uint32_t)mDateTime.TimeFormat) << 16U));
       RTC->TR = (uint32_t)(tmp & RTC_TR_RESERVED_MASK);
 
       // Clear the bits to be configured
       RTC->CR &= (uint32_t)~RTC_CR_BCK;
 
       // Configure the RTC_CR register
-      RTC->CR |= (uint32_t)(time->DayLightSaving | time->StoreOperation);
+      RTC->CR |= (uint32_t)(mDateTime.DayLightSaving | mDateTime.StoreOperation);
 
       // Exit Initialization mode
       RTC->ISR &= (uint32_t)~RTC_ISR_INIT;
 
-      // If CR_BYPSHAD bit = 0, wait for synchro else this check is not needed
       if ((RTC->CR & RTC_CR_BYPSHAD) == RESET)
-        if (HAL_RTC_WaitForSynchro(hrtc) != HAL_OK){}
+        if (!waitForSynchro())
+          printf ("setDateTime - timeout waiting for synchro\n");
       }
 
-    __HAL_RTC_WRITEPROTECTION_ENABLE(hrtc);
+    writeProtectEnable();
     }
   //}}}
   //{{{
@@ -918,12 +923,96 @@ private:
     }
   //}}}
 
+  //{{{
+  void writeProtectDisable() {
+    RTC->WPR = 0xCAU;
+    RTC->WPR = 0x53U;
+    }
+  //}}}
+  //{{{
+  bool enterInitMode() {
+
+    // Check if the Initialization mode is set
+    if ((RTC->ISR & RTC_ISR_INITF) == (uint32_t)RESET) {
+      // Set the Initialization mode
+      RTC->ISR = (uint32_t)RTC_INIT_MASK;
+
+      /* Get tick */
+      uint32_t tickstart = HAL_GetTick();
+
+      // Wait till RTC is in INIT state and if Time out is reached exit
+      while ((RTC->ISR & RTC_ISR_INITF) == (uint32_t)RESET)
+        if ((HAL_GetTick() - tickstart ) > RTC_TIMEOUT_VALUE)
+          return false;
+      }
+
+    return true;
+    }
+  //}}}
+  //{{{
+  bool waitForSynchro() {
+
+    // Clear RSF flag
+    RTC->ISR &= (uint32_t)RTC_RSF_MASK;
+
+    uint32_t tickstart = HAL_GetTick();
+
+    // Wait the registers to be synchronised
+    while ((RTC->ISR & RTC_ISR_RSF) == (uint32_t)RESET)
+      if ((HAL_GetTick() - tickstart ) > RTC_TIMEOUT_VALUE)
+        return false;
+
+    return true;
+    }
+  //}}}
+  //{{{
+  void writeProtectEnable() {
+    RTC->WPR = 0xFFU;
+    }
+  //}}}
+
   const float kPi = 3.1415926f;
   const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
   RTC_HandleTypeDef mRtcHandle;
-  RTC_TimeTypeDef mRtcTime;
-  RTC_DateTypeDef mRtcDate;
+
+  //{{{  struct sDateTime
+  struct sDateTime {
+    uint8_t Hours;            /*!< Specifies the RTC Time Hour.
+                                   This parameter must be a number between Min_Data = 0 and Max_Data = 12 if the RTC_HourFormat_12 is selected.
+                                   This parameter must be a number between Min_Data = 0 and Max_Data = 23 if the RTC_HourFormat_24 is selected  */
+    uint8_t Minutes;          /*!< Specifies the RTC Time Minutes.
+                                   This parameter must be a number between Min_Data = 0 and Max_Data = 59 */
+    uint8_t Seconds;          /*!< Specifies the RTC Time Seconds.
+                                   This parameter must be a number between Min_Data = 0 and Max_Data = 59 */
+    uint8_t TimeFormat;       /*!< Specifies the RTC AM/PM Time.
+                                   This parameter can be a value of @ref RTC_AM_PM_Definitions */
+    uint32_t SubSeconds;     /*!< Specifies the RTC_SSR RTC Sub Second register content.
+                                   This parameter corresponds to a time unit range between [0-1] Second
+                                   with [1 Sec / SecondFraction +1] granularity */
+    uint32_t SecondFraction;  /*!< Specifies the range or granularity of Sub Second register content
+                                   corresponding to Synchronous pre-scaler factor value (PREDIV_S)
+                                   This parameter corresponds to a time unit range between [0-1] Second
+                                   with [1 Sec / SecondFraction +1] granularity.
+                                   This field will be used only by HAL_RTC_GetTime function */
+    uint32_t DayLightSaving;  /*!< Specifies DayLight Save Operation.
+                                   This parameter can be a value of @ref RTC_DayLightSaving_Definitions */
+    uint32_t StoreOperation;  /*!< Specifies RTC_StoreOperation value to be written in the BCK bit
+                                   in CR register to store the operation.
+                                   This parameter can be a value of @ref RTC_StoreOperation_Definitions */
+
+    uint8_t WeekDay;  /*!< Specifies the RTC Date WeekDay.
+                           This parameter can be a value of @ref RTC_WeekDay_Definitions */
+    uint8_t Month;    /*!< Specifies the RTC Date Month (in BCD format).
+                           This parameter can be a value of @ref RTC_Month_Date_Definitions */
+    uint8_t Date;     /*!< Specifies the RTC Date.
+                           This parameter must be a number between Min_Data = 1 and Max_Data = 31 */
+    uint8_t Year;     /*!< Specifies the RTC Date Year.
+                           This parameter must be a number between Min_Data = 0 and Max_Data = 99 */
+    };
+  //}}}
+  sDateTime mDateTime;
+
   std::string mBuildTime = __TIME__;
   std::string mBuildDate = __DATE__;
   };

@@ -114,8 +114,6 @@
         <file file_name="drivers/Src/stm32f4xx_hal_pwr_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_rcc.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_rcc_ex.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_rtc.c" />
-        <file file_name="drivers/Src/stm32f4xx_hal_rtc_ex.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_spi.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_tim.c" />
         <file file_name="drivers/Src/stm32f4xx_hal_tim_ex.c" />
@@ -128,7 +126,6 @@
         <file file_name="drivers/Src/stm32f4xx_ll_i2c.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_pwr.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_rcc.c" />
-        <file file_name="drivers/Src/stm32f4xx_ll_rtc.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_spi.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_tim.c" />
         <file file_name="drivers/Src/stm32f4xx_ll_usart.c" />
