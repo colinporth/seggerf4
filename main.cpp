@@ -150,9 +150,9 @@ public:
     }
   //}}}
 
-  const uint16_t getWidth() { return 400; }
-  const uint16_t getHeight() { return 240; }
-  const cPoint getSize() { return cPoint (getWidth(), getHeight()); }
+  const uint16_t getWidth() { return kWidth; }
+  const uint16_t getHeight() { return kHeight; }
+  const cPoint getSize() { return cPoint (kWidth, kHeight); }
   const cRect getRect() { return cRect (getSize()); }
   const cPoint getCentre() { return getSize()/2; }
 
@@ -611,6 +611,8 @@ public:
   SPI_HandleTypeDef* getSpiHandle() { return &mSpiHandle; }
 
 private:
+  const uint16_t kWidth = 400;
+  const uint16_t kHeight = 240;
   const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
   const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
@@ -632,7 +634,7 @@ private:
     }
   //}}}
 
-  // commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
+  // frameBuf - commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
   uint8_t* mFrameBuf = nullptr;
   int mFrameNum = 0;
 
@@ -932,7 +934,6 @@ private:
   //{{{
   class cDateTime {
   public:
-    const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     cDateTime() {}
     //{{{
     cDateTime (const std::string& buildDateStr, const std::string& buildTimeStr) {
@@ -979,6 +980,7 @@ private:
       }
     //}}}
 
+    //{{{
     void setFromValue (uint32_t value) {
       TimeFormat = RTC_HOURFORMAT12_AM;
       DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
@@ -998,6 +1000,7 @@ private:
 
       WeekDay = RTC_WEEKDAY_FRIDAY;  // wrong
       }
+    //}}}
 
     uint8_t Year;
     uint8_t Month;
@@ -1011,13 +1014,13 @@ private:
     uint32_t SecondFraction;
     uint32_t DayLightSaving;
     uint32_t StoreOperation;
+
+  private:
+    const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     };
   //}}}
-
-  // vars
-  RTC_HandleTypeDef mRtcHandle;
-
   cDateTime mDateTime;
+  RTC_HandleTypeDef mRtcHandle;
   bool mClockSet = false;
   };
 //}}}
