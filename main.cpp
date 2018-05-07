@@ -1162,7 +1162,7 @@ public:
       drawString (eOff, eSmall, eLeft, mRtc.getBuildTimeDateString(), cPoint(0, 20));
       drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
 
-      drawClock (getCentre(), 100);
+      drawClock (getCentre(), getHeight()/2 - 2);
       //drawClock (cPoint(400-42, 42), 40);
       //drawValues();
       drawTests();
