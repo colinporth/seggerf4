@@ -247,33 +247,16 @@ public:
 
         for (int16_t y = 0; y < fontChar->height; y++) {
           int16_t x = xfirst;
-          if (true) {
-            int16_t charBits = fontChar->width;
-            while (charBits > 0) {
-              uint8_t xbit = x & 7;
-              if (xbit) {
-                *framePtr++ ^= (*charBytes) >> xbit;
-                *framePtr ^= (*charBytes) << (8 - xbit);
-                }
-              else
-                *framePtr++ ^= *charBytes;
-              charBits -= 8;
-              charBytes++;
-              }
+          int16_t charBits = fontChar->width;
+          uint8_t charByte = 0;
+          while (charBits > 0) {
+            uint8_t xbit = x & 7;
+            *framePtr++ ^= charByte | ((*charBytes) >> xbit);
+            charByte = (*charBytes) << (8 - xbit);
+            charBytes++;
+            charBits -= 8;
             }
-          else {
-            // not yet
-            int16_t charBits = fontChar->width;
-            uint8_t charByte = 0;
-            while (charBits > 0) {
-              uint8_t xbit = x & 7;
-              *framePtr++ ^= charByte | ((*charBytes) >> xbit);
-              charByte = (*charBytes) << (8 - xbit);
-              charBytes++;
-              charBits -= 8;
-              }
-            *framePtr++ ^= charByte;
-            }
+          *framePtr ^= charByte;
           framePtr += getPitch() - (fontChar->width + 7)/8;
           }
         rect.left += fontChar->advance;
