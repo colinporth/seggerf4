@@ -1030,6 +1030,7 @@ private:
 class cApp : public cLcd {
 public:
   cApp (bool pinReset, bool powerOnReset) : mPinReset(pinReset), mPowerOnReset(powerOnReset) {}
+
   //{{{
   void init() {
 
@@ -1066,27 +1067,25 @@ public:
       auto ticks = HAL_GetTick();
 
       clear (eOn);
-      drawString (eInvert, eSmall, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
-                           dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
-                           dec(ticks - lastTicks) + " " +
-                           (mRtc.getClockSet() ? "set ": "") +
-                           (mPowerOnReset ? "pow ": "") +
-                           (mPinReset ? "pin" : ""),
+      drawString (eInvert, eSmall, 
+                  dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
+                  dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
+                  dec (ticks - lastTicks) + " " +
+                  (mRtc.getClockSet() ? "set ": "") +
+                  (mPowerOnReset ? "pow ": "") +
+                  (mPinReset ? "pin" : ""),
                   cRect (0, 0, getWidth(), 20));
       lastTicks = ticks;
 
-      drawString (eInvert, eMedium, mRtc.getClockTimeDateString(), cRect (0, 20, getWidth(), 60));
-      drawString (eInvert, eMedium, mRtc.getBuildTimeDateString(), cRect (0, 60, getWidth(), 100));
-      drawString (eInvert, eBigger, mRtc.getClockTimeString(), cRect (0, 100, getWidth(), 220));
+      drawString (eOff, eMedium, mRtc.getClockTimeDateString(), cRect (0, 20, getWidth(), 60));
+      drawString (eOff, eMedium, mRtc.getBuildTimeDateString(), cRect (0, 60, getWidth(), 100));
+      drawString (eOff, eBigger, mRtc.getClockTimeString(), cRect (0, 100, getWidth(), 220));
 
+      drawClock (getCentre(), 100);
       //drawClock (cPoint(400-42, 42), 40);
       //drawValues();
-      drawClock (getCentre(), 100);
 
       present();
-
-      if (getFrameNum() % 500 == 1)
-        printf ("cApp::run loop %d %d\n", ticks, getFrameNum());
       }
     }
   //}}}
