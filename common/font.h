@@ -21,3 +21,6 @@ typedef struct font {
 } font_t;
 
 extern const font_t font18;
+extern const font_t font36;
+extern const font_t font72;
+extern const font_t font120;

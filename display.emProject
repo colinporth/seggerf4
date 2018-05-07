@@ -152,6 +152,9 @@
       <file file_name="common/utils.h" />
       <file file_name="common/font18.c" />
       <file file_name="font.h" />
+      <file file_name="common/font36.c" />
+      <file file_name="common/font120.c" />
+      <file file_name="common/font72.c" />
     </folder>
   </project>
   <configuration

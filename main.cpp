@@ -32,6 +32,7 @@ public:
   #define ABS(X)     ((X) > 0 ? (X) : -(X))
   //}}}
   enum eDraw { eInvert, eOff, eOn };
+  enum eFont { eSmall, eMedium, eBig, eBigger };
   //{{{
   void init() {
 
@@ -233,36 +234,47 @@ public:
     }
   //}}}
   //{{{
-  void drawString (eDraw draw, const std::string& str, cRect rect) {
+  void drawString (eDraw draw, eFont font, const std::string& str, cRect rect) {
+  // simple char clip to width
 
-    const font_t* font = &font18;
+    const font_t* drawFont;
+    if (font == eSmall)
+      drawFont = &font18;
+    else if (font == eMedium)
+      drawFont = &font36;
+    else if (font == eBig)
+      drawFont = &font72;
+    else if (font == eBigger)
+      drawFont = &font120;
 
     for (auto ch : str) {
-      if ((ch >= font->firstChar) && (ch <= font->lastChar)) {
-        auto fontChar = (fontChar_t*)(font->glyphsBase + font->glyphOffsets[ch - font->firstChar]);
-        auto charBytes = (uint8_t*)fontChar + 5;
+      if ((ch >= drawFont->firstChar) && (ch <= drawFont->lastChar)) {
+        auto fontChar = (fontChar_t*)(drawFont->glyphsBase + drawFont->glyphOffsets[ch - drawFont->firstChar]);
+        if (rect.left + fontChar->left + fontChar->width < getWidth()) {
+          auto charBytes = (uint8_t*)fontChar + 5;
 
-        int16_t xfirst = rect.left + fontChar->left;
-        auto framePtr = getFramePtr (rect.top + font->height - fontChar->top) + xfirst/8;
+          int16_t xfirst = rect.left + fontChar->left;
+          auto framePtr = getFramePtr (rect.top + drawFont->height - fontChar->top) + xfirst/8;
 
-        for (int16_t y = 0; y < fontChar->height; y++) {
-          int16_t x = xfirst;
-          int16_t charBits = fontChar->width;
-          uint8_t charByte = 0;
-          while (charBits > 0) {
-            uint8_t xbit = x & 7;
-            *framePtr++ ^= charByte | ((*charBytes) >> xbit);
-            charByte = (*charBytes) << (8 - xbit);
-            charBytes++;
-            charBits -= 8;
+          for (int16_t y = 0; y < fontChar->height; y++) {
+            int16_t x = xfirst;
+            int16_t charBits = fontChar->width;
+            uint8_t charByte = 0;
+            while (charBits > 0) {
+              uint8_t xbit = x & 7;
+              *framePtr++ ^= charByte | ((*charBytes) >> xbit);
+              charByte = (*charBytes) << (8 - xbit);
+              charBytes++;
+              charBits -= 8;
+              }
+            *framePtr ^= charByte;
+            framePtr += getPitch() - (fontChar->width + 7)/8;
             }
-          *framePtr ^= charByte;
-          framePtr += getPitch() - (fontChar->width + 7)/8;
           }
         rect.left += fontChar->advance;
         }
       else
-        rect.left += font->spaceWidth;
+        rect.left += drawFont->spaceWidth;
       }
     }
   //}}}
@@ -776,6 +788,12 @@ public:
     }
   //}}}
   //{{{
+  std::string getClockTimeString() {
+
+    return mDateTime.getTimeString();
+    }
+  //}}}
+  //{{{
   std::string getClockTimeDateString() {
 
     return mDateTime.getTimeDateString();
@@ -1048,7 +1066,7 @@ public:
       auto ticks = HAL_GetTick();
 
       clear (eOn);
-      drawString (eInvert, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
+      drawString (eInvert, eSmall, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
                            dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
                            dec(ticks - lastTicks) + " " +
                            (mRtc.getClockSet() ? "set ": "") +
@@ -1057,8 +1075,9 @@ public:
                   cRect (0, 0, getWidth(), 20));
       lastTicks = ticks;
 
-      drawString (eInvert, mRtc.getClockTimeDateString(), cRect (0, 20, getWidth(), 40));
-      drawString (eInvert, mRtc.getBuildTimeDateString(), cRect (0, 40, getWidth(), 60));
+      drawString (eInvert, eMedium, mRtc.getClockTimeDateString(), cRect (0, 20, getWidth(), 60));
+      drawString (eInvert, eMedium, mRtc.getBuildTimeDateString(), cRect (0, 60, getWidth(), 100));
+      drawString (eInvert, eBigger, mRtc.getClockTimeString(), cRect (0, 100, getWidth(), 220));
 
       //drawClock (cPoint(400-42, 42), 40);
       //drawValues();
