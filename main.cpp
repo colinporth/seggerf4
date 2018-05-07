@@ -207,7 +207,13 @@ public:
       uint8_t mask = kFirstMask[rect.left & 7] & kLastMask[(rect.right-1) & 7];
       auto framePtr = getFramePtr (rect.top) + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
-        *framePtr ^= mask;
+        if (draw == eInvert)
+          *framePtr ^= mask;
+        else if (draw == eOff)
+          *framePtr &= ~mask;
+        else
+          *framePtr |= mask;
+
         framePtr += getPitch();
         }
       }
@@ -219,17 +225,35 @@ public:
       auto framePtr = getFramePtr (rect.top) + firstByte + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
         uint8_t byte = firstByte;
-        *framePtr++ ^= firstMask;
+        if (draw == eInvert)
+          *framePtr ^= firstMask;
+        else if (draw == eOff)
+          *framePtr &= ~firstMask;
+        else
+          *framePtr |= firstMask;
+
         byte++;
 
         while (byte < lastByte) {
           *framePtr++ ^= 0xFF;
+          if (draw == eInvert)
+            *framePtr++ ^= 0xFF;
+          else if (draw == eOff)
+            *framePtr++ &= 0x00;
+          else
+            *framePtr++ |= 0xFF;
+
           byte++;
           }
 
-        if (byte == lastByte)
-          *framePtr++ ^= lastMask;
-
+        if (byte == lastByte) {
+          if (draw == eInvert)
+            *framePtr ^= lastMask;
+          else if (draw == eOff)
+            *framePtr &= ~lastMask;
+          else
+            *framePtr |= lastMask;
+          }
         framePtr += getPitch() - (lastByte - firstByte) - 1;
         }
      }
@@ -297,12 +321,22 @@ public:
             uint8_t charByte = 0;
             while (charBits > 0) {
               uint8_t xbit = x & 7;
-              *framePtr++ ^= charByte | ((*charBytes) >> xbit);
+              if (draw == eInvert)
+                *framePtr++ ^= charByte | ((*charBytes) >> xbit);
+              else if (draw == eOff)
+                *framePtr++ &= ~(charByte | ((*charBytes) >> xbit));
+              else
+                *framePtr++ |= charByte | ((*charBytes) >> xbit);
               charByte = (*charBytes) << (8 - xbit);
               charBytes++;
               charBits -= 8;
               }
-            *framePtr ^= charByte;
+            if (draw == eInvert)
+              *framePtr ^= charByte;
+            else if (draw == eOff)
+              *framePtr &= ~charByte;
+            else
+              *framePtr |= charByte;
             framePtr += getPitch() - (fontChar->width + 7)/8;
             }
           }
@@ -619,16 +653,14 @@ public:
   //}}}
   //{{{
   void present() {
-  // commandByte | 240 * (lineByte | 50bytes,400pixels | paddingByte 0) | paddingByte 0
 
     // CS hi
     GPIOB->BSRR = CS_PIN;
 
-    //if (HAL_SPI_Transmit (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1, 100))
     if (HAL_SPI_Transmit_DMA (&mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1))
       printf ("HAL_SPI_Transmit failed\n");
     while (HAL_SPI_GetState (&mSpiHandle) != HAL_SPI_STATE_READY)
-      HAL_Delay(1);
+      HAL_Delay (1);
 
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
@@ -1120,7 +1152,7 @@ public:
       auto ticks = HAL_GetTick();
 
       clear (eOn);
-      drawString (eInvert, eSmall, eLeft,
+      drawString (eOff, eSmall, eLeft,
                   dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
                   dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
                   dec (ticks - lastTicks) + " " +
@@ -1135,7 +1167,8 @@ public:
 
       drawClock (getCentre(), 100);
       //drawClock (cPoint(400-42, 42), 40);
-      drawValues();
+      //drawValues();
+      drawTests();
 
       present();
       }
@@ -1169,9 +1202,21 @@ private:
     int32_t valueIndex = getFrameNum() - getWidth();
     for (int i = 0; i < getWidth(); i++) {
       int16_t len = valueIndex > 0 ? (getHeight() * (mValues[valueIndex % getWidth()] - mMinValue))  / (mMaxValue - mMinValue) : 0;
-      fillRect (eInvert, cRect (i, getHeight()-len, i+1, getHeight()));
+      fillRect (eOff, cRect (i, getHeight()-len, i+1, getHeight()));
       valueIndex++;
       }
+    }
+  //}}}
+  //{{{
+  void drawTests() {
+
+    int16_t iteration = (getFrameNum() / 3) % 100;
+
+    for (int i = 0; i < iteration; i++)
+      fillRect (eOff, cRect (i, i, i+1, i+i));
+
+    //for (int i = 0; i < iteration; i++)
+    //  fillRect (eOff, cRect (200+i, i, 200+i+i, i+1));
     }
   //}}}
 

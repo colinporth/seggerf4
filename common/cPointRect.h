@@ -1,7 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-//{{{
 class cPoint {
 public:
   //{{{
@@ -84,8 +83,8 @@ public:
   int16_t x;
   int16_t y;
   };
-//}}}
-//{{{
+
+
 class cRect {
 public:
   //{{{
@@ -154,4 +153,3 @@ public:
   int16_t top;
   int16_t bottom;
   };
-//}}}
