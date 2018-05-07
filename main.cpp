@@ -167,7 +167,8 @@ public:
   const cRect getRect() { return cRect (getSize()); }
   const cPoint getCentre() { return getSize()/2; }
 
-  int getFrameNum() { return mFrameNum; }
+  uint32_t getFrameNum() { return mFrameNum; }
+  uint32_t getTookTicks() { return mTookTicks; }
 
   //{{{
   void clear (eDraw draw) {
@@ -356,14 +357,14 @@ public:
 
     cPoint p = {0, radius};
     while (p.x <= p.y) {
-      drawPix (draw, centre.x + p.x, centre.y - p.y);
-      drawPix (draw, centre.x - p.x, centre.y - p.y);
-      drawPix (draw, centre.x + p.y, centre.y - p.x);
-      drawPix (draw, centre.x - p.y, centre.y - p.x);
-      drawPix (draw, centre.x + p.x, centre.y + p.y);
-      drawPix (draw, centre.x - p.x, centre.y + p.y);
-      drawPix (draw, centre.x + p.y, centre.y + p.x);
-      drawPix (draw, centre.x - p.y, centre.y + p.x);
+      drawPix (draw, centre + cPoint (p.x, -p.y));
+      drawPix (draw, centre + cPoint (-p.x, -p.y));
+      drawPix (draw, centre + cPoint (p.y, -p.x));
+      drawPix (draw, centre + cPoint (-p.y, -p.x));
+      drawPix (draw, centre + cPoint (p.x, p.y));
+      drawPix (draw, centre + cPoint (-p.x, p.y));
+      drawPix (draw, centre + cPoint (p.y, p.x));
+      drawPix (draw, centre + cPoint (-p.y, p.x));
 
       if (decision < 0)
         decision += (p.x << 2) + 6;
@@ -380,64 +381,34 @@ public:
   //{{{
   void drawLine (eDraw draw, cPoint p1, cPoint p2) {
 
-    int16_t xinc1 = 0, xinc2 = 0, yinc1 = 0, yinc2 = 0;
-    int16_t den = 0, num = 0, num_add = 0, num_pixels = 0;
-
     int16_t deltax = ABS(p2.x - p1.x); // The difference between the x's
     int16_t deltay = ABS(p2.y - p1.y); // The difference between the y's
-    int16_t x = p1.x;                       // Start x off at the first pixel
-    int16_t y = p1.y;                       // Start y off at the first pixel
 
-    if (p2.x >= p1.x) {
-      // The x-values are increasing
-      xinc1 = 1;
-      xinc2 = 1;
-      }
-    else {
-      // The x-values are decreasing
-      xinc1 = -1;
-      xinc2 = -1;
-      }
+    cPoint p = p1;
+    cPoint inc1 ((p2.x >= p1.x) ? 1 : -1, (p2.y >= p1.y) ? 1 : -1);
+    cPoint inc2 = inc1;
 
-    if (p2.y >= p1.y) {
-      // The y-values are increasing
-      yinc1 = 1;
-      yinc2 = 1;
-      }
-    else {
-      // The y-values are decreasing
-      yinc1 = -1;
-      yinc2 = -1;
-      }
-
+    int16_t numAdd = (deltax >= deltay) ? deltay : deltax;
+    int16_t den = (deltax >= deltay) ? deltax : deltay;
     if (deltax >= deltay) { // There is at least one x-value for every y-value
-      xinc1 = 0;            // Don't change the x when numerator >= denominator
-      yinc2 = 0;            // Don't change the y for every iteration
-      den = deltax;
-      num = deltax / 2;
-      num_add = deltay;
-      num_pixels = deltax;  // There are more x-values than y-values
+      inc1.x = 0;            // Don't change the x when numerator >= denominator
+      inc2.y = 0;            // Don't change the y for every iteration
       }
     else {                  // There is at least one y-value for every x-value
-      xinc2 = 0;            // Don't change the x for every iteration
-      yinc1 = 0;            // Don't change the y when numerator >= denominator
-      den = deltay;
-      num = deltay / 2;
-      num_add = deltax;
-      num_pixels = deltay;  // There are more y-values than x-values
+      inc2.x = 0;            // Don't change the x for every iteration
+      inc1.y = 0;            // Don't change the y when numerator >= denominator
       }
+    int16_t num = den / 2;
+    int16_t numPixels = den;
 
-    for (int16_t curpixel = 0; curpixel <= num_pixels; curpixel++) {
-      drawPix (draw, x, y);
-      num += num_add;     // Increase the numerator by the top of the fraction
+    for (int16_t pixel = 0; pixel <= numPixels; pixel++) {
+      drawPix (draw, p);
+      num += numAdd;     // Increase the numerator by the top of the fraction
       if (num >= den) {   // Check if numerator >= denominator
         num -= den;       // Calculate the new numerator value
-        x += xinc1;       // Change the x as appropriate
-        y += yinc1;       // Change the y as appropriate
+        p += inc1;
         }
-
-      x += xinc2;         // Change the x as appropriate
-      y += yinc2;         // Change the y as appropriate
+      p += inc2;
       }
     }
   //}}}
@@ -480,10 +451,10 @@ public:
     float k = (float)radius.y / (float)radius.x;
 
     do {
-      drawPix (draw, (centre.x - (int16_t)(x / k)), centre.y + y);
-      drawPix (draw, (centre.x + (int16_t)(x / k)), centre.y + y);
-      drawPix (draw, (centre.x + (int16_t)(x / k)), centre.y - y);
-      drawPix (draw, (centre.x - (int16_t)(x / k)), centre.y - y);
+      drawPix (draw, centre + cPoint (-(int16_t)(x / k), y));
+      drawPix (draw, centre + cPoint ((int16_t)(x / k), y));
+      drawPix (draw, centre + cPoint ((int16_t)(x / k), -y));
+      drawPix (draw, centre + cPoint (- (int16_t)(x / k), - y));
 
       int e2 = err;
       if (e2 <= x) {
@@ -667,6 +638,9 @@ public:
     // CS lo
     GPIOB->BSRR = CS_PIN << 16;
 
+    auto ticks = HAL_GetTick();
+    mTookTicks = ticks - mPresentTicks;
+    mPresentTicks = ticks;
     mFrameNum++;
     }
   //}}}
@@ -691,10 +665,10 @@ private:
   //}}}
 
   //{{{
-  void drawPix (eDraw draw, uint16_t x, uint16_t y) {
+  void drawPix (eDraw draw, cPoint p) {
 
-    uint8_t mask = 0x80 >> (x & 7);
-    auto framePtr = getFramePtr (y) + x/8;
+    uint8_t mask = 0x80 >> (p.x & 7);
+    auto framePtr = getFramePtr (p.y) + p.x/8;
 
     if (draw == eInvert)
       *framePtr++ ^= mask;
@@ -707,7 +681,9 @@ private:
 
   // frameBuf - commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
   uint8_t* mFrameBuf = nullptr;
-  int mFrameNum = 0;
+  uint32_t mFrameNum = 0;
+  uint32_t mPresentTicks = 0;
+  uint32_t mTookTicks = 0;
 
   SPI_HandleTypeDef mSpiHandle;
   DMA_HandleTypeDef mSpiTxDma;
@@ -1129,8 +1105,6 @@ public:
   //{{{
   void run() {
 
-    auto lastTicks = HAL_GetTick();
-
     mAdc.start();
     while (true) {
       mAdc.poll();
@@ -1151,22 +1125,18 @@ public:
       else
         mAverageVdd = ((mAverageVdd * 99.f) + vdd) / 100.f;
 
-      auto ticks = HAL_GetTick();
-
       clear (eOn);
       drawString (eOff, eSmall, eLeft,
                   dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
                   dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
-                  dec (ticks - lastTicks) + " " +
+                  dec (getTookTicks()) + " " +
                   (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "pin" : ""),
                   cPoint(0,0));
-      drawString (eOff, eSmall, eLeft, mRtc.getBuildTimeDateString(), cPoint(0, 20));
-      drawClock (getCentre(), getHeight()/2 - 2);
-      drawValues();
+      drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0, 20));
+      drawClock (getCentre(), getHeight()/2 - 40);
+      //drawValues();
       drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
-      //drawTests();
       present();
-      lastTicks = ticks;
       }
     }
   //}}}
@@ -1179,6 +1149,7 @@ private:
   void drawClock (cPoint centre, int16_t radius) {
 
     drawCircle (eOff, centre, radius);
+    drawCircle (eOff, centre, radius-1);
 
     float hourAngle;
     float minuteAngle;
