@@ -131,8 +131,10 @@ public:
     //}}}
 
     // init frameBuf command : 240 * (lineByte:15bytes:padding) : padding
+    const int frameBufLen = 1 + (((getWidth()/8) + 2) * getHeight()) + 1;
+    mFrameBuf = (uint8_t*)malloc (frameBufLen);
+    memset (mFrameBuf+1, 0, frameBufLen);
     mFrameBuf [0] = commandByte;
-    memset (mFrameBuf+1, 0, (getPitch() * getHeight()) + 1);
     for (uint16_t y = 0; y < getHeight(); y++) {
       uint8_t lineAddressByte = y+1;
       // bit reverse
@@ -265,7 +267,7 @@ public:
             uint8_t charByte = 0;
             while (charBits > 0) {
               uint8_t xbit = x & 7;
-              *framePtr++ ^= charByte || ((*charBytes) >> xbit);
+              *framePtr++ ^= charByte | ((*charBytes) >> xbit);
               charByte = (*charBytes) << (8 - xbit);
               charBytes++;
               charBits -= 8;
@@ -631,7 +633,7 @@ private:
   //}}}
 
   // commandByte | 240 * (lineAddressByte | 50bytes,400pixels | paddingByte0) | paddingByte0
-  uint8_t mFrameBuf [1 + (((400/8) + 2) * 240) + 1];
+  uint8_t* mFrameBuf = nullptr;
   int mFrameNum = 0;
 
   SPI_HandleTypeDef mSpiHandle;
@@ -759,88 +761,43 @@ public:
       //}}}
     writeProtectEnable();
 
-    // parse buildTime, buildDate strings
-    // time hh:mm:ss      - 8
-    // date dd:mmm:yyyy   - 11
-    int hours = (mBuildTime[0]  - 0x30) * 10 + (mBuildTime[1] -0x30);
-    int minutes = (mBuildTime[3] - 0x30) * 10 + (mBuildTime[4] -0x30);
-    int seconds = (mBuildTime[6] - 0x30) * 10 + (mBuildTime[7] -0x30);
-    int date = ((mBuildDate[4] == ' ') ? 0 : mBuildDate[4] - 0x30) * 10 + (mBuildDate[5] -0x30);
-    int year = (mBuildDate[9] - 0x30) * 10 + (mBuildDate[10] -0x30);
-    int month = 0;
-    for (int i = 0; i < 12; i++)
-      if ((mBuildDate[0] == *kMonth[i]) && (mBuildDate[1] == *(kMonth[i]+1)) && (mBuildDate[2] == *(kMonth[i]+2))) {
-        month = i;
-        break;
-        }
+    loadDateTime();
+    uint32_t clockDateTimeValue = mDateTime.getValue();
 
-    getDateTime();
-    uint32_t clockDateTime = ((((mDateTime.Year*12 + mDateTime.Month)*31 + mDateTime.Date)*24 +
-                                 mDateTime.Hours)*60 + mDateTime.Minutes)*60 + mDateTime.Seconds;
-    uint32_t buildDateTime = ((((year*12 + month)*31 + date)*24 + hours)*60 + minutes)*60 + seconds;
-    if (clockDateTime < buildDateTime+7) {
-      //{{{  set clockDateTime from buildDateTime
-      printf ("cRtc::init set clockDateTime < buildDateTime %d < %d\n", clockDateTime, buildDateTime);
-
-      mDateTime.TimeFormat = RTC_HOURFORMAT12_AM;
-      mDateTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-      mDateTime.StoreOperation = RTC_STOREOPERATION_RESET;
-
-      buildDateTime += 7;
-      mDateTime.Seconds = buildDateTime % 60;
-      buildDateTime /= 60;
-      mDateTime.Minutes = buildDateTime % 60;
-      buildDateTime /= 60;
-      mDateTime.Hours = buildDateTime % 24;
-
-      buildDateTime /= 24;
-      mDateTime.Date = buildDateTime % 31;
-      buildDateTime /= 31;
-      mDateTime.Month = buildDateTime % 12;
-      buildDateTime /= 12;
-      mDateTime.Year = buildDateTime;
-
-      mDateTime.WeekDay = RTC_WEEKDAY_FRIDAY;  // wrong
-
-      setDateTime();
+    cDateTime buildDateTime (mBuildDate, mBuildTime);
+    uint32_t buildDateTimeValue = buildDateTime.getValue();
+    if (clockDateTimeValue < buildDateTimeValue + kBuildSecs) {
+      // set clockDateTime from buildDateTime
+      mDateTime.setFromValue (buildDateTimeValue + kBuildSecs);
+      printf ("cRtc::init set clock < build %d < %d\n", clockDateTimeValue, buildDateTimeValue);
+      saveDateTime();
+      mClockSet = true;
       }
-      //}}}
     }
   //}}}
 
   //{{{
-  float getClockHourAngle() {
-
-    getDateTime();
-    return (1.f - ((mDateTime.Hours + (mDateTime.Minutes / 60.f)) / 6.f)) * kPi;
+  bool getClockSet() {
+    return mClockSet;
     }
   //}}}
   //{{{
-  float getClockMinuteAngle() {
+  void getClockAngles (float& hours, float& minutes, float& seconds) {
 
-    getDateTime();
-    return (1.f - ((mDateTime.Minutes + (mDateTime.Seconds / 60.f))/ 30.f)) * kPi;
+    loadDateTime();
+    hours = (1.f - ((mDateTime.Hours + (mDateTime.Minutes / 60.f)) / 6.f)) * kPi;
+    minutes = (1.f - ((mDateTime.Minutes + (mDateTime.Seconds / 60.f))/ 30.f)) * kPi;
+    seconds =  (1.f - (mDateTime.Seconds / 30.f)) * kPi;
     }
   //}}}
   //{{{
-  float getClockSecondAngle() {
+  std::string getClockTimeDateString() {
 
-    getDateTime();
-    return (1.f - (mDateTime.Seconds / 30.f)) * kPi;
+    return mDateTime.getTimeDateString();
     }
   //}}}
   //{{{
-  std::string getClockTimeString() {
-
-    getDateTime();
-
-    return dec(mDateTime.Hours,2) + ":" + dec(mDateTime.Minutes,2) + ":" + dec(mDateTime.Seconds,2) + " " +
-           kMonth[mDateTime.Month] + " " + dec(mDateTime.Date,2) + " " + dec(2000 + mDateTime.Year,4);
-           //dec(mDateTime.SubSeconds) + " " + dec(mDateTime.SecondFraction);
-    }
-  //}}}
-  //{{{
-  std::string getBuildTimeString() {
+  std::string getBuildTimeDateString() {
 
     return mBuildTime + " "  + mBuildDate;
     }
@@ -848,26 +805,26 @@ public:
 
 private:
   //{{{
-  void getDateTime() {
+  void loadDateTime() {
 
     mDateTime.SubSeconds = RTC->SSR;
     mDateTime.SecondFraction = RTC->PRER & RTC_PRER_PREDIV_S;
 
     uint32_t tr = RTC->TR;
     mDateTime.TimeFormat = (tr & RTC_TR_PM) >> 16U;
-    mDateTime.Hours = getBcd ((tr & (RTC_TR_HT | RTC_TR_HU)) >> 16U);
-    mDateTime.Minutes = getBcd ((tr & (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);
-    mDateTime.Seconds = getBcd (tr & (RTC_TR_ST | RTC_TR_SU));
+    mDateTime.Hours = getByteFromBcd ((tr & (RTC_TR_HT | RTC_TR_HU)) >> 16U);
+    mDateTime.Minutes = getByteFromBcd ((tr & (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);
+    mDateTime.Seconds = getByteFromBcd (tr & (RTC_TR_ST | RTC_TR_SU));
 
     uint32_t dr = RTC->DR;
-    mDateTime.Year = getBcd ((dr & (RTC_DR_YT | RTC_DR_YU)) >> 16U);
+    mDateTime.Year = getByteFromBcd ((dr & (RTC_DR_YT | RTC_DR_YU)) >> 16U);
     mDateTime.WeekDay = (dr & RTC_DR_WDU) >> 13U;
-    mDateTime.Month = getBcd ((dr & (RTC_DR_MT | RTC_DR_MU)) >> 8U);
-    mDateTime.Date = getBcd (dr & (RTC_DR_DT | RTC_DR_DU));
+    mDateTime.Month = getByteFromBcd ((dr & (RTC_DR_MT | RTC_DR_MU)) >> 8U);
+    mDateTime.Date = getByteFromBcd (dr & (RTC_DR_DT | RTC_DR_DU));
     }
   //}}}
   //{{{
-  void setDateTime() {
+  void saveDateTime() {
 
     writeProtectDisable();
     if (enterInitMode()) {
@@ -878,12 +835,16 @@ private:
         mDateTime.Month = (uint8_t)((mDateTime.Month & (uint8_t)~(0x10U)) + (uint8_t)0x0AU);
 
       // Set the RTC_DR register
-      uint32_t tmp = (getByte (mDateTime.Year) << 16) | (getByte (mDateTime.Month) << 8) | getByte (mDateTime.Date) |
+      uint32_t tmp = (getBcdFromByte (mDateTime.Year) << 16) |
+                     (getBcdFromByte (mDateTime.Month) << 8) |
+                      getBcdFromByte (mDateTime.Date) |
                      (mDateTime.WeekDay << 13);
       RTC->DR = (uint32_t)(tmp & RTC_DR_RESERVED_MASK);
 
       // Set the RTC_TR register
-      tmp = ((getByte (mDateTime.Hours) << 16) | (getByte (mDateTime.Minutes) << 8) | getByte (mDateTime.Seconds) |
+      tmp = ((getBcdFromByte (mDateTime.Hours) << 16) |
+             (getBcdFromByte (mDateTime.Minutes) << 8) |
+              getBcdFromByte (mDateTime.Seconds) |
             (mDateTime.TimeFormat) << 16);
       RTC->TR = (uint32_t)(tmp & RTC_TR_RESERVED_MASK);
 
@@ -905,22 +866,13 @@ private:
     }
   //}}}
   //{{{
-  uint8_t getByte (uint8_t bcd) {
-
-    uint32_t bcdHigh = 0U;
-    while (bcd >= 10U) {
-      bcdHigh++;
-      bcd -= 10U;
-      }
-
-    return  ((uint8_t)(bcdHigh << 4U) | bcd);
+  uint8_t getBcdFromByte (uint8_t byte) {
+    return ((byte / 10) << 4) | (byte % 10);
     }
   //}}}
   //{{{
-  uint8_t getBcd (uint8_t byte) {
-
-    uint32_t tmp = ((uint8_t)(byte & (uint8_t)0xF0) >> (uint8_t)0x4) * 10;
-    return (tmp + (byte & (uint8_t)0x0F));
+  uint8_t getByteFromBcd (uint8_t bcd) {
+    return (((bcd & 0xF0) >> 4) * 10) + (bcd & 0x0F);
     }
   //}}}
 
@@ -973,49 +925,100 @@ private:
   //}}}
 
   const float kPi = 3.1415926f;
-  const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  const int kBuildSecs = 6;
+  const std::string mBuildTime = __TIME__;
+  const std::string mBuildDate = __DATE__;
 
-  RTC_HandleTypeDef mRtcHandle;
+  //{{{
+  class cDateTime {
+  public:
+    const char* kMonth[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    cDateTime() {}
+    //{{{
+    cDateTime (const std::string& buildDateStr, const std::string& buildTimeStr) {
 
-  //{{{  struct sDateTime
-  struct sDateTime {
-    uint8_t Hours;            /*!< Specifies the RTC Time Hour.
-                                   This parameter must be a number between Min_Data = 0 and Max_Data = 12 if the RTC_HourFormat_12 is selected.
-                                   This parameter must be a number between Min_Data = 0 and Max_Data = 23 if the RTC_HourFormat_24 is selected  */
-    uint8_t Minutes;          /*!< Specifies the RTC Time Minutes.
-                                   This parameter must be a number between Min_Data = 0 and Max_Data = 59 */
-    uint8_t Seconds;          /*!< Specifies the RTC Time Seconds.
-                                   This parameter must be a number between Min_Data = 0 and Max_Data = 59 */
-    uint8_t TimeFormat;       /*!< Specifies the RTC AM/PM Time.
-                                   This parameter can be a value of @ref RTC_AM_PM_Definitions */
-    uint32_t SubSeconds;     /*!< Specifies the RTC_SSR RTC Sub Second register content.
-                                   This parameter corresponds to a time unit range between [0-1] Second
-                                   with [1 Sec / SecondFraction +1] granularity */
-    uint32_t SecondFraction;  /*!< Specifies the range or granularity of Sub Second register content
-                                   corresponding to Synchronous pre-scaler factor value (PREDIV_S)
-                                   This parameter corresponds to a time unit range between [0-1] Second
-                                   with [1 Sec / SecondFraction +1] granularity.
-                                   This field will be used only by HAL_RTC_GetTime function */
-    uint32_t DayLightSaving;  /*!< Specifies DayLight Save Operation.
-                                   This parameter can be a value of @ref RTC_DayLightSaving_Definitions */
-    uint32_t StoreOperation;  /*!< Specifies RTC_StoreOperation value to be written in the BCK bit
-                                   in CR register to store the operation.
-                                   This parameter can be a value of @ref RTC_StoreOperation_Definitions */
+      // buildDateStr - dd:mmm:yyyy
+      Date = ((buildDateStr[4] == ' ') ? 0 : buildDateStr[4] - 0x30) * 10 + (buildDateStr[5] -0x30);
+      Year = (buildDateStr[9] - 0x30) * 10 + (buildDateStr[10] -0x30);
 
-    uint8_t WeekDay;  /*!< Specifies the RTC Date WeekDay.
-                           This parameter can be a value of @ref RTC_WeekDay_Definitions */
-    uint8_t Month;    /*!< Specifies the RTC Date Month (in BCD format).
-                           This parameter can be a value of @ref RTC_Month_Date_Definitions */
-    uint8_t Date;     /*!< Specifies the RTC Date.
-                           This parameter must be a number between Min_Data = 1 and Max_Data = 31 */
-    uint8_t Year;     /*!< Specifies the RTC Date Year.
-                           This parameter must be a number between Min_Data = 0 and Max_Data = 99 */
+      Month = 0;
+      for (int i = 0; i < 12; i++)
+        if ((buildDateStr[0] == *kMonth[i]) && (buildDateStr[1] == *(kMonth[i]+1)) && (buildDateStr[2] == *(kMonth[i]+2))) {
+          Month = i;
+          break;
+          }
+
+      // buildTimeStr - hh:mm:ss
+      Hours = (buildTimeStr[0]  - 0x30) * 10 + (buildTimeStr[1] -0x30);
+      Minutes = (buildTimeStr[3] - 0x30) * 10 + (buildTimeStr[4] -0x30);
+      Seconds = (buildTimeStr[6] - 0x30) * 10 + (buildTimeStr[7] -0x30);
+      }
+    //}}}
+
+    //{{{
+    uint32_t getValue() {
+      return ((((Year*12 + Month)*31 + Date)*24 + Hours)*60 + Minutes)*60 + Seconds;
+      }
+    //}}}
+    //{{{
+    std::string getTimeString() {
+      return dec(Hours,2) + ":" + dec(Minutes,2) + ":" + dec(Seconds,2);
+             //dec(SubSeconds) + " " + dec(SecondFraction);
+      }
+    //}}}
+    //{{{
+    std::string getDateString() {
+      return std::string(kMonth[Month]) + " " + dec(Date,2) + " " + dec(2000 + Year,4);
+      }
+    //}}}
+    //{{{
+    std::string getTimeDateString() {
+      return dec(Hours,2) + ":" + dec(Minutes,2) + ":" + dec(Seconds,2) + " " +
+             kMonth[Month] + " " + dec(Date,2) + " " + dec(2000 + Year,4);
+             //dec(SubSeconds) + " " + dec(SecondFraction);
+      }
+    //}}}
+
+    void setFromValue (uint32_t value) {
+      TimeFormat = RTC_HOURFORMAT12_AM;
+      DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+      StoreOperation = RTC_STOREOPERATION_RESET;
+
+      Seconds = value % 60;
+      value /= 60;
+      Minutes = value % 60;
+      value /= 60;
+      Hours = value % 24;
+      value /= 24;
+      Date = value % 31;
+      value /= 31;
+      Month = value % 12;
+      value /= 12;
+      Year = value;
+
+      WeekDay = RTC_WEEKDAY_FRIDAY;  // wrong
+      }
+
+    uint8_t Year;
+    uint8_t Month;
+    uint8_t WeekDay;
+    uint8_t Date;
+    uint8_t Hours;
+    uint8_t Minutes;
+    uint8_t Seconds;
+    uint8_t TimeFormat;
+    uint32_t SubSeconds;
+    uint32_t SecondFraction;
+    uint32_t DayLightSaving;
+    uint32_t StoreOperation;
     };
   //}}}
-  sDateTime mDateTime;
 
-  std::string mBuildTime = __TIME__;
-  std::string mBuildDate = __DATE__;
+  // vars
+  RTC_HandleTypeDef mRtcHandle;
+
+  cDateTime mDateTime;
+  bool mClockSet = false;
   };
 //}}}
 
@@ -1029,6 +1032,8 @@ public:
     cLcd::init();
     mAdc.init();
     mRtc.init();
+
+    mValues = (uint16_t*)malloc (getWidth() * 2);
     }
   //}}}
   //{{{
@@ -1040,7 +1045,7 @@ public:
     while (true) {
       mAdc.poll();
       auto value = mAdc.getValue();
-      mValues[getFrameNum() % kMaxValues] = value;
+      mValues[getFrameNum() % getWidth()] = value;
       if (value < mMinValue)
         mMinValue = value;
       if (value > mMaxValue)
@@ -1060,12 +1065,14 @@ public:
       drawString (eInvert, dec(mMinValue) + "min " + dec(value)    + " " + dec(mMaxValue) + "max " +
                            dec(int(mAverageVdd) / 1000) + "." + dec(int(mAverageVdd) % 1000, 3) + "v " +
                            dec(ticks - lastTicks) + " " +
-                           (mPowerOnReset ? "pow ": " ") + " " + (mPinReset ? "pin" : ""),
+                           (mRtc.getClockSet() ? "set ": "") +
+                           (mPowerOnReset ? "pow ": "") +
+                           (mPinReset ? "pin" : ""),
                   cRect (0, 0, getWidth(), 20));
       lastTicks = ticks;
 
-      drawString (eInvert, mRtc.getClockTimeString(), cRect (0, 20, getWidth(), 40));
-      drawString (eInvert, mRtc.getBuildTimeString(), cRect (0, 40, getWidth(), 60));
+      drawString (eInvert, mRtc.getClockTimeDateString(), cRect (0, 20, getWidth(), 40));
+      drawString (eInvert, mRtc.getBuildTimeDateString(), cRect (0, 40, getWidth(), 60));
 
       //drawClock (cPoint(400-42, 42), 40);
       //drawValues();
@@ -1088,41 +1095,38 @@ private:
 
     drawCircle (eOff, centre, radius);
 
+    float hourAngle;
+    float minuteAngle;
+    float secondAngle;
+    mRtc.getClockAngles (hourAngle, minuteAngle, secondAngle);
     float hourRadius = radius * 0.7f;
-    float hourAngle = mRtc.getClockHourAngle();
     drawLine (eOff, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
-
     float minuteRadius = radius * 0.8f;
-    float minuteAngle = mRtc.getClockMinuteAngle();
     drawLine (eOff, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
-
     float secondRadius = radius * 0.9f;
-    float secondAngle = mRtc.getClockSecondAngle();
     drawLine (eOff, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
     }
   //}}}
   //{{{
   void drawValues() {
 
-    int valueIndex = getFrameNum() - kMaxValues;
-    for (int i = 0; i < kMaxValues; i++) {
-      int16_t len = valueIndex > 0 ? (kMaxLen * (mValues[valueIndex % kMaxValues] - mMinValue))  / (mMaxValue - mMinValue) : 0;
+    int valueIndex = getFrameNum() - getWidth();
+    for (int i = 0; i < getWidth(); i++) {
+      int16_t len = valueIndex > 0 ? (getHeight() * (mValues[valueIndex % getWidth()] - mMinValue))  / (mMaxValue - mMinValue) : 0;
       fillRect (eInvert, cRect (i, getHeight()-len, i+1, getHeight()));
       valueIndex++;
       }
     }
   //}}}
 
-  static const int kMaxLen = 220;
-  static const int kMaxValues = 400;
-
   cRtc mRtc;
-  bool mPowerOnReset;
-  bool mPinReset;
+  bool mPowerOnReset = false;
+  bool mPinReset = false;
 
-  uint32_t mMinValue = 4096;
-  uint32_t mMaxValue = 0;
-  uint32_t mValues[kMaxValues];
+  uint16_t* mValues = nullptr;
+  uint16_t mMinValue = 4096;
+  uint16_t mMaxValue = 0;
+
   float mAverageVdd = 0;
   };
 //}}}
