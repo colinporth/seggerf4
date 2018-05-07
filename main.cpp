@@ -707,21 +707,21 @@ public:
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // config ADC dma - right channel,stream?
-    hdma_adc.Instance = DMA2_Stream0;
-    hdma_adc.Init.Channel  = DMA_CHANNEL_2;
-    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    hdma_adc.Init.Mode = DMA_CIRCULAR;
-    hdma_adc.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_adc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    hdma_adc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-    hdma_adc.Init.MemBurst = DMA_MBURST_SINGLE;
-    hdma_adc.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init (&hdma_adc);
-    __HAL_LINKDMA (&mAdcHandle, DMA_Handle, hdma_adc);
+    mDmaAdc.Instance = DMA2_Stream0;
+    mDmaAdc.Init.Channel  = DMA_CHANNEL_2;
+    mDmaAdc.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    mDmaAdc.Init.PeriphInc = DMA_PINC_DISABLE;
+    mDmaAdc.Init.MemInc = DMA_MINC_ENABLE;
+    mDmaAdc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    mDmaAdc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    mDmaAdc.Init.Mode = DMA_CIRCULAR;
+    mDmaAdc.Init.Priority = DMA_PRIORITY_HIGH;
+    mDmaAdc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    mDmaAdc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    mDmaAdc.Init.MemBurst = DMA_MBURST_SINGLE;
+    mDmaAdc.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    HAL_DMA_Init (&mDmaAdc);
+    __HAL_LINKDMA (&mAdcHandle, DMA_Handle, mDmaAdc);
 
     // NVIC configuration for DMA transfer complete interrupt
     HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
@@ -758,12 +758,15 @@ public:
 
   void start() { HAL_ADC_Start (&mAdcHandle); }
   void poll() { HAL_ADC_PollForConversion (&mAdcHandle, 100); }
+
   uint32_t getValue() { return HAL_ADC_GetValue (&mAdcHandle); }
 
-  ADC_HandleTypeDef mAdcHandle;
+  // for irq
+  ADC_HandleTypeDef* getAdcHandle() { return &mAdcHandle; }
 
 private:
-  DMA_HandleTypeDef hdma_adc;
+  ADC_HandleTypeDef mAdcHandle;
+  DMA_HandleTypeDef mDmaAdc;
   };
 //}}}
 //{{{
@@ -1109,8 +1112,6 @@ public:
     while (true) {
       mAdc.poll();
       auto value = mAdc.getValue();
-      printf ("value %d %d\n", value, getFrameNum());
-
       mValues[getFrameNum() % getWidth()] = value;
       if (value < mMinValue)
         mMinValue = value;
@@ -1119,7 +1120,6 @@ public:
 
       //auto vdd = 1000.f * 1.2f / (value / 4096.f);
       auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
-
       if (mAverageVdd == 0.f)
         mAverageVdd = vdd;
       else
@@ -1130,7 +1130,7 @@ public:
                   dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
                   dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
                   dec (getTookTicks()) + " " +
-                  (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "pin" : ""),
+                  (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "por ": "") + (mPinReset ? "rst" : ""),
                   cPoint(0,0));
       drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0, 20));
       drawClock (getCentre(), getHeight()/2 - 40);
@@ -1141,8 +1141,9 @@ public:
     }
   //}}}
 
+  ADC_HandleTypeDef* getAdcHandle() { return mAdc.getAdcHandle(); }
+
   static cApp* mApp;
-  cAdc mAdc;
 
 private:
   //{{{
@@ -1195,6 +1196,7 @@ private:
     }
   //}}}
 
+  cAdc mAdc;
   cRtc mRtc;
   bool mPinReset = false;
   bool mPowerOnReset = false;
@@ -1218,7 +1220,7 @@ extern "C" {
   void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->getSpiHandle()->hdmatx); }
 
   // adc irq
-  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->mAdc.mAdcHandle.DMA_Handle); }
+  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->getAdcHandle()->DMA_Handle); }
   }
 //}}}
 
