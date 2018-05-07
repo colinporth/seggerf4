@@ -135,17 +135,23 @@ public:
     // init frameBuf command : 240 * (lineByte:15bytes:padding) : padding
     const int frameBufLen = 1 + (((getWidth()/8) + 2) * getHeight()) + 1;
     mFrameBuf = (uint8_t*)malloc (frameBufLen);
-    memset (mFrameBuf+1, 0, frameBufLen);
-    mFrameBuf [0] = commandByte;
-    for (uint16_t y = 0; y < getHeight(); y++) {
-      uint8_t lineAddressByte = y+1;
-      // bit reverse
-      lineAddressByte = ((lineAddressByte & 0xF0) >> 4) | ((lineAddressByte & 0x0F) << 4);
-      lineAddressByte = ((lineAddressByte & 0xCC) >> 2) | ((lineAddressByte & 0x33) << 2);
-      lineAddressByte = ((lineAddressByte & 0xAA) >> 1) | ((lineAddressByte & 0x55) << 1);
-      mFrameBuf [1 + (y*getPitch())] = lineAddressByte;
+    if (mFrameBuf) {
+      printf ("cLcd:: init alloc %d\n", frameBufLen);
+
+      memset (mFrameBuf+1, 0, frameBufLen);
+      mFrameBuf [0] = commandByte;
+      for (uint16_t y = 0; y < getHeight(); y++) {
+        uint8_t lineAddressByte = y+1;
+        // bit reverse
+        lineAddressByte = ((lineAddressByte & 0xF0) >> 4) | ((lineAddressByte & 0x0F) << 4);
+        lineAddressByte = ((lineAddressByte & 0xCC) >> 2) | ((lineAddressByte & 0x33) << 2);
+        lineAddressByte = ((lineAddressByte & 0xAA) >> 1) | ((lineAddressByte & 0x55) << 1);
+        mFrameBuf [1 + (y*getPitch())] = lineAddressByte;
+        }
+      present();
       }
-    present();
+    else
+      printf ("cLcd:: init alloc fail\n");
 
     // enable DISP hi
     GPIOB->BSRR = DISP_PIN;
@@ -1070,13 +1076,20 @@ public:
   cApp (bool pinReset, bool powerOnReset) : mPinReset(pinReset), mPowerOnReset(powerOnReset) {}
 
   //{{{
-  void init() {
+  bool init() {
 
     cLcd::init();
     mAdc.init();
     mRtc.init();
 
     mValues = (int16_t*)malloc (getWidth() * 2);
+
+    if (mValues)
+      printf ("cApp:: init alloc %d\n", getWidth() * 2);
+    else
+      printf ("cApp:: init alloc failed\n");
+
+    return mValues;
     }
   //}}}
   //{{{
@@ -1198,11 +1211,11 @@ int main() {
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
   bool powerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST);
   __HAL_RCC_CLEAR_RESET_FLAGS();
-  printf ("start cApp pin:%d power:%d\n", pinReset, powerOnReset);
+  printf ("main pin:%d power:%d cApp:%d\n", pinReset, powerOnReset, sizeof (cApp));
 
   cApp::mApp = new cApp (pinReset, powerOnReset);
-  cApp::mApp->init();
-  cApp::mApp->run();
+  if (cApp::mApp->init())
+    cApp::mApp->run();
 
   return 0;
   }
