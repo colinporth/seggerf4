@@ -7,6 +7,9 @@
 #include "stm32f4xx.h"
 //}}}
 
+const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
+const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
+
 //{{{
 class cLcd {
 public:
@@ -199,8 +202,8 @@ public:
     if (rect.top >= rect.bottom)
       return;
 
-    uint8_t firstByte = rect.left / 8;
-    uint8_t lastByte = (rect.right-1) / 8;
+    int16_t firstByte = rect.left / 8;
+    int16_t lastByte = (rect.right-1) / 8;
 
     if (firstByte == lastByte) {
       // simple single x byte case
@@ -221,9 +224,9 @@ public:
       uint8_t firstMask = kFirstMask[rect.left & 7];
       uint8_t lastMask = kLastMask[(rect.right-1) & 7];
 
-      auto framePtr = getFramePtr (rect.top) + firstByte + firstByte;
+      auto framePtr = getFramePtr (rect.top) + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
-        uint8_t byte = firstByte;
+        int16_t byte = firstByte;
 
         if (draw == eOff)
           *framePtr++ &= ~firstMask;
@@ -278,10 +281,11 @@ public:
     switch (align) {
       //{{{
       case eCentre: {
-        uint16_t size = 0;
+        int16_t size = 0;
         for (auto ch : str)
           size += getCharWidth (drawFont, ch);
         p.x -= size/2;
+
         if (p.x < 0)
           p.x = 0;
         else if (p.x >= getWidth())
@@ -291,10 +295,11 @@ public:
       //}}}
       //{{{
       case eRight: {
-        uint16_t size = 0;
+        int16_t size = 0;
         for (auto ch : str)
           size += getCharWidth (drawFont, ch);
         p.x -= size;
+
         if (p.x < 0)
           p.x = 0;
         else if (p.x >= getWidth())
@@ -672,8 +677,6 @@ public:
 private:
   const uint16_t kWidth = 400;
   const uint16_t kHeight = 240;
-  const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
-  const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
   uint16_t getPitch() { return 2 + getWidth()/8; }
   uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }
@@ -881,6 +884,17 @@ public:
 
 private:
   //{{{
+  uint8_t getBcdFromByte (uint8_t byte) {
+    return ((byte / 10) << 4) | (byte % 10);
+    }
+  //}}}
+  //{{{
+  uint8_t getByteFromBcd (uint8_t bcd) {
+    return (((bcd & 0xF0) >> 4) * 10) + (bcd & 0x0F);
+    }
+  //}}}
+
+  //{{{
   void loadDateTime() {
 
     mDateTime.SubSeconds = RTC->SSR;
@@ -939,16 +953,6 @@ private:
       }
 
     writeProtectEnable();
-    }
-  //}}}
-  //{{{
-  uint8_t getBcdFromByte (uint8_t byte) {
-    return ((byte / 10) << 4) | (byte % 10);
-    }
-  //}}}
-  //{{{
-  uint8_t getByteFromBcd (uint8_t bcd) {
-    return (((bcd & 0xF0) >> 4) * 10) + (bcd & 0x0F);
     }
   //}}}
 
@@ -1094,6 +1098,7 @@ private:
     };
   //}}}
   cDateTime mDateTime;
+
   RTC_HandleTypeDef mRtcHandle;
   bool mClockSet = false;
   };
@@ -1153,21 +1158,15 @@ public:
                   dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
                   dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
                   dec (ticks - lastTicks) + " " +
-                  (mRtc.getClockSet() ? "set ": "") +
-                  (mPowerOnReset ? "pow ": "") +
-                  (mPinReset ? "pin" : ""),
+                  (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "pin" : ""),
                   cPoint(0,0));
-      lastTicks = ticks;
-
       drawString (eOff, eSmall, eLeft, mRtc.getBuildTimeDateString(), cPoint(0, 20));
-      drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
-
       drawClock (getCentre(), getHeight()/2 - 2);
-      //drawClock (cPoint(400-42, 42), 40);
-      //drawValues();
-      drawTests();
-
+      drawValues();
+      drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
+      //drawTests();
       present();
+      lastTicks = ticks;
       }
     }
   //}}}
@@ -1210,19 +1209,24 @@ private:
   //{{{
   void drawTests() {
 
-    int16_t iteration = (getFrameNum() / 3) % 100;
+    eDraw draw = eOff;
+    int16_t iteration = getFrameNum() % 100;
 
     for (int i = 0; i < iteration; i++)
-      fillRect (eOff, cRect (i, i, i+1, i+i));
+      fillRect (draw, cRect (i, i, i+1, i+i));
 
-    for (int i = 0; i < iteration; i++)
-      fillRect (eOff, cRect (200+i, i, 200+i+i, i+1));
+    for (int i = 0; i < 220; i++)
+      fillRect (draw, cRect (100 + iteration, i, 100 + iteration + i, i + 1));
+
+    drawCircle (draw, getCentre(), getHeight() * iteration / 200);
+
+    drawEllipse (draw, getCentre(), getSize() * iteration / 200);
     }
   //}}}
 
   cRtc mRtc;
-  bool mPowerOnReset = false;
   bool mPinReset = false;
+  bool mPowerOnReset = false;
 
   int16_t* mValues = nullptr;
   int16_t mMinValue = 4096;
@@ -1248,8 +1252,8 @@ extern "C" {
 //}}}
 
 int main() {
-  printf ("main started\n");
 
+  printf ("main started\n");
   HAL_Init();
 
   // get reset flags
