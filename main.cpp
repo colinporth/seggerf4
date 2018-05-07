@@ -1076,7 +1076,7 @@ public:
     mAdc.init();
     mRtc.init();
 
-    mValues = (uint16_t*)malloc (getWidth() * 2);
+    mValues = (int16_t*)malloc (getWidth() * 2);
     }
   //}}}
   //{{{
@@ -1088,6 +1088,8 @@ public:
     while (true) {
       mAdc.poll();
       auto value = mAdc.getValue();
+      printf ("value %d %d\n", value, getFrameNum());
+
       mValues[getFrameNum() % getWidth()] = value;
       if (value < mMinValue)
         mMinValue = value;
@@ -1120,7 +1122,7 @@ public:
 
       drawClock (getCentre(), 100);
       //drawClock (cPoint(400-42, 42), 40);
-      //drawValues();
+      drawValues();
 
       present();
       }
@@ -1151,7 +1153,7 @@ private:
   //{{{
   void drawValues() {
 
-    int valueIndex = getFrameNum() - getWidth();
+    int32_t valueIndex = getFrameNum() - getWidth();
     for (int i = 0; i < getWidth(); i++) {
       int16_t len = valueIndex > 0 ? (getHeight() * (mValues[valueIndex % getWidth()] - mMinValue))  / (mMaxValue - mMinValue) : 0;
       fillRect (eInvert, cRect (i, getHeight()-len, i+1, getHeight()));
@@ -1164,9 +1166,9 @@ private:
   bool mPowerOnReset = false;
   bool mPinReset = false;
 
-  uint16_t* mValues = nullptr;
-  uint16_t mMinValue = 4096;
-  uint16_t mMaxValue = 0;
+  int16_t* mValues = nullptr;
+  int16_t mMinValue = 4096;
+  int16_t mMaxValue = 0;
 
   float mAverageVdd = 0;
   };
