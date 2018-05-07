@@ -207,13 +207,12 @@ public:
       uint8_t mask = kFirstMask[rect.left & 7] & kLastMask[(rect.right-1) & 7];
       auto framePtr = getFramePtr (rect.top) + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
-        if (draw == eInvert)
-          *framePtr ^= mask;
-        else if (draw == eOff)
+        if (draw == eOff)
           *framePtr &= ~mask;
+        else if (draw == eInvert)
+          *framePtr ^= mask;
         else
           *framePtr |= mask;
-
         framePtr += getPitch();
         }
       }
@@ -225,34 +224,32 @@ public:
       auto framePtr = getFramePtr (rect.top) + firstByte + firstByte;
       for (uint16_t y = rect.top; y < rect.bottom; y++) {
         uint8_t byte = firstByte;
-        if (draw == eInvert)
-          *framePtr ^= firstMask;
-        else if (draw == eOff)
-          *framePtr &= ~firstMask;
-        else
-          *framePtr |= firstMask;
 
+        if (draw == eOff)
+          *framePtr++ &= ~firstMask;
+        else if (draw == eInvert)
+          *framePtr++ ^= firstMask;
+        else
+          *framePtr++ |= firstMask;
         byte++;
 
         while (byte < lastByte) {
-          *framePtr++ ^= 0xFF;
-          if (draw == eInvert)
+          if (draw == eOff)
+            *framePtr++ = 0x00;
+          else if (draw == eInvert)
             *framePtr++ ^= 0xFF;
-          else if (draw == eOff)
-            *framePtr++ &= 0x00;
           else
-            *framePtr++ |= 0xFF;
-
+            *framePtr++ = 0xFF;
           byte++;
           }
 
         if (byte == lastByte) {
-          if (draw == eInvert)
-            *framePtr ^= lastMask;
-          else if (draw == eOff)
-            *framePtr &= ~lastMask;
+          if (draw == eOff)
+            *framePtr++ &= ~lastMask;
+          else if (draw == eInvert)
+            *framePtr++ ^= lastMask;
           else
-            *framePtr |= lastMask;
+            *framePtr++ |= lastMask;
           }
         framePtr += getPitch() - (lastByte - firstByte) - 1;
         }
@@ -1188,10 +1185,13 @@ private:
     float minuteAngle;
     float secondAngle;
     mRtc.getClockAngles (hourAngle, minuteAngle, secondAngle);
+
     float hourRadius = radius * 0.7f;
     drawLine (eOff, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
+
     float minuteRadius = radius * 0.8f;
     drawLine (eOff, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));
+
     float secondRadius = radius * 0.9f;
     drawLine (eOff, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
     }
@@ -1215,8 +1215,8 @@ private:
     for (int i = 0; i < iteration; i++)
       fillRect (eOff, cRect (i, i, i+1, i+i));
 
-    //for (int i = 0; i < iteration; i++)
-    //  fillRect (eOff, cRect (200+i, i, 200+i+i, i+1));
+    for (int i = 0; i < iteration; i++)
+      fillRect (eOff, cRect (200+i, i, 200+i+i, i+1));
     }
   //}}}
 
