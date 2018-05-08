@@ -37,27 +37,28 @@ public:
   enum eDraw { eInvert, eOff, eOn };
   enum eFont { eSmall, eMedium, eBig, eBigger };
   enum eAlign { eLeft, eCentre, eRight };
+
   //{{{
-  void init() {
+  bool init() {
 
     // config CS, DISP
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
     // CS, DISP init lo
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = CS_PIN | DISP_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
-    HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
+    GPIO_InitTypeDef gpioInit;
+    gpioInit.Pin = CS_PIN | DISP_PIN;
+    gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
+    gpioInit.Pull = GPIO_PULLUP;
+    gpioInit.Speed = GPIO_SPEED_FAST;
+    HAL_GPIO_Init (GPIOB, &gpioInit);
 
     __HAL_RCC_TIM2_CLK_ENABLE();
     //{{{  config VCOM GPIOB as TIM2 CH4
-    GPIO_InitStruct.Pin = VCOM_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+    gpioInit.Pin = VCOM_PIN;
+    gpioInit.Mode = GPIO_MODE_AF_PP;
+    gpioInit.Alternate = GPIO_AF1_TIM2;
 
-    HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init (GPIOB, &gpioInit);
     //}}}
     //{{{  init timer timHandle
     TIM_HandleTypeDef timHandle;
@@ -87,9 +88,9 @@ public:
 
     //{{{  config SPI2 tx
     // config SPI2 GPIOB
-    GPIO_InitStruct.Pin = SCK_PIN | MOSI_PIN;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
-    HAL_GPIO_Init (GPIOB, &GPIO_InitStruct);
+    gpioInit.Pin = SCK_PIN | MOSI_PIN;
+    gpioInit.Alternate = GPIO_AF5_SPI2;
+    HAL_GPIO_Init (GPIOB, &gpioInit);
 
     __HAL_RCC_SPI2_CLK_ENABLE();
     __HAL_RCC_DMA1_CLK_ENABLE();
@@ -139,7 +140,7 @@ public:
     const int frameBufLen = 1 + (((getWidth()/8) + 2) * getHeight()) + 1;
     mFrameBuf = (uint8_t*)malloc (frameBufLen);
     if (mFrameBuf) {
-      printf ("cLcd:: init alloc %d\n", frameBufLen);
+      printf ("cLcd::init frameBuf alloc:%d\n", frameBufLen);
 
       memset (mFrameBuf+1, 0, frameBufLen);
       mFrameBuf [0] = commandByte;
@@ -154,10 +155,12 @@ public:
       present();
       }
     else
-      printf ("cLcd:: init alloc fail\n");
+      printf ("cLcd::init frameBuf alloc fail\n");
 
     // enable DISP hi
     GPIOB->BSRR = DISP_PIN;
+
+    return mFrameBuf;
     }
   //}}}
 
@@ -695,39 +698,16 @@ public:
   //{{{
   void init() {
 
+    // gpio config
     __HAL_RCC_GPIOA_CLK_ENABLE();
+    GPIO_InitTypeDef gpioInit;
+    gpioInit.Pin = GPIO_PIN_1;
+    gpioInit.Mode = GPIO_MODE_ANALOG;
+    gpioInit.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init (GPIOA, &gpioInit);
+
+    // ADC1 config
     __HAL_RCC_ADC1_CLK_ENABLE();
-    __HAL_RCC_DMA2_CLK_ENABLE();
-
-    // ADC Channel GPIO pin configuration
-    GPIO_InitTypeDef GPIO_InitStruct;
-    GPIO_InitStruct.Pin = GPIO_PIN_1;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    // config ADC dma - right channel,stream?
-    mDmaAdc.Instance = DMA2_Stream0;
-    mDmaAdc.Init.Channel  = DMA_CHANNEL_2;
-    mDmaAdc.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    mDmaAdc.Init.PeriphInc = DMA_PINC_DISABLE;
-    mDmaAdc.Init.MemInc = DMA_MINC_ENABLE;
-    mDmaAdc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    mDmaAdc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    mDmaAdc.Init.Mode = DMA_CIRCULAR;
-    mDmaAdc.Init.Priority = DMA_PRIORITY_HIGH;
-    mDmaAdc.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    mDmaAdc.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-    mDmaAdc.Init.MemBurst = DMA_MBURST_SINGLE;
-    mDmaAdc.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init (&mDmaAdc);
-    __HAL_LINKDMA (&mAdcHandle, DMA_Handle, mDmaAdc);
-
-    // NVIC configuration for DMA transfer complete interrupt
-    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
-
-    // config ADC1
     mAdcHandle.Instance                   = ADC1;
     mAdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
     mAdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
@@ -743,30 +723,50 @@ public:
     mAdcHandle.Init.EOCSelection          = DISABLE;
     HAL_ADC_Init (&mAdcHandle);
 
-    // config ADC channel
-    ADC_ChannelConfTypeDef sConfig;
-    //sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-    //sConfig.Channel = ADC_CHANNEL_VBAT;
-    //sConfig.Channel = ADC_CHANNEL_VREFINT;
-    sConfig.Channel      = ADC_CHANNEL_1;
-    sConfig.Rank         = 1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
-    sConfig.Offset       = 0;
-    HAL_ADC_ConfigChannel (&mAdcHandle, &sConfig);
+    // ADC dma2 stream0 chan2 config
+    __HAL_RCC_DMA2_CLK_ENABLE();
+    mAdcDmaHandle.Instance = DMA2_Stream0;
+    mAdcDmaHandle.Init.Channel  = DMA_CHANNEL_2;
+    mAdcDmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    mAdcDmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
+    mAdcDmaHandle.Init.MemInc = DMA_MINC_ENABLE;
+    mAdcDmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    mAdcDmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    mAdcDmaHandle.Init.Mode = DMA_CIRCULAR;
+    mAdcDmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
+    mAdcDmaHandle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    mAdcDmaHandle.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    mAdcDmaHandle.Init.MemBurst = DMA_MBURST_SINGLE;
+    mAdcDmaHandle.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    HAL_DMA_Init (&mAdcDmaHandle);
+    __HAL_LINKDMA (&mAdcHandle, DMA_Handle, mAdcDmaHandle);
+
+    // NVIC DMA transfer complete irq config
+    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
+
+    // ADC chan config
+    ADC_ChannelConfTypeDef adcChannelConfig;
+    adcChannelConfig.Channel      = ADC_CHANNEL_1;
+    //adcChannelConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    //adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
+    //adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
+    adcChannelConfig.Rank         = 1;
+    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
+    adcChannelConfig.Offset       = 0;
+    HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
     }
   //}}}
 
-  void start() { HAL_ADC_Start (&mAdcHandle); }
-  void poll() { HAL_ADC_PollForConversion (&mAdcHandle, 100); }
-
+  ADC_HandleTypeDef* getAdcHandle() { return &mAdcHandle; }
   uint32_t getValue() { return HAL_ADC_GetValue (&mAdcHandle); }
 
-  // for irq
-  ADC_HandleTypeDef* getAdcHandle() { return &mAdcHandle; }
+  void start() { HAL_ADC_Start (&mAdcHandle); }
+  void poll() { HAL_ADC_PollForConversion (&mAdcHandle, 40); }
 
 private:
   ADC_HandleTypeDef mAdcHandle;
-  DMA_HandleTypeDef mDmaAdc;
+  DMA_HandleTypeDef mAdcDmaHandle;
   };
 //}}}
 //{{{
@@ -1082,7 +1082,6 @@ private:
   bool mClockSet = false;
   };
 //}}}
-
 //{{{
 class cApp : public cLcd {
 public:
@@ -1091,16 +1090,17 @@ public:
   //{{{
   bool init() {
 
-    cLcd::init();
+    if (!cLcd::init())
+      return false;
+
     mAdc.init();
     mRtc.init();
 
     mValues = (int16_t*)malloc (getWidth() * 2);
-
     if (mValues)
-      printf ("cApp:: init alloc %d\n", getWidth() * 2);
+      printf ("cApp::init values alloc:%d\n", getWidth() * 2);
     else
-      printf ("cApp:: init alloc failed\n");
+      printf ("cApp::init values alloc fail\n");
 
     return mValues;
     }
@@ -1130,11 +1130,11 @@ public:
                   dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
                   dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
                   dec (getTookTicks()) + " " +
-                  (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "por ": "") + (mPinReset ? "rst" : ""),
+                  (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "rst" : ""),
                   cPoint(0,0));
       drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0, 20));
       drawClock (getCentre(), getHeight()/2 - 40);
-      //drawValues();
+      drawValues();
       drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
       present();
       }
@@ -1196,8 +1196,10 @@ private:
     }
   //}}}
 
-  cAdc mAdc;
+  // !!!! order problem !!!
   cRtc mRtc;
+  cAdc mAdc;
+
   bool mPinReset = false;
   bool mPowerOnReset = false;
 
@@ -1226,14 +1228,13 @@ extern "C" {
 
 int main() {
 
-  printf ("main started\n");
   HAL_Init();
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
   bool powerOnReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PORRST);
   __HAL_RCC_CLEAR_RESET_FLAGS();
-  printf ("main pin:%d power:%d cApp:%d\n", pinReset, powerOnReset, sizeof (cApp));
+  printf ("main pin:%d power:%d cApp size:%d\n", pinReset, powerOnReset, sizeof (cApp));
 
   cApp::mApp = new cApp (pinReset, powerOnReset);
   if (cApp::mApp->init())
