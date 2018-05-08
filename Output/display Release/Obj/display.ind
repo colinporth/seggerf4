@@ -8,7 +8,6 @@
 "Output/display Release/Obj/system_stm32f4xx.o"
 "Output/display Release/Obj/stm32f4xx_hal.o"
 "Output/display Release/Obj/stm32f4xx_hal_adc.o"
-"Output/display Release/Obj/stm32f4xx_hal_adc_ex.o"
 "Output/display Release/Obj/stm32f4xx_hal_cortex.o"
 "Output/display Release/Obj/stm32f4xx_hal_dma.o"
 "Output/display Release/Obj/stm32f4xx_hal_dma_ex.o"
