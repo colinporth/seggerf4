@@ -744,9 +744,9 @@ public:
     mAdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
     mAdcHandle.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
     mAdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    mAdcHandle.Init.NbrOfConversion       = 4;
+    mAdcHandle.Init.NbrOfConversion       = 3;
     mAdcHandle.Init.DMAContinuousRequests = DISABLE;
-    mAdcHandle.Init.EOCSelection          = DISABLE;
+    mAdcHandle.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
     HAL_ADC_Init (&mAdcHandle);
 
     //{{{  dma
@@ -785,11 +785,6 @@ public:
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
 
-    adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
-    adcChannelConfig.Rank = 3;
-    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
-    HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
-
     adcChannelConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
     adcChannelConfig.Rank = 4;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
@@ -800,6 +795,7 @@ public:
   ADC_HandleTypeDef* getAdcHandle() { return &mAdcHandle; }
 
   bool start() { return HAL_ADC_Start (&mAdcHandle) == HAL_OK; }
+  bool stop() { return HAL_ADC_Stop (&mAdcHandle) == HAL_OK; }
   bool poll() { return HAL_ADC_PollForConversion (&mAdcHandle, 40) == HAL_OK; }
   uint32_t getValue() { return HAL_ADC_GetValue (&mAdcHandle); }
 
@@ -1148,32 +1144,25 @@ public:
   //{{{
   void run() {
 
-    mAdc.start();
     while (true) {
+      mAdc.start();
       if (!mAdc.poll())
         printf ("poll1 failed\n");
-      auto value = mAdc.getValue();
-
-      if (!mAdc.poll())
-        printf ("poll2 failed\n");
+      auto value1 = mAdc.getValue();
+      mAdc.poll();
       auto value2 = mAdc.getValue();
-
-      if (!mAdc.poll())
-        printf ("poll3 failed\n");
+      mAdc.poll();
       auto value3 = mAdc.getValue();
 
-      if (!mAdc.poll())
-        printf ("poll4 failed\n");
-      auto value4 = mAdc.getValue();
-
-      mValues[getFrameNum() % getWidth()] = value;
-      if (value < mMinValue)
-        mMinValue = value;
-      if (value > mMaxValue)
-        mMaxValue = value;
+      mValues[getFrameNum() % getWidth()] = value1;
+      if (value1 < mMinValue)
+        mMinValue = value1;
+      if (value1 > mMaxValue)
+        mMaxValue = value1;
+      mAdc.stop();
 
       //auto vdd = 1000.f * 1.2f / (value / 4096.f);
-      auto vdd = 1000.f * 2.f * 2.93f * value / 4096.f;
+      auto vdd = 1000.f * 2.f * 2.93f * value1 / 4096.f;
       if (mAverageVdd == 0.f)
         mAverageVdd = vdd;
       else
@@ -1181,7 +1170,11 @@ public:
 
       clear (eOn);
       drawString (eOff, eSmall, eLeft,
-                  dec (mMinValue) + "min " + dec (value)    + " " + dec (mMaxValue) + "max " +
+                  dec (mMinValue) + "min " +
+                  dec (value1) + " " +
+                  dec (value2) + " " +
+                  dec (value3) + " " +
+                  dec (mMaxValue) + "max " +
                   dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
                   dec (getTookTicks()) + " " +
                   (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "rst" : ""),
