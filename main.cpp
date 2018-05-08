@@ -6,7 +6,6 @@
 
 #include "stm32f4xx.h"
 //}}}
-
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
@@ -61,7 +60,7 @@ public:
     HAL_GPIO_Init (GPIOB, &gpioInit);
     //}}}
     //{{{  init timer timHandle
-    TIM_HandleTypeDef timHandle;
+    TIM_HandleTypeDef timHandle = {0};
     timHandle.Instance = TIM2;
     timHandle.Init.Period = 10000 - 1;
     uint32_t uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
@@ -72,7 +71,7 @@ public:
       printf ("HAL_TIM_Base_Init failed\n");
     //}}}
     //{{{  init timer timOcInit
-    TIM_OC_InitTypeDef timOcInit;
+    TIM_OC_InitTypeDef timOcInit = {0};
     timOcInit.OCMode       = TIM_OCMODE_PWM1;
     timOcInit.OCPolarity   = TIM_OCPOLARITY_HIGH;
     timOcInit.OCFastMode   = TIM_OCFAST_DISABLE;
@@ -96,7 +95,7 @@ public:
     __HAL_RCC_DMA1_CLK_ENABLE();
 
     // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
-    SPI_HandleTypeDef SPI_Handle;
+    SPI_HandleTypeDef SPI_Handle = {0};
     mSpiHandle.Instance = SPI2;
     mSpiHandle.Init.Mode              = SPI_MODE_MASTER;
     mSpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
@@ -294,34 +293,6 @@ public:
     }
   //}}}
   //{{{
-  void drawCircle (eDraw draw, cPoint centre, int16_t radius) {
-
-    int32_t decision = 3 - (radius << 1);
-
-    cPoint p = {0, radius};
-    while (p.x <= p.y) {
-      drawPix (draw, centre + cPoint (p.x, -p.y));
-      drawPix (draw, centre + cPoint (-p.x, -p.y));
-      drawPix (draw, centre + cPoint (p.y, -p.x));
-      drawPix (draw, centre + cPoint (-p.y, -p.x));
-      drawPix (draw, centre + cPoint (p.x, p.y));
-      drawPix (draw, centre + cPoint (-p.x, p.y));
-      drawPix (draw, centre + cPoint (p.y, p.x));
-      drawPix (draw, centre + cPoint (-p.y, p.x));
-
-      if (decision < 0)
-        decision += (p.x << 2) + 6;
-      else {
-        decision += ((p.x - p.y) << 2) + 10;
-        p.y--;
-        }
-
-      p.x++;
-      }
-
-    }
-  //}}}
-  //{{{
   void drawLine (eDraw draw, cPoint p1, cPoint p2) {
 
     int16_t deltax = ABS(p2.x - p1.x); // The difference between the x's
@@ -356,32 +327,47 @@ public:
     }
   //}}}
   //{{{
-  void fillCircle (eDraw draw, cPoint centre, uint16_t radius) {
+  void drawPolygon (eDraw draw, cPoint* points, uint16_t numPoints) {
+
+    int16_t x = 0, y = 0;
+
+    if (numPoints < 2)
+      return;
+
+    drawLine (draw, *points, *(points + numPoints-1));
+
+    while (--numPoints) {
+      cPoint point = *points++;
+      drawLine (draw, point, *points);
+      }
+    }
+  //}}}
+  //{{{
+  void drawCircle (eDraw draw, cPoint centre, int16_t radius) {
 
     int32_t decision = 3 - (radius << 1);
 
-    uint32_t current_x = 0;
-    uint32_t current_y = radius;
+    cPoint p = {0, radius};
+    while (p.x <= p.y) {
+      drawPix (draw, centre + cPoint (p.x, -p.y));
+      drawPix (draw, centre + cPoint (-p.x, -p.y));
+      drawPix (draw, centre + cPoint (p.y, -p.x));
+      drawPix (draw, centre + cPoint (-p.y, -p.x));
+      drawPix (draw, centre + cPoint (p.x, p.y));
+      drawPix (draw, centre + cPoint (-p.x, p.y));
+      drawPix (draw, centre + cPoint (p.y, p.x));
+      drawPix (draw, centre + cPoint (-p.y, p.x));
 
-    while (current_x <= current_y) {
-      if (current_y > 0) {
-        fillRect (draw, centre.x - current_y, centre.y + current_x, 1, 2*current_y);
-        fillRect (draw, centre.x - current_y, centre.y - current_x, 1, 2*current_y);
-        }
-      if (current_x > 0) {
-        fillRect (draw, centre.x - current_x, centre.y - current_y, 1, 2*current_x);
-        fillRect (draw, centre.x - current_x, centre.y + current_y, 1, 2*current_x);
-        }
       if (decision < 0)
-        decision += (current_x << 2) + 6;
+        decision += (p.x << 2) + 6;
       else {
-        decision += ((current_x - current_y) << 2) + 10;
-        current_y--;
+        decision += ((p.x - p.y) << 2) + 10;
+        p.y--;
         }
-      current_x++;
+
+      p.x++;
       }
 
-    drawCircle (draw, centre, radius);
     }
   //}}}
   //{{{
@@ -408,88 +394,6 @@ public:
       if (e2 > y)
         err += ++y *2 + 1;
       } while (y <= 0);
-    }
-  //}}}
-  //{{{
-  void fillEllipse (eDraw draw, cPoint centre, cPoint radius) {
-
-    int x = 0;
-    int y = -radius.y;
-    int err = 2 - 2 * radius.x;
-    float k = (float)radius.y / (float)radius.x;
-
-    do {
-      fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));
-      fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));
-
-      int e2 = err;
-      if (e2 <= x) {
-        err += ++x * 2 + 1;
-        if (-y == x && e2 <= y)
-          e2 = 0;
-        }
-      if (e2 > y)
-        err += ++y*2+1;
-      } while (y <= 0);
-    }
-  //}}}
-  //{{{
-  void drawPolygon (eDraw draw, cPoint* points, uint16_t numPoints) {
-
-    int16_t x = 0, y = 0;
-
-    if (numPoints < 2)
-      return;
-
-    drawLine (draw, *points, *(points + numPoints-1));
-
-    while (--numPoints) {
-      cPoint point = *points++;
-      drawLine (draw, point, *points);
-      }
-    }
-  //}}}
-  //{{{
-  void fillPolygon (eDraw draw, cPoint* points, uint16_t numPoints) {
-
-    cPoint tl = *points;
-    cPoint br = *points;
-
-    cPoint pixel;
-    for (int16_t counter = 1; counter < numPoints; counter++) {
-      pixel.x = POLY_X (counter);
-      if (pixel.x < tl.x)
-        tl.x = pixel.x;
-      if (pixel.x > br.x)
-        br.x = pixel.x;
-
-      pixel.y = POLY_Y(counter);
-      if (pixel.y < tl.y)
-        tl.y = pixel.y;
-      if (pixel.y > br.y)
-        br.y = pixel.y;
-      }
-
-    if (numPoints < 2)
-      return;
-
-    cPoint centre = (tl + br) / 2;
-    cPoint first = *points;
-
-    cPoint p2;
-    while (--numPoints) {
-      cPoint p1 = *points;
-      points++;
-      p2 = *points;
-
-      fillTriangle (draw, p1, p2, centre);
-      fillTriangle (draw, p1, centre, p2);
-      fillTriangle (draw, centre, p2, p1);
-      }
-
-    fillTriangle (draw, first, p2, centre);
-    fillTriangle (draw, first, centre, p2);
-    fillTriangle (draw, centre, p2, first);
     }
   //}}}
   //{{{
@@ -568,6 +472,101 @@ public:
     }
   //}}}
   //{{{
+  void fillPolygon (eDraw draw, cPoint* points, uint16_t numPoints) {
+
+    cPoint tl = *points;
+    cPoint br = *points;
+
+    cPoint pixel;
+    for (int16_t counter = 1; counter < numPoints; counter++) {
+      pixel.x = POLY_X (counter);
+      if (pixel.x < tl.x)
+        tl.x = pixel.x;
+      if (pixel.x > br.x)
+        br.x = pixel.x;
+
+      pixel.y = POLY_Y(counter);
+      if (pixel.y < tl.y)
+        tl.y = pixel.y;
+      if (pixel.y > br.y)
+        br.y = pixel.y;
+      }
+
+    if (numPoints < 2)
+      return;
+
+    cPoint centre = (tl + br) / 2;
+    cPoint first = *points;
+
+    cPoint p2;
+    while (--numPoints) {
+      cPoint p1 = *points;
+      points++;
+      p2 = *points;
+
+      fillTriangle (draw, p1, p2, centre);
+      fillTriangle (draw, p1, centre, p2);
+      fillTriangle (draw, centre, p2, p1);
+      }
+
+    fillTriangle (draw, first, p2, centre);
+    fillTriangle (draw, first, centre, p2);
+    fillTriangle (draw, centre, p2, first);
+    }
+  //}}}
+  //{{{
+  void fillCircle (eDraw draw, cPoint centre, uint16_t radius) {
+
+    int32_t decision = 3 - (radius << 1);
+
+    uint32_t current_x = 0;
+    uint32_t current_y = radius;
+
+    while (current_x <= current_y) {
+      if (current_y > 0) {
+        fillRect (draw, centre.x - current_y, centre.y + current_x, 1, 2*current_y);
+        fillRect (draw, centre.x - current_y, centre.y - current_x, 1, 2*current_y);
+        }
+      if (current_x > 0) {
+        fillRect (draw, centre.x - current_x, centre.y - current_y, 1, 2*current_x);
+        fillRect (draw, centre.x - current_x, centre.y + current_y, 1, 2*current_x);
+        }
+      if (decision < 0)
+        decision += (current_x << 2) + 6;
+      else {
+        decision += ((current_x - current_y) << 2) + 10;
+        current_y--;
+        }
+      current_x++;
+      }
+
+    drawCircle (draw, centre, radius);
+    }
+  //}}}
+  //{{{
+  void fillEllipse (eDraw draw, cPoint centre, cPoint radius) {
+
+    int x = 0;
+    int y = -radius.y;
+    int err = 2 - 2 * radius.x;
+    float k = (float)radius.y / (float)radius.x;
+
+    do {
+      fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));
+      fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));
+
+      int e2 = err;
+      if (e2 <= x) {
+        err += ++x * 2 + 1;
+        if (-y == x && e2 <= y)
+          e2 = 0;
+        }
+      if (e2 > y)
+        err += ++y*2+1;
+      } while (y <= 0);
+    }
+  //}}}
+  //{{{
   void drawString (eDraw draw, eFont font, eAlign align, const std::string& str, cPoint p) {
   // simple char clip to width
 
@@ -633,14 +632,14 @@ public:
                 *framePtr++ ^= charByte;
               else
                 *framePtr++ |= charByte;
+              charBits -= 8;
               charByte = (*charBytes) << (8 - xbit);
               charBytes++;
-              charBits -= 8;
               }
-            if (draw == eInvert)
-              *framePtr ^= charByte;
-            else if (draw == eOff)
+            if (draw == eOff)
               *framePtr &= ~charByte;
+            else if (draw == eInvert)
+              *framePtr ^= charByte;
             else
               *framePtr |= charByte;
             framePtr += getPitch() - (fontChar->width + 7)/8;
@@ -726,7 +725,7 @@ public:
 
     // gpio config
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    GPIO_InitTypeDef gpioInit;
+    GPIO_InitTypeDef gpioInit = {0};
     gpioInit.Pin = GPIO_PIN_1;
     gpioInit.Mode = GPIO_MODE_ANALOG;
     gpioInit.Pull = GPIO_NOPULL;
@@ -734,6 +733,7 @@ public:
 
     // ADC1 config
     __HAL_RCC_ADC1_CLK_ENABLE();
+    mAdcHandle = {0};
     mAdcHandle.Instance                   = ADC1;
     mAdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
     mAdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
@@ -751,6 +751,7 @@ public:
 
     // ADC dma2 stream0 chan2 config
     __HAL_RCC_DMA2_CLK_ENABLE();
+    mAdcDmaHandle = {0};
     mAdcDmaHandle.Instance = DMA2_Stream0;
     mAdcDmaHandle.Init.Channel  = DMA_CHANNEL_2;
     mAdcDmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
@@ -772,14 +773,14 @@ public:
     HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
 
     // ADC chan config
-    ADC_ChannelConfTypeDef adcChannelConfig;
-    adcChannelConfig.Channel      = ADC_CHANNEL_1;
+    ADC_ChannelConfTypeDef adcChannelConfig = {0};
+    adcChannelConfig.Channel = ADC_CHANNEL_1;
     //adcChannelConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
     //adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
     //adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
-    adcChannelConfig.Rank         = 1;
+    adcChannelConfig.Rank = 1;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
-    adcChannelConfig.Offset       = 0;
+    adcChannelConfig.Offset = 0;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
     }
   //}}}
@@ -802,7 +803,7 @@ public:
   void init() {
 
     // Configue LSE as RTC clock source
-    RCC_OscInitTypeDef rccOscInitStruct;
+    RCC_OscInitTypeDef rccOscInitStruct = {0};
     rccOscInitStruct.OscillatorType =  RCC_OSCILLATORTYPE_LSI | RCC_OSCILLATORTYPE_LSE;
     rccOscInitStruct.PLL.PLLState = RCC_PLL_NONE;
     rccOscInitStruct.LSEState = RCC_LSE_ON;
@@ -810,7 +811,7 @@ public:
     if (HAL_RCC_OscConfig (&rccOscInitStruct))
       printf ("HAL_RCC_OscConfig failed\n");
 
-    RCC_PeriphCLKInitTypeDef periphClkInitStruct;
+    RCC_PeriphCLKInitTypeDef periphClkInitStruct = {0};
     periphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC;
     periphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
     if (HAL_RCCEx_PeriphCLKConfig (&periphClkInitStruct))
@@ -1123,6 +1124,7 @@ public:
     mRtc.init();
 
     mValues = (int16_t*)malloc (getWidth() * 2);
+    memset (mValues, 0, getWidth() * 2);
     if (mValues)
       printf ("cApp::init values alloc:%d\n", getWidth() * 2);
     else
