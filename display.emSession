@@ -1,7 +1,7 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="1114" column="-1" path="C:/projects/seggerf4/main.cpp" number="13" extra="static const int kMaxValues = 400;" color="5"/>
+  <BookmarkItem objectName="" line="1113" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="static const int kMaxLen = 220;" color="5"/>
   <BookmarkItem objectName="" line="28" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="44" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="49" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -323,11 +323,11 @@
   <BookmarkItem objectName="" line="611" column="-1" path="C:/projects/seggerf4/main.cpp" number="9" extra="const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };" color="5"/>
   <BookmarkItem objectName="" line="972" column="-1" path="C:/projects/seggerf4/main.cpp" number="10" extra="const float kPi = 3.1415926f;" color="5"/>
   <BookmarkItem objectName="" line="973" column="-1" path="C:/projects/seggerf4/main.cpp" number="11" extra="const char* kMonth[12] = { &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;, &quot;Jul&quot;, &quot;Aug&quot;, &quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot;};" color="5"/>
-  <BookmarkItem objectName="" line="1113" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="static const int kMaxLen = 220;" color="5"/>
+  <BookmarkItem objectName="" line="1114" column="-1" path="C:/projects/seggerf4/main.cpp" number="13" extra="static const int kMaxValues = 400;" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="133" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="397" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="1119" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="449" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="drivers/Src/stm32f4xx_hal_spi.c" useHWbreakpoint="false"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -369,7 +369,7 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;display"/>
-  <ProjectSessionItem path="display;display;common"/>
+  <ProjectSessionItem path="display;display;drivers"/>
   <ProjectSessionItem path="display;display;system"/>
  </Project>
  <Register1>
@@ -408,7 +408,10 @@
   <Trace enabled="Yes"/>
  </TraceWindow>
  <Watch1>
-  <Watches active="1" update="Never"/>
+  <Watches active="1" update="Never">
+   <Watchpoint numelements="0" expression="rect" evalMode="0" name="rect" radix="-1" linenumber="224" filename="main.cpp" list=""/>
+   <Watchpoint numelements="0" expression="value" evalMode="0" name="value" radix="-1" linenumber="1119" filename="main.cpp" list=""/>
+  </Watches>
  </Watch1>
  <Watch2>
   <Watches active="0" update="Never"/>
@@ -419,6 +422,8 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="10" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="1" top="0" codecName="Default"/>
+ </Files>
  <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

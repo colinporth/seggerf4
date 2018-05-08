@@ -8,8 +8,8 @@
 //}}}
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
-
-//{{{
+ 
+//{{{ 
 class cLcd {
 public:
   //{{{  defines
@@ -40,10 +40,8 @@ public:
   //{{{
   bool init() {
 
-    // config CS, DISP
+    // config CS, DISP, init lo
     __HAL_RCC_GPIOB_CLK_ENABLE();
-
-    // CS, DISP init lo
     GPIO_InitTypeDef gpioInit;
     gpioInit.Pin = CS_PIN | DISP_PIN;
     gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
@@ -51,36 +49,39 @@ public:
     gpioInit.Speed = GPIO_SPEED_FAST;
     HAL_GPIO_Init (GPIOB, &gpioInit);
 
-    __HAL_RCC_TIM2_CLK_ENABLE();
-    //{{{  config VCOM GPIOB as TIM2 CH4
+    //{{{  init tim2 
+    // config VCOM GPIOB as TIM2 CH4
     gpioInit.Pin = VCOM_PIN;
     gpioInit.Mode = GPIO_MODE_AF_PP;
     gpioInit.Alternate = GPIO_AF1_TIM2;
-
     HAL_GPIO_Init (GPIOB, &gpioInit);
-    //}}}
-    //{{{  init timer timHandle
+
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
     TIM_HandleTypeDef timHandle = {0};
     timHandle.Instance = TIM2;
     timHandle.Init.Period = 10000 - 1;
-    uint32_t uwPrescalerValue = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
-    timHandle.Init.Prescaler = uwPrescalerValue;
+    timHandle.Init.Prescaler = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;
     timHandle.Init.ClockDivision = 0;
     timHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+
     if (HAL_TIM_Base_Init (&timHandle))
       printf ("HAL_TIM_Base_Init failed\n");
-    //}}}
-    //{{{  init timer timOcInit
+
+    // init timOcInit
     TIM_OC_InitTypeDef timOcInit = {0};
+
     timOcInit.OCMode       = TIM_OCMODE_PWM1;
     timOcInit.OCPolarity   = TIM_OCPOLARITY_HIGH;
     timOcInit.OCFastMode   = TIM_OCFAST_DISABLE;
     timOcInit.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
     timOcInit.OCNIdleState = TIM_OCNIDLESTATE_RESET;
     timOcInit.OCIdleState  = TIM_OCIDLESTATE_RESET;
-    timOcInit.Pulse = 10000 /2;
+    timOcInit.Pulse = 10000 / 2;
+
     if (HAL_TIM_PWM_ConfigChannel (&timHandle, &timOcInit, TIM_CHANNEL_4))
       printf ("HAL_TIM_PWM_ConfigChannel failed\n");
+
     //}}}
     if (HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_4))
       printf ("HAL_TIM_PWM_Start failed\n");
@@ -91,24 +92,24 @@ public:
     gpioInit.Alternate = GPIO_AF5_SPI2;
     HAL_GPIO_Init (GPIOB, &gpioInit);
 
+    // set SPI2 master, mode0, 8bit
     __HAL_RCC_SPI2_CLK_ENABLE();
-    __HAL_RCC_DMA1_CLK_ENABLE();
-
-    // set SPI2 master, mode0, 8bit, LSBfirst, NSS pin high, baud rate
     SPI_HandleTypeDef SPI_Handle = {0};
     mSpiHandle.Instance = SPI2;
     mSpiHandle.Init.Mode              = SPI_MODE_MASTER;
     mSpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
     mSpiHandle.Init.DataSize          = SPI_DATASIZE_8BIT;
-    mSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW; // SPI mode0
-    mSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;     // SPI mode0
+    mSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW; // SPI mode 0
+    mSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;  // SPI mode 0
     mSpiHandle.Init.NSS               = SPI_NSS_SOFT;
-    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 168mHz/2 / 4 = 20.5mHz
+    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 10.5mHz
     mSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     mSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLE;
     HAL_SPI_Init (&mSpiHandle);
 
     // config tx dma
+    __HAL_RCC_DMA1_CLK_ENABLE();
+    mSpiTxDma = {0};
     mSpiTxDma.Instance = DMA1_Stream4;
     mSpiTxDma.Init.Channel             = DMA_CHANNEL_0;
     mSpiTxDma.Init.Direction           = DMA_MEMORY_TO_PERIPH;
