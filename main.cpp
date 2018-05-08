@@ -744,34 +744,10 @@ public:
     mAdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
     mAdcHandle.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
     mAdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    mAdcHandle.Init.NbrOfConversion       = 3;
     mAdcHandle.Init.DMAContinuousRequests = DISABLE;
     mAdcHandle.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
+    mAdcHandle.Init.NbrOfConversion       = 3;
     HAL_ADC_Init (&mAdcHandle);
-
-    //{{{  dma
-    //__HAL_RCC_DMA2_CLK_ENABLE();
-    //mAdcDmaHandle = {0};
-    //mAdcDmaHandle.Instance = DMA2_Stream0;
-    //mAdcDmaHandle.Init.Channel  = DMA_CHANNEL_2;
-    //mAdcDmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    //mAdcDmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
-    //mAdcDmaHandle.Init.MemInc = DMA_MINC_ENABLE;
-    //mAdcDmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    //mAdcDmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    //mAdcDmaHandle.Init.Mode = DMA_CIRCULAR;
-    //mAdcDmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
-    //mAdcDmaHandle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    //mAdcDmaHandle.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-    //mAdcDmaHandle.Init.MemBurst = DMA_MBURST_SINGLE;
-    //mAdcDmaHandle.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    //HAL_DMA_Init (&mAdcDmaHandle);
-    //__HAL_LINKDMA (&mAdcHandle, DMA_Handle, mAdcDmaHandle);
-
-    //// NVIC DMA transfer complete irq config
-    //HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
-    //HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
-    //}}}
 
     // ADC chan config
     ADC_ChannelConfTypeDef adcChannelConfig = {0};
@@ -792,8 +768,6 @@ public:
     }
   //}}}
 
-  ADC_HandleTypeDef* getAdcHandle() { return &mAdcHandle; }
-
   bool start() { return HAL_ADC_Start (&mAdcHandle) == HAL_OK; }
   bool stop() { return HAL_ADC_Stop (&mAdcHandle) == HAL_OK; }
   bool poll() { return HAL_ADC_PollForConversion (&mAdcHandle, 40) == HAL_OK; }
@@ -801,7 +775,6 @@ public:
 
 private:
   ADC_HandleTypeDef mAdcHandle;
-  DMA_HandleTypeDef mAdcDmaHandle;
   };
 //}}}
 //{{{
@@ -1146,49 +1119,58 @@ public:
 
     while (true) {
       mAdc.start();
-      if (!mAdc.poll())
-        printf ("poll1 failed\n");
+      mAdc.poll();
       auto value1 = mAdc.getValue();
       mAdc.poll();
       auto value2 = mAdc.getValue();
       mAdc.poll();
       auto value3 = mAdc.getValue();
-
-      mValues[getFrameNum() % getWidth()] = value1;
-      if (value1 < mMinValue)
-        mMinValue = value1;
-      if (value1 > mMaxValue)
-        mMaxValue = value1;
       mAdc.stop();
 
-      //auto vdd = 1000.f * 1.2f / (value / 4096.f);
-      auto vdd = 1000.f * 2.f * 2.93f * value1 / 4096.f;
+      // 2.5mv  /degC
+      // 0.76v at 25C
+      // 0x1fff7a2c,d adc val at 30deg c
+      // 0x1fff7a2e,f adc val at 110deg c
+      if (value2 < mMinValue2)
+        mMinValue2 = value2;
+      if (value2 > mMaxValue2)
+        mMaxValue2 = value2;
+
+      auto vdd = 1.2f / (value2 / 4096.f);
       if (mAverageVdd == 0.f)
         mAverageVdd = vdd;
       else
         mAverageVdd = ((mAverageVdd * 99.f) + vdd) / 100.f;
 
+      if (value1 < mMinValue1)
+        mMinValue1 = value1;
+      if (value1 > mMaxValue1)
+        mMaxValue1 = value1;
+
+      auto vin = 2.f * vdd * value1 / 4096.f;
+      if (mAverageVdd == 0.f)
+        mAverageVin = vin;
+      else
+        mAverageVin = ((mAverageVin * 99.f) + vin) / 100.f;
+
       clear (eOn);
       drawString (eOff, eSmall, eLeft,
-                  dec (mMinValue) + "min " +
-                  dec (value1) + " " +
-                  dec (value2) + " " +
+                  dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "v " +
+                  dec (mMaxValue2 - mMinValue2) + " " +
+                  dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + "v " +
+                  dec (mMaxValue1 - mMinValue1) + " " +
                   dec (value3) + " " +
-                  dec (mMaxValue) + "max " +
-                  dec (int(mAverageVdd) / 1000) + "." + dec (int(mAverageVdd) % 1000, 3) + "v " +
                   dec (getTookTicks()) + " " +
                   (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "rst" : ""),
                   cPoint(0,0));
       drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0, 20));
       drawClock (getCentre(), getHeight()/2 - 40);
-      drawValues();
+      //drawValues();
       drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
       present();
       }
     }
   //}}}
-
-  ADC_HandleTypeDef* getAdcHandle() { return mAdc.getAdcHandle(); }
 
   static cApp* mApp;
 
@@ -1219,7 +1201,7 @@ private:
 
     int32_t valueIndex = getFrameNum() - getWidth();
     for (int i = 0; i < getWidth(); i++) {
-      int16_t len = valueIndex > 0 ? (getHeight() * (mValues[valueIndex % getWidth()] - mMinValue))  / (mMaxValue - mMinValue) : 0;
+      int16_t len = valueIndex > 0 ? (getHeight() * (mValues[valueIndex % getWidth()] - mMinValue2))  / (mMaxValue2 - mMinValue2) : 0;
       fillRect (eOff, cRect (i, getHeight()-len, i+1, getHeight()));
       valueIndex++;
       }
@@ -1250,10 +1232,13 @@ private:
   bool mPowerOnReset = false;
 
   int16_t* mValues = nullptr;
-  int16_t mMinValue = 4096;
-  int16_t mMaxValue = 0;
+  int16_t mMinValue1 = 4096;
+  int16_t mMaxValue1 = 0;
+  int16_t mMinValue2 = 4096;
+  int16_t mMaxValue2 = 0;
 
   float mAverageVdd = 0;
+  float mAverageVin = 0;
   };
 //}}}
 cApp* cApp::mApp = nullptr;
@@ -1266,9 +1251,6 @@ extern "C" {
   // lcd irq
   void SPI2_IRQHandler() { HAL_SPI_IRQHandler (cApp::mApp->getSpiHandle()); }
   void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->getSpiHandle()->hdmatx); }
-
-  // adc irq
-  void DMA2_Stream0_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->getAdcHandle()->DMA_Handle); }
   }
 //}}}
 
