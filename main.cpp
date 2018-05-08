@@ -8,8 +8,8 @@
 //}}}
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
- 
-//{{{ 
+
+//{{{
 class cLcd {
 public:
   //{{{  defines
@@ -49,7 +49,7 @@ public:
     gpioInit.Speed = GPIO_SPEED_FAST;
     HAL_GPIO_Init (GPIOB, &gpioInit);
 
-    //{{{  init tim2 
+    //{{{  init tim2
     // config VCOM GPIOB as TIM2 CH4
     gpioInit.Pin = VCOM_PIN;
     gpioInit.Mode = GPIO_MODE_AF_PP;
@@ -738,59 +738,70 @@ public:
     mAdcHandle.Instance                   = ADC1;
     mAdcHandle.Init.ClockPrescaler        = ADC_CLOCKPRESCALER_PCLK_DIV4;
     mAdcHandle.Init.Resolution            = ADC_RESOLUTION_12B;
-    mAdcHandle.Init.ScanConvMode          = DISABLE;  // Sequencer disabled - ADC conversion on 1 channel on rank 1
-    mAdcHandle.Init.ContinuousConvMode    = ENABLE;   // Continuous mode enabled to have continuous conversion
-    mAdcHandle.Init.DiscontinuousConvMode = DISABLE;  // Parameter discarded because sequencer is disabled
-    mAdcHandle.Init.NbrOfDiscConversion   = 0;
-    mAdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;  // Conversion start trigged at each external event
-    mAdcHandle.Init.ExternalTrigConv      = ADC_EXTERNALTRIGCONV_T1_CC1;
+    mAdcHandle.Init.ScanConvMode          = ENABLE;
+    mAdcHandle.Init.ContinuousConvMode    = ENABLE;
+    mAdcHandle.Init.DiscontinuousConvMode = DISABLE;
+    mAdcHandle.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
+    mAdcHandle.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
     mAdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    mAdcHandle.Init.NbrOfConversion       = 1;
-    mAdcHandle.Init.DMAContinuousRequests = ENABLE;
+    mAdcHandle.Init.NbrOfConversion       = 4;
+    mAdcHandle.Init.DMAContinuousRequests = DISABLE;
     mAdcHandle.Init.EOCSelection          = DISABLE;
     HAL_ADC_Init (&mAdcHandle);
 
-    // ADC dma2 stream0 chan2 config
-    __HAL_RCC_DMA2_CLK_ENABLE();
-    mAdcDmaHandle = {0};
-    mAdcDmaHandle.Instance = DMA2_Stream0;
-    mAdcDmaHandle.Init.Channel  = DMA_CHANNEL_2;
-    mAdcDmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    mAdcDmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
-    mAdcDmaHandle.Init.MemInc = DMA_MINC_ENABLE;
-    mAdcDmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    mAdcDmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-    mAdcDmaHandle.Init.Mode = DMA_CIRCULAR;
-    mAdcDmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
-    mAdcDmaHandle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    mAdcDmaHandle.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
-    mAdcDmaHandle.Init.MemBurst = DMA_MBURST_SINGLE;
-    mAdcDmaHandle.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init (&mAdcDmaHandle);
-    __HAL_LINKDMA (&mAdcHandle, DMA_Handle, mAdcDmaHandle);
+    //{{{  dma
+    //__HAL_RCC_DMA2_CLK_ENABLE();
+    //mAdcDmaHandle = {0};
+    //mAdcDmaHandle.Instance = DMA2_Stream0;
+    //mAdcDmaHandle.Init.Channel  = DMA_CHANNEL_2;
+    //mAdcDmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    //mAdcDmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
+    //mAdcDmaHandle.Init.MemInc = DMA_MINC_ENABLE;
+    //mAdcDmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    //mAdcDmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    //mAdcDmaHandle.Init.Mode = DMA_CIRCULAR;
+    //mAdcDmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
+    //mAdcDmaHandle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    //mAdcDmaHandle.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_HALFFULL;
+    //mAdcDmaHandle.Init.MemBurst = DMA_MBURST_SINGLE;
+    //mAdcDmaHandle.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    //HAL_DMA_Init (&mAdcDmaHandle);
+    //__HAL_LINKDMA (&mAdcHandle, DMA_Handle, mAdcDmaHandle);
 
-    // NVIC DMA transfer complete irq config
-    HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
+    //// NVIC DMA transfer complete irq config
+    //HAL_NVIC_SetPriority (DMA2_Stream0_IRQn, 0, 0);
+    //HAL_NVIC_EnableIRQ (DMA2_Stream0_IRQn);
+    //}}}
 
     // ADC chan config
     ADC_ChannelConfTypeDef adcChannelConfig = {0};
     adcChannelConfig.Channel = ADC_CHANNEL_1;
-    //adcChannelConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-    //adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
-    //adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
     adcChannelConfig.Rank = 1;
-    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES; // ADC_SAMPLETIME_3CYCLES;
-    adcChannelConfig.Offset = 0;
+    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+    HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
+
+    adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
+    adcChannelConfig.Rank = 2;
+    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+    HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
+
+    adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
+    adcChannelConfig.Rank = 3;
+    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+    HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
+
+    adcChannelConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    adcChannelConfig.Rank = 4;
+    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
     }
   //}}}
 
   ADC_HandleTypeDef* getAdcHandle() { return &mAdcHandle; }
-  uint32_t getValue() { return HAL_ADC_GetValue (&mAdcHandle); }
 
-  void start() { HAL_ADC_Start (&mAdcHandle); }
-  void poll() { HAL_ADC_PollForConversion (&mAdcHandle, 40); }
+  bool start() { return HAL_ADC_Start (&mAdcHandle) == HAL_OK; }
+  bool poll() { return HAL_ADC_PollForConversion (&mAdcHandle, 40) == HAL_OK; }
+  uint32_t getValue() { return HAL_ADC_GetValue (&mAdcHandle); }
 
 private:
   ADC_HandleTypeDef mAdcHandle;
@@ -1139,8 +1150,22 @@ public:
 
     mAdc.start();
     while (true) {
-      mAdc.poll();
+      if (!mAdc.poll())
+        printf ("poll1 failed\n");
       auto value = mAdc.getValue();
+
+      if (!mAdc.poll())
+        printf ("poll2 failed\n");
+      auto value2 = mAdc.getValue();
+
+      if (!mAdc.poll())
+        printf ("poll3 failed\n");
+      auto value3 = mAdc.getValue();
+
+      if (!mAdc.poll())
+        printf ("poll4 failed\n");
+      auto value4 = mAdc.getValue();
+
       mValues[getFrameNum() % getWidth()] = value;
       if (value < mMinValue)
         mMinValue = value;
@@ -1225,7 +1250,6 @@ private:
     }
   //}}}
 
-  // !!!! order problem !!!
   cRtc mRtc;
   cAdc mAdc;
 
