@@ -227,130 +227,70 @@ public:
       // multiple x bytes
       uint8_t firstMask = kFirstMask[rect.left & 7];
       uint8_t lastMask = kLastMask[(rect.right-1) & 7];
-
       auto framePtr = getFramePtr (rect.top) + firstByte;
-      for (uint16_t y = rect.top; y < rect.bottom; y++) {
-        int16_t byte = firstByte;
-
-        if (draw == eOff)
+      if (draw == eOff) {
+        //{{{  eOff
+        for (uint16_t y = rect.top; y < rect.bottom; y++) {
+          int16_t byte = firstByte;
           *framePtr++ &= ~firstMask;
-        else if (draw == eInvert)
-          *framePtr++ ^= firstMask;
-        else
-          *framePtr++ |= firstMask;
-        byte++;
-
-        while (byte < lastByte) {
-          if (draw == eOff)
-            *framePtr++ = 0x00;
-          else if (draw == eInvert)
-            *framePtr++ ^= 0xFF;
-          else
-            *framePtr++ = 0xFF;
           byte++;
-          }
 
-        if (byte == lastByte) {
-          if (draw == eOff)
+          while (byte < lastByte) {
+            *framePtr++ = 0x00;
+            byte++;
+            }
+
+          if (byte == lastByte)
             *framePtr++ &= ~lastMask;
-          else if (draw == eInvert)
-            *framePtr++ ^= lastMask;
-          else
-            *framePtr++ |= lastMask;
+
+          framePtr += getPitch() - (lastByte - firstByte) - 1;
           }
-        framePtr += getPitch() - (lastByte - firstByte) - 1;
         }
-     }
+        //}}}
+      else if (draw == eOn) {
+        //{{{  eOn
+        for (uint16_t y = rect.top; y < rect.bottom; y++) {
+          int16_t byte = firstByte;
+          *framePtr++ |= firstMask;
+          byte++;
+
+          while (byte < lastByte) {
+            *framePtr++ = 0xFF;
+            byte++;
+            }
+
+          if (byte == lastByte)
+            *framePtr++ |= lastMask;
+
+          framePtr += getPitch() - (lastByte - firstByte) - 1;
+          }
+        }
+        //}}}
+      else {
+        //{{{  eInvert
+        for (uint16_t y = rect.top; y < rect.bottom; y++) {
+          int16_t byte = firstByte;
+          *framePtr++ ^= firstMask;
+          byte++;
+
+          while (byte < lastByte) {
+            *framePtr++ ^= 0xFF;
+            byte++;
+            }
+
+          if (byte == lastByte)
+            *framePtr++ ^= lastMask;
+
+          framePtr += getPitch() - (lastByte - firstByte) - 1;
+          }
+        }
+        //}}}
+      }
     }
   //}}}
   //{{{
   void fillRect (eDraw draw, uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
     fillRect (draw, cRect (x, y, x+width, y+height));
-    }
-  //}}}
-  //{{{
-  void drawString (eDraw draw, eFont font, eAlign align, const std::string& str, cPoint p) {
-  // simple char clip to width
-
-    const font_t* drawFont;
-    if (font == eSmall)
-      drawFont = &font18;
-    else if (font == eMedium)
-      drawFont = &font36;
-    else if (font == eBig)
-      drawFont = &font72;
-    else if (font == eBigger)
-      drawFont = &font120;
-
-    switch (align) {
-      //{{{
-      case eCentre: {
-        int16_t size = 0;
-        for (auto ch : str)
-          size += getCharWidth (drawFont, ch);
-        p.x -= size/2;
-
-        if (p.x < 0)
-          p.x = 0;
-        else if (p.x >= getWidth())
-          p.x = 0;
-        }
-        break;
-      //}}}
-      //{{{
-      case eRight: {
-        int16_t size = 0;
-        for (auto ch : str)
-          size += getCharWidth (drawFont, ch);
-        p.x -= size;
-
-        if (p.x < 0)
-          p.x = 0;
-        else if (p.x >= getWidth())
-          p.x = 0;
-        }
-        break;
-      //}}}
-      }
-
-    for (auto ch : str) {
-      if ((ch >= drawFont->firstChar) && (ch <= drawFont->lastChar)) {
-        auto fontChar = (fontChar_t*)(drawFont->glyphsBase + drawFont->glyphOffsets[ch - drawFont->firstChar]);
-        if (p.x + fontChar->left + fontChar->width < getWidth()) {
-          auto charBytes = (uint8_t*)fontChar + 5;
-          int16_t xfirst = p.x + fontChar->left;
-          auto framePtr = getFramePtr (p.y + drawFont->height - fontChar->top) + xfirst/8;
-
-          for (uint16_t y = 0; y < fontChar->height; y++) {
-            int16_t x = xfirst;
-            int16_t charBits = fontChar->width;
-            uint8_t charByte = 0;
-            while (charBits > 0) {
-              uint8_t xbit = x & 7;
-              if (draw == eInvert)
-                *framePtr++ ^= charByte | ((*charBytes) >> xbit);
-              else if (draw == eOff)
-                *framePtr++ &= ~(charByte | ((*charBytes) >> xbit));
-              else
-                *framePtr++ |= charByte | ((*charBytes) >> xbit);
-              charByte = (*charBytes) << (8 - xbit);
-              charBytes++;
-              charBits -= 8;
-              }
-            if (draw == eInvert)
-              *framePtr ^= charByte;
-            else if (draw == eOff)
-              *framePtr &= ~charByte;
-            else
-              *framePtr |= charByte;
-            framePtr += getPitch() - (fontChar->width + 7)/8;
-            }
-          }
-        p.x += fontChar->advance;
-        }
-      else
-        p.x += drawFont->spaceWidth;
-      }
     }
   //}}}
   //{{{
@@ -624,6 +564,92 @@ public:
         }
 
       p += inc2;         // Change the x as appropriate
+      }
+    }
+  //}}}
+  //{{{
+  void drawString (eDraw draw, eFont font, eAlign align, const std::string& str, cPoint p) {
+  // simple char clip to width
+
+    const font_t* drawFont;
+    if (font == eSmall)
+      drawFont = &font18;
+    else if (font == eMedium)
+      drawFont = &font36;
+    else if (font == eBig)
+      drawFont = &font72;
+    else if (font == eBigger)
+      drawFont = &font120;
+
+    switch (align) {
+      //{{{
+      case eCentre: {
+        int16_t size = 0;
+        for (auto ch : str)
+          size += getCharWidth (drawFont, ch);
+        p.x -= size/2;
+
+        if (p.x < 0)
+          p.x = 0;
+        else if (p.x >= getWidth())
+          p.x = 0;
+        }
+        break;
+      //}}}
+      //{{{
+      case eRight: {
+        int16_t size = 0;
+        for (auto ch : str)
+          size += getCharWidth (drawFont, ch);
+        p.x -= size;
+
+        if (p.x < 0)
+          p.x = 0;
+        else if (p.x >= getWidth())
+          p.x = 0;
+        }
+        break;
+      //}}}
+      }
+
+    for (auto ch : str) {
+      if ((ch >= drawFont->firstChar) && (ch <= drawFont->lastChar)) {
+        auto fontChar = (fontChar_t*)(drawFont->glyphsBase + drawFont->glyphOffsets[ch - drawFont->firstChar]);
+        if (p.x + fontChar->left + fontChar->width < getWidth()) {
+          auto charBytes = (uint8_t*)fontChar + 5;
+          int16_t xfirst = p.x + fontChar->left;
+          auto framePtr = getFramePtr (p.y + drawFont->height - fontChar->top) + xfirst/8;
+
+          for (uint16_t y = 0; y < fontChar->height; y++) {
+            int16_t x = xfirst;
+            int16_t charBits = fontChar->width;
+            uint8_t charByte = 0;
+            while (charBits > 0) {
+              uint8_t xbit = x & 7;
+              charByte |= (*charBytes) >> xbit;
+              if (draw == eOff)
+                *framePtr++ &= ~charByte;
+              else if (draw == eInvert)
+                *framePtr++ ^= charByte;
+              else
+                *framePtr++ |= charByte;
+              charByte = (*charBytes) << (8 - xbit);
+              charBytes++;
+              charBits -= 8;
+              }
+            if (draw == eInvert)
+              *framePtr ^= charByte;
+            else if (draw == eOff)
+              *framePtr &= ~charByte;
+            else
+              *framePtr |= charByte;
+            framePtr += getPitch() - (fontChar->width + 7)/8;
+            }
+          }
+        p.x += fontChar->advance;
+        }
+      else
+        p.x += drawFont->spaceWidth;
       }
     }
   //}}}
