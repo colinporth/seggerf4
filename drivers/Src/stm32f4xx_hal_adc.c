@@ -320,94 +320,87 @@ static void ADC_MultiModeDMAError (DMA_HandleTypeDef *hdma)
 //{{{
 HAL_StatusTypeDef HAL_ADC_Init (ADC_HandleTypeDef* hadc) {
 
-  HAL_StatusTypeDef tmp_hal_status = HAL_OK;
+  // Set ADC state
+  ADC_STATE_CLR_SET (hadc->State, HAL_ADC_STATE_REG_BUSY | HAL_ADC_STATE_INJ_BUSY, HAL_ADC_STATE_BUSY_INTERNAL);
 
-  if (HAL_IS_BIT_CLR (hadc->State, HAL_ADC_STATE_ERROR_INTERNAL)) {
-    // Set ADC state
-    ADC_STATE_CLR_SET (hadc->State, HAL_ADC_STATE_REG_BUSY | HAL_ADC_STATE_INJ_BUSY, HAL_ADC_STATE_BUSY_INTERNAL);
+  // Set ADC parameters
+  ADC_Common_TypeDef* tmpADC_Common = ADC_COMMON_REGISTER(hadc);
+  //{{{  Set the ADC clock prescaler
+  tmpADC_Common->CCR &= ~(ADC_CCR_ADCPRE);
+  tmpADC_Common->CCR |=  hadc->Init.ClockPrescaler;
+  //}}}
+  //{{{  Set ADC scan mode
+  hadc->Instance->CR1 &= ~(ADC_CR1_SCAN);
+  hadc->Instance->CR1 |=  ADC_CR1_SCANCONV (hadc->Init.ScanConvMode);
+  //}}}
+  //{{{  Set ADC resolution
+  hadc->Instance->CR1 &= ~(ADC_CR1_RES);
+  hadc->Instance->CR1 |=  hadc->Init.Resolution;
+  //}}}
+  //{{{  Set ADC data alignment
+  hadc->Instance->CR2 &= ~(ADC_CR2_ALIGN);
+  hadc->Instance->CR2 |= hadc->Init.DataAlign;
+  //}}}
 
-    // Set ADC parameters
-    ADC_Common_TypeDef* tmpADC_Common = ADC_COMMON_REGISTER(hadc);
-    //{{{  Set the ADC clock prescaler
-    tmpADC_Common->CCR &= ~(ADC_CCR_ADCPRE);
-    tmpADC_Common->CCR |=  hadc->Init.ClockPrescaler;
-    //}}}
-    //{{{  Set ADC scan mode
-    hadc->Instance->CR1 &= ~(ADC_CR1_SCAN);
-    hadc->Instance->CR1 |=  ADC_CR1_SCANCONV(hadc->Init.ScanConvMode);
+  // Enable external trigger if trigger selection is different of software start.                                                                 */
+  // This configuration keeps the hardware feature of parameter
+  // ExternalTrigConvEdge "trigger edge none" equivalent to software start                                                  */
+  if (hadc->Init.ExternalTrigConv != ADC_SOFTWARE_START) {
+    //{{{  Select external trigger to start conversion
+    hadc->Instance->CR2 &= ~(ADC_CR2_EXTSEL);
+    hadc->Instance->CR2 |= hadc->Init.ExternalTrigConv;
 
-    //}}}
-    //{{{  Set ADC resolution
-    hadc->Instance->CR1 &= ~(ADC_CR1_RES);
-    hadc->Instance->CR1 |=  hadc->Init.Resolution;
-    //}}}
-    //{{{  Set ADC data alignment
-    hadc->Instance->CR2 &= ~(ADC_CR2_ALIGN);
-    hadc->Instance->CR2 |= hadc->Init.DataAlign;
-    //}}}
-
-    // Enable external trigger if trigger selection is different of software start.                                                                 */
-    // This configuration keeps the hardware feature of parameter
-    // ExternalTrigConvEdge "trigger edge none" equivalent to software start                                                  */
-    if (hadc->Init.ExternalTrigConv != ADC_SOFTWARE_START) {
-      //{{{  Select external trigger to start conversion
-      hadc->Instance->CR2 &= ~(ADC_CR2_EXTSEL);
-      hadc->Instance->CR2 |= hadc->Init.ExternalTrigConv;
-
-      /* Select external trigger polarity */
-      hadc->Instance->CR2 &= ~(ADC_CR2_EXTEN);
-      hadc->Instance->CR2 |= hadc->Init.ExternalTrigConvEdge;
-      }
-      //}}}
-    else {
-      //{{{  Reset the external trigger */
-      hadc->Instance->CR2 &= ~(ADC_CR2_EXTSEL);
-      hadc->Instance->CR2 &= ~(ADC_CR2_EXTEN);
-      }
-      //}}}
-
-    //{{{  Enable or disable ADC continuous conversion mode
-    hadc->Instance->CR2 &= ~(ADC_CR2_CONT);
-    hadc->Instance->CR2 |= ADC_CR2_CONTINUOUS(hadc->Init.ContinuousConvMode);
-    //}}}
-
-    if (hadc->Init.DiscontinuousConvMode != DISABLE) {
-      //{{{  Enable the selected ADC regular discontinuous mode
-      hadc->Instance->CR1 |= (uint32_t)ADC_CR1_DISCEN;
-
-      /* Set the number of channels to be converted in discontinuous mode */
-      hadc->Instance->CR1 &= ~(ADC_CR1_DISCNUM);
-      hadc->Instance->CR1 |=  ADC_CR1_DISCONTINUOUS(hadc->Init.NbrOfDiscConversion);
-      }
-      //}}}
-    else
-      //{{{  Disable the selected ADC regular discontinuous mode
-      hadc->Instance->CR1 &= ~(ADC_CR1_DISCEN);
-      //}}}
-
-    //{{{  Set ADC number of conversion
-    hadc->Instance->SQR1 &= ~(ADC_SQR1_L);
-    hadc->Instance->SQR1 |=  ADC_SQR1(hadc->Init.NbrOfConversion);
-    //}}}
-    //{{{  Enable or disable ADC DMA continuous request
-    hadc->Instance->CR2 &= ~(ADC_CR2_DDS);
-    hadc->Instance->CR2 |= ADC_CR2_DMAContReq(hadc->Init.DMAContinuousRequests);
-    //}}}
-    //{{{  Enable or disable ADC end of conversion selection
-    hadc->Instance->CR2 &= ~(ADC_CR2_EOCS);
-    hadc->Instance->CR2 |= ADC_CR2_EOCSelection(hadc->Init.EOCSelection);
-    //}}}
-
-    // Set ADC error code to none
-    ADC_CLEAR_ERRORCODE (hadc);
-
-    // Set the ADC state
-    ADC_STATE_CLR_SET (hadc->State, HAL_ADC_STATE_BUSY_INTERNAL, HAL_ADC_STATE_READY);
+    /* Select external trigger polarity */
+    hadc->Instance->CR2 &= ~(ADC_CR2_EXTEN);
+    hadc->Instance->CR2 |= hadc->Init.ExternalTrigConvEdge;
     }
-  else
-    tmp_hal_status = HAL_ERROR;
+    //}}}
+  else {
+    //{{{  Reset the external trigger */
+    hadc->Instance->CR2 &= ~(ADC_CR2_EXTSEL);
+    hadc->Instance->CR2 &= ~(ADC_CR2_EXTEN);
+    }
+    //}}}
 
-  return tmp_hal_status;
+  //{{{  Enable or disable ADC continuous conversion mode
+  hadc->Instance->CR2 &= ~(ADC_CR2_CONT);
+  hadc->Instance->CR2 |= ADC_CR2_CONTINUOUS(hadc->Init.ContinuousConvMode);
+  //}}}
+
+  if (hadc->Init.DiscontinuousConvMode != DISABLE) {
+    //{{{  Enable the selected ADC regular discontinuous mode
+    hadc->Instance->CR1 |= (uint32_t)ADC_CR1_DISCEN;
+
+    /* Set the number of channels to be converted in discontinuous mode */
+    hadc->Instance->CR1 &= ~(ADC_CR1_DISCNUM);
+    hadc->Instance->CR1 |=  ADC_CR1_DISCONTINUOUS(hadc->Init.NbrOfDiscConversion);
+    }
+    //}}}
+  else
+    //{{{  Disable the selected ADC regular discontinuous mode
+    hadc->Instance->CR1 &= ~(ADC_CR1_DISCEN);
+    //}}}
+
+  //{{{  Set ADC number of conversion
+  hadc->Instance->SQR1 &= ~(ADC_SQR1_L);
+  hadc->Instance->SQR1 |=  ADC_SQR1 (hadc->Init.NbrOfConversion);
+  //}}}
+  //{{{  Enable or disable ADC DMA continuous request
+  hadc->Instance->CR2 &= ~(ADC_CR2_DDS);
+  hadc->Instance->CR2 |= ADC_CR2_DMAContReq(hadc->Init.DMAContinuousRequests);
+  //}}}
+  //{{{  Enable or disable ADC end of conversion selection
+  hadc->Instance->CR2 &= ~(ADC_CR2_EOCS);
+  hadc->Instance->CR2 |= ADC_CR2_EOCSelection(hadc->Init.EOCSelection);
+  //}}}
+
+  // Set ADC error code to none
+  ADC_CLEAR_ERRORCODE (hadc);
+
+  // Set the ADC state
+  ADC_STATE_CLR_SET (hadc->State, HAL_ADC_STATE_BUSY_INTERNAL, HAL_ADC_STATE_READY);
+
+  return HAL_OK;
   }
 //}}}
 //{{{
@@ -514,35 +507,31 @@ HAL_StatusTypeDef HAL_ADC_AnalogWDGConfig (ADC_HandleTypeDef* hadc, ADC_AnalogWD
 //{{{
 HAL_StatusTypeDef HAL_ADC_Start (ADC_HandleTypeDef* hadc) {
 
-  __IO uint32_t counter = 0U;
-  ADC_Common_TypeDef *tmpADC_Common;
-
-  /* Enable the ADC peripheral */
   /* Check if ADC peripheral is disabled in order to enable it and wait during Tstab time the ADC's stabilization */
   if ((hadc->Instance->CR2 & ADC_CR2_ADON) != ADC_CR2_ADON) {
     /* Enable the Peripheral */
     __HAL_ADC_ENABLE(hadc);
 
     /* Delay for ADC stabilization time Compute number of CPU cycles to wait for */
-    counter = (ADC_STAB_DELAY_US * (SystemCoreClock / 1000000U));
-    while(counter != 0U)
+  __IO uint32_t counter = (ADC_STAB_DELAY_US * (SystemCoreClock / 1000000U));
+    while (counter != 0U)
       counter--;
     }
 
   /* Start conversion if ADC is effectively enabled */
-  if (HAL_IS_BIT_SET(hadc->Instance->CR2, ADC_CR2_ADON)) {
+  if (HAL_IS_BIT_SET (hadc->Instance->CR2, ADC_CR2_ADON)) {
     // - Clear state bitfield related to regular group conversion results
     // - Set state bitfield related to regular group operation
-    ADC_STATE_CLR_SET(hadc->State,
-                      HAL_ADC_STATE_READY | HAL_ADC_STATE_REG_EOC | HAL_ADC_STATE_REG_OVR,
-                      HAL_ADC_STATE_REG_BUSY);
+    ADC_STATE_CLR_SET (hadc->State,
+                       HAL_ADC_STATE_READY | HAL_ADC_STATE_REG_EOC | HAL_ADC_STATE_REG_OVR,
+                       HAL_ADC_STATE_REG_BUSY);
 
     // If conversions on group regular are also triggering group injected  update ADC state.                                                      */
     if (READ_BIT(hadc->Instance->CR1, ADC_CR1_JAUTO) != RESET)
-      ADC_STATE_CLR_SET(hadc->State, HAL_ADC_STATE_INJ_EOC, HAL_ADC_STATE_INJ_BUSY);
+      ADC_STATE_CLR_SET (hadc->State, HAL_ADC_STATE_INJ_EOC, HAL_ADC_STATE_INJ_BUSY);
 
     // State machine update: Check if an injected conversion is ongoing
-    if (HAL_IS_BIT_SET(hadc->State, HAL_ADC_STATE_INJ_BUSY))
+    if (HAL_IS_BIT_SET (hadc->State, HAL_ADC_STATE_INJ_BUSY))
       // Reset ADC error code fields related to conversions on group regular
       CLEAR_BIT (hadc->ErrorCode, (HAL_ADC_ERROR_OVR | HAL_ADC_ERROR_DMA));
     else
@@ -551,11 +540,11 @@ HAL_StatusTypeDef HAL_ADC_Start (ADC_HandleTypeDef* hadc) {
 
     // Pointer to the common control register to which is belonging hadc
     // (Depending on STM32F4 product, there may be up to 3 ADCs and 1 common control register)                                                    */
-    tmpADC_Common = ADC_COMMON_REGISTER (hadc);
+    ADC_Common_TypeDef* tmpADC_Common = ADC_COMMON_REGISTER (hadc);
 
     /* Clear regular group conversion flag and overrun flag */
     /* (To ensure of no unknown state from potential previous ADC operations) */
-    __HAL_ADC_CLEAR_FLAG(hadc, ADC_FLAG_EOC | ADC_FLAG_OVR);
+    __HAL_ADC_CLEAR_FLAG (hadc, ADC_FLAG_EOC | ADC_FLAG_OVR);
 
     /* Check if Multimode enabled */
     if (HAL_IS_BIT_CLR(tmpADC_Common->CCR, ADC_CCR_MULTI)) {
@@ -572,7 +561,6 @@ HAL_StatusTypeDef HAL_ADC_Start (ADC_HandleTypeDef* hadc) {
       }
     }
 
-  /* Return function status */
   return HAL_OK;
   }
 //}}}
