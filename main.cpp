@@ -746,18 +746,24 @@ public:
     mAdcHandle.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
     mAdcHandle.Init.DMAContinuousRequests = DISABLE;
     mAdcHandle.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
-    mAdcHandle.Init.NbrOfConversion       = 3;
+    mAdcHandle.Init.NbrOfConversion       = 4;
     HAL_ADC_Init (&mAdcHandle);
 
     // ADC chan config
     ADC_ChannelConfTypeDef adcChannelConfig = {0};
-    adcChannelConfig.Channel = ADC_CHANNEL_1;
+
+    adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
     adcChannelConfig.Rank = 1;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
 
-    adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
+    adcChannelConfig.Channel = ADC_CHANNEL_1;
     adcChannelConfig.Rank = 2;
+    adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
+    HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
+
+    adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
+    adcChannelConfig.Rank = 3;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
 
@@ -768,12 +774,29 @@ public:
     }
   //}}}
 
+  //{{{
+  bool getValues (uint16_t& value1, uint16_t& value2, uint16_t& value3, uint16_t& value4) {
+
+    start();
+    poll();
+    value1 = getValue();
+    poll();
+    value2 = getValue();
+    poll();
+    value3 = getValue();
+    poll();
+    value4 = getValue();
+    stop();
+    }
+  //}}}
+
+private:
   bool start() { return HAL_ADC_Start (&mAdcHandle) == HAL_OK; }
   bool stop() { return HAL_ADC_Stop (&mAdcHandle) == HAL_OK; }
   bool poll() { return HAL_ADC_PollForConversion (&mAdcHandle, 40) == HAL_OK; }
+
   uint32_t getValue() { return HAL_ADC_GetValue (&mAdcHandle); }
 
-private:
   ADC_HandleTypeDef mAdcHandle;
   };
 //}}}
@@ -1118,52 +1141,62 @@ public:
   void run() {
 
     while (true) {
-      mAdc.start();
-      mAdc.poll();
-      auto value1 = mAdc.getValue();
-      mAdc.poll();
-      auto value2 = mAdc.getValue();
-      mAdc.poll();
-      auto value3 = mAdc.getValue();
-      mAdc.stop();
+      uint16_t value1;
+      uint16_t value2;
+      uint16_t value3;
+      uint16_t value4;
+      if ((getFrameNum() % 50) == 49) {
+        mAdc.getValues (value1, value2, value3, value4);
+
+        if (value1 < mMinValue1)
+          mMinValue1 = value1;
+        if (value1 > mMaxValue1)
+          mMaxValue1 = value1;
+        auto vdd = 1.2f / (value1 / 4096.f);
+        if (mAverageVdd == 0.f)
+          mAverageVdd = vdd;
+        else
+          mAverageVdd = ((mAverageVdd * 9.f) + vdd) / 10.f;
+
+        if (value2 < mMinValue2)
+          mMinValue2 = value2;
+        if (value2 > mMaxValue2)
+          mMaxValue2 = value2;
+        auto vin = 2.f * vdd * value2 / 4096.f;
+        if (mAverageVin == 0.f)
+          mAverageVin = vin;
+        else
+          mAverageVin = ((mAverageVin * 9.f) + vin) / 10.f;
+
+        if (value3 < mMinValue3)
+          mMinValue3 = value3;
+        if (value3 > mMaxValue3)
+          mMaxValue3 = value3;
+        auto vbat = 2.f * vdd * value3 / 4096.f;
+        if (mAverageVbat == 0.f)
+          mAverageVbat = vbat;
+        else
+          mAverageVbat = ((mAverageVbat * 9.f) + vbat) / 10.f;
+        }
 
       // 2.5mv  /degC
       // 0.76v at 25C
-      // 0x1fff7a2c,d adc val at 30deg c
-      // 0x1fff7a2e,f adc val at 110deg c
-      if (value2 < mMinValue2)
-        mMinValue2 = value2;
-      if (value2 > mMaxValue2)
-        mMaxValue2 = value2;
-
-      auto vdd = 1.2f / (value2 / 4096.f);
-      if (mAverageVdd == 0.f)
-        mAverageVdd = vdd;
-      else
-        mAverageVdd = ((mAverageVdd * 99.f) + vdd) / 100.f;
-
-      if (value1 < mMinValue1)
-        mMinValue1 = value1;
-      if (value1 > mMaxValue1)
-        mMaxValue1 = value1;
-
-      auto vin = 2.f * vdd * value1 / 4096.f;
-      if (mAverageVdd == 0.f)
-        mAverageVin = vin;
-      else
-        mAverageVin = ((mAverageVin * 99.f) + vin) / 100.f;
+      uint16_t temp30  = *((uint16_t*)0x1fff7a2c);
+      uint16_t temp110 = *((uint16_t*)0x1fff7a2e);
+      uint16_t vref30  = *((uint16_t*)0x1fff7a2a);
 
       clear (eOn);
       drawString (eOff, eSmall, eLeft,
-                  dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "v " +
-                  dec (mMaxValue2 - mMinValue2) + " " +
-                  dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + "v " +
-                  dec (mMaxValue1 - mMinValue1) + " " +
-                  dec (value3) + " " +
+                  dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "vref  " +
+                  dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + "vin  " +
+                  dec (int(mAverageVbat)) + "." + dec (int(mAverageVbat*1000.f) % 1000, 3) + "vbat  " +
+                  dec (value4) + " " +
                   dec (getTookTicks()) + " " +
                   (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "rst" : ""),
                   cPoint(0,0));
-      drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0, 20));
+      drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0,20));
+      drawString (eOff, eSmall, eLeft, dec (temp30) +  ":t30  " + dec (temp110) + ":t100  " + dec (vref30) + ":vref30 ", cPoint(0,40));
+
       drawClock (getCentre(), getHeight()/2 - 40);
       //drawValues();
       drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
@@ -1236,9 +1269,12 @@ private:
   int16_t mMaxValue1 = 0;
   int16_t mMinValue2 = 4096;
   int16_t mMaxValue2 = 0;
+  int16_t mMinValue3 = 4096;
+  int16_t mMaxValue3 = 0;
 
-  float mAverageVdd = 0;
-  float mAverageVin = 0;
+  float mAverageVdd = 0.f;
+  float mAverageVin = 0.f;
+  float mAverageVbat = 0.f;
   };
 //}}}
 cApp* cApp::mApp = nullptr;
