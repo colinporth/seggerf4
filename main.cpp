@@ -752,21 +752,25 @@ public:
     // ADC chan config
     ADC_ChannelConfTypeDef adcChannelConfig = {0};
 
+    // vref int
     adcChannelConfig.Channel = ADC_CHANNEL_VREFINT;
     adcChannelConfig.Rank = 1;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
 
+    // vin
     adcChannelConfig.Channel = ADC_CHANNEL_1;
     adcChannelConfig.Rank = 2;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
 
+    // vbat
     adcChannelConfig.Channel = ADC_CHANNEL_VBAT;
     adcChannelConfig.Rank = 3;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
     HAL_ADC_ConfigChannel (&mAdcHandle, &adcChannelConfig);
 
+    // temp int
     adcChannelConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
     adcChannelConfig.Rank = 4;
     adcChannelConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
@@ -777,16 +781,29 @@ public:
   //{{{
   bool getValues (uint16_t& value1, uint16_t& value2, uint16_t& value3, uint16_t& value4) {
 
-    start();
-    poll();
+    if (!start())
+      return false;
+
+    if (!poll())
+      return false;
     value1 = getValue();
-    poll();
+
+    if (!poll())
+      return false;
     value2 = getValue();
-    poll();
+
+    if (!poll())
+      return false;
     value3 = getValue();
-    poll();
+
+    if (!poll())
+      return false;
     value4 = getValue();
-    stop();
+
+    if (!stop())
+      return false;
+
+    return true;
     }
   //}}}
 
@@ -1179,11 +1196,11 @@ public:
           mAverageVbat = ((mAverageVbat * 9.f) + vbat) / 10.f;
         }
 
-      // 2.5mv  /degC
-      // 0.76v at 25C
-      uint16_t temp30  = *((uint16_t*)0x1fff7a2c);
-      uint16_t temp110 = *((uint16_t*)0x1fff7a2e);
-      uint16_t vref30  = *((uint16_t*)0x1fff7a2a);
+      // temp slope 2.5mV / degC
+      // nominal 0.76v at 25C
+      uint16_t temp30  = *((uint16_t*)0x1fff7a2c); // value temp    30c 3.3vref
+      uint16_t temp110 = *((uint16_t*)0x1fff7a2e); // value temp   110c 3.3vref
+      uint16_t vref30  = *((uint16_t*)0x1fff7a2a); // value vrefint 30c 3.3vref
 
       clear (eOn);
       drawString (eOff, eSmall, eLeft,
