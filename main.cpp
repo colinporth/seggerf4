@@ -102,7 +102,7 @@ public:
     mSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW; // SPI mode 0
     mSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;  // SPI mode 0
     mSpiHandle.Init.NSS               = SPI_NSS_SOFT;
-    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 10.5mHz
+    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64; // 32 // 4 = 10.5mHz
     mSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     mSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLE;
     HAL_SPI_Init (&mSpiHandle);
@@ -678,8 +678,10 @@ public:
   SPI_HandleTypeDef* getSpiHandle() { return &mSpiHandle; }
 
 private:
-  const uint16_t kWidth = 400;
-  const uint16_t kHeight = 240;
+  //const uint16_t kWidth = 400;
+  //const uint16_t kHeight = 240;
+  const uint16_t kWidth = 96;
+  const uint16_t kHeight = 96;
 
   uint16_t getPitch() { return 2 + getWidth()/8; }
   uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }
@@ -882,12 +884,14 @@ public:
     }
   //}}}
   //{{{
-  void getClockAngles (float& hours, float& minutes, float& seconds) {
+  void getClockAngles (float& hours, float& minutes, float& seconds, float& subSeconds) {
 
     loadDateTime();
+
     hours = (1.f - ((mDateTime.Hours + (mDateTime.Minutes / 60.f)) / 6.f)) * kPi;
     minutes = (1.f - ((mDateTime.Minutes + (mDateTime.Seconds / 60.f))/ 30.f)) * kPi;
     seconds =  (1.f - (mDateTime.Seconds / 30.f)) * kPi;
+    subSeconds =  (1.f - ((255 - mDateTime.SubSeconds) / 128.f)) * kPi;
     }
   //}}}
   //{{{
@@ -1158,11 +1162,11 @@ public:
   void run() {
 
     while (true) {
-      uint16_t value1;
-      uint16_t value2;
-      uint16_t value3;
-      uint16_t value4;
       if ((getFrameNum() % 50) == 49) {
+        uint16_t value1;
+        uint16_t value2;
+        uint16_t value3;
+        uint16_t value4;
         mAdc.getValues (value1, value2, value3, value4);
 
         if (value1 < mMinValue1)
@@ -1175,20 +1179,12 @@ public:
         else
           mAverageVdd = ((mAverageVdd * 9.f) + vdd) / 10.f;
 
-        if (value2 < mMinValue2)
-          mMinValue2 = value2;
-        if (value2 > mMaxValue2)
-          mMaxValue2 = value2;
         auto vin = 2.f * vdd * value2 / 4096.f;
         if (mAverageVin == 0.f)
           mAverageVin = vin;
         else
           mAverageVin = ((mAverageVin * 9.f) + vin) / 10.f;
 
-        if (value3 < mMinValue3)
-          mMinValue3 = value3;
-        if (value3 > mMaxValue3)
-          mMaxValue3 = value3;
         auto vbat = 2.f * vdd * value3 / 4096.f;
         if (mAverageVbat == 0.f)
           mAverageVbat = vbat;
@@ -1204,17 +1200,25 @@ public:
 
       clear (eOn);
       drawString (eOff, eSmall, eLeft,
-                  dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "vref  " +
-                  dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + "vin  " +
-                  dec (int(mAverageVbat)) + "." + dec (int(mAverageVbat*1000.f) % 1000, 3) + "vbat  " +
-                  dec (value4) + " " +
-                  dec (getTookTicks()) + " " +
-                  (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "rst" : ""),
+                  dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + " " +
+                  dec (getTookTicks()),
                   cPoint(0,0));
-      drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0,20));
-      drawString (eOff, eSmall, eLeft, dec (temp30) +  ":t30  " + dec (temp110) + ":t100  " + dec (vref30) + ":vref30 ", cPoint(0,40));
 
-      drawClock (getCentre(), getHeight()/2 - 40);
+      //drawString (eOff, eSmall, eLeft,
+      //            dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "vref  " +
+      //            dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + "vin  " +
+      //            dec (int(mAverageVbat)) + "." + dec (int(mAverageVbat*1000.f) % 1000, 3) + "vbat  " +
+      //            dec (value4) + " " +
+      //            dec (getTookTicks()) + " " +
+      //            (mRtc.getClockSet() ? "set ": "") + (mPowerOnReset ? "pow ": "") + (mPinReset ? "rst" : ""),
+      //            cPoint(0,0));
+      //drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0,20));
+      //drawString (eOff, eSmall, eLeft, dec (temp30) +  ":t30  " + dec (temp110) + ":t100  " + dec (vref30) + ":vref30 ", cPoint(0,40));
+
+      int r = getFrameNum() / 2;
+      if (r > getHeight()/2)
+        r = getHeight()/2;
+      drawClock (getCentre(), r);
       //drawValues();
       drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
       present();
@@ -1234,7 +1238,8 @@ private:
     float hourAngle;
     float minuteAngle;
     float secondAngle;
-    mRtc.getClockAngles (hourAngle, minuteAngle, secondAngle);
+    float subSecondAngle;
+    mRtc.getClockAngles (hourAngle, minuteAngle, secondAngle, subSecondAngle);
 
     float hourRadius = radius * 0.7f;
     drawLine (eOff, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));
@@ -1244,6 +1249,9 @@ private:
 
     float secondRadius = radius * 0.9f;
     drawLine (eOff, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));
+
+    float subSecondRadius = radius * 1.f;
+    drawLine (eOff, centre, centre + cPoint (int16_t(subSecondRadius * sin (subSecondAngle)), int16_t(subSecondRadius * cos (subSecondAngle))));
     }
   //}}}
   //{{{
@@ -1307,9 +1315,60 @@ extern "C" {
   }
 //}}}
 
+//{{{
+void systemClockInit() {
+// System Clock source            = PLL (HSE)
+// SYSCLK(Hz)                     = 168000000
+// HCLK(Hz)                       = 168000000
+// AHB Prescaler                  = 1
+// APB1 Prescaler                 = 4
+// APB2 Prescaler                 = 2
+// HSE Frequency(Hz)              = 8000000
+// PLL_M                          = 8
+// PLL_N                          = 336
+// PLL_P                          = 2
+// PLL_Q                          = 7
+// VDD(V)                         = 3.3
+// Main regulator output voltage  = Scale1 mode
+// Flash Latency(WS)              = 5
+
+  // Enable Power Control clock
+  __HAL_RCC_PWR_CLK_ENABLE();
+
+  // The voltage scaling allows optimizing the power consumption
+  __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  // enable HSE Oscillator activate PLL HSE source
+  RCC_OscInitTypeDef RCC_OscInit;
+  RCC_OscInit.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInit.HSEState = RCC_HSE_ON;
+  RCC_OscInit.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInit.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInit.PLL.PLLM = 8;
+  RCC_OscInit.PLL.PLLN = 336;
+  RCC_OscInit.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInit.PLL.PLLQ = 7;
+  HAL_RCC_OscConfig (&RCC_OscInit);
+
+  // select PLL system clock source configure HCLK, PCLK1, PCLK2 clocks dividers
+  RCC_ClkInitTypeDef RCC_ClkInit;
+  RCC_ClkInit.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+  RCC_ClkInit.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInit.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInit.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInit.APB2CLKDivider = RCC_HCLK_DIV2;
+  HAL_RCC_ClockConfig (&RCC_ClkInit, FLASH_LATENCY_5);
+
+  // STM32F405x/407x/415x/417x Revision Z devices: prefetch is supported
+  //if (HAL_GetREVID() == 0x1001) Enable the Flash prefetch
+  //  __HAL_FLASH_PREFETCH_BUFFER_ENABLE();
+  }
+//}}}
+
 int main() {
 
   HAL_Init();
+  systemClockInit();
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
