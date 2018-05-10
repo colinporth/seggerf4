@@ -33,9 +33,9 @@
 #define TICK_INT_PRIORITY            (0x0FU) // tick interrupt priority
 #define USE_RTOS                     0U
 
-#define PREFETCH_ENABLE              0U
-#define INSTRUCTION_CACHE_ENABLE     1U
-#define DATA_CACHE_ENABLE            1U
+#define INSTRUCTION_CACHE_ENABLE     1U      // HAL_init cache flags
+#define DATA_CACHE_ENABLE            1U      // HAL_init cache flags
+#define PREFETCH_ENABLE              0U      // HAL_init cache flags
 
 //{{{  module enabled includes
 #ifdef HAL_RCC_MODULE_ENABLED
