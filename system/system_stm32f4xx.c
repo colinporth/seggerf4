@@ -78,15 +78,11 @@ void SystemCoreClockUpdate(void)
   }
 //}}}
 
+//{{{
 void SystemInit() {
-  // Config System clock source, PLL Multiplier Divider, AHB/APBx prescalers and Flash settings
-  __IO uint32_t StartUpCounter = 0;
-  __IO uint32_t HSEStatus = 0;
 
   // FPU settings
-#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
   SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // set CP10 and CP11 Full Access
-#endif
 
   // Reset the RCC clock configuration to the default reset state, Set HSION bit
   RCC->CR |= (uint32_t)0x00000001;
@@ -108,6 +104,8 @@ void SystemInit() {
 
   // Enable HSE, Wait till HSE ready, exit if Timeout
   RCC->CR |= ((uint32_t)RCC_CR_HSEON);
+  __IO uint32_t StartUpCounter = 0;
+  __IO uint32_t HSEStatus = 0;
   do {
     HSEStatus = RCC->CR & RCC_CR_HSERDY;
     StartUpCounter++;
@@ -143,3 +141,4 @@ void SystemInit() {
 
   SCB->VTOR = FLASH_BASE;
   }
+//}}}

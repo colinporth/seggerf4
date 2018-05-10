@@ -139,28 +139,8 @@ _vectors_end:
   .section .init, "ax"
   .thumb_func
 
-  reset_handler:
-
-#ifndef __NO_SYSTEM_INIT
+reset_handler:
   ldr r0, =__SRAM_segment_end__
   mov sp, r0
   bl SystemInit
-#endif
-
-#if !defined(__SOFTFP__)
-  // Enable CP11 and CP10 with CPACR |= (0xf<<20)
-  movw r0, 0xED88
-  movt r0, 0xE000
-  ldr r1, [r0]
-  orrs r1, r1, #(0xf << 20)
-  str r1, [r0]
-#endif
-
   b _start
-
-#ifndef __NO_SYSTEM_INIT
-  .thumb_func
-  .weak SystemInit
-SystemInit:
-  bx lr
-#endif

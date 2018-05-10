@@ -1,6 +1,7 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
+  <BookmarkItem objectName="" line="1178" column="-1" path="C:/projects/seggerf4/main.cpp" number="44" extra="auto vbat = 2.f * vdd * value3 / 4096.f;" color="5"/>
   <BookmarkItem objectName="" line="28" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="44" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="49" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -366,7 +367,6 @@
   <BookmarkItem objectName="" line="1132" column="-1" path="C:/projects/seggerf4/main.cpp" number="41" extra="printf (&quot;cApp::init values alloc:%d\n&quot;, getWidth() * 2);" color="5"/>
   <BookmarkItem objectName="" line="1150" column="-1" path="C:/projects/seggerf4/main.cpp" number="42" extra="// 2.5mv /degC" color="5"/>
   <BookmarkItem objectName="" line="1168" column="-1" path="C:/projects/seggerf4/main.cpp" number="43" extra="auto vin = 2.f * vdd * value2 / 4096.f;" color="5"/>
-  <BookmarkItem objectName="" line="1178" column="-1" path="C:/projects/seggerf4/main.cpp" number="44" extra="auto vbat = 2.f * vdd * value3 / 4096.f;" color="5"/>
   <BookmarkItem objectName="" line="1199" column="-1" path="C:/projects/seggerf4/main.cpp" number="45" extra="drawClock (getCentre(), getHeight()/2 - 40);" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
@@ -413,8 +413,6 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;display"/>
-  <ProjectSessionItem path="display;display;drivers"/>
-  <ProjectSessionItem path="display;display;drivers;src"/>
  </Project>
  <Register1>
   <RegisterWindow visibleNodes="CPU - Current Context/r0;CPU - Current Context/r1;CPU - Current Context/r2;CPU - Current Context/r3;CPU - Current Context/r4;CPU - Current Context/r5;CPU - Current Context/r6;CPU - Current Context/r7;CPU - Current Context/r8;CPU - Current Context/r9;CPU - Current Context/r10;CPU - Current Context/r11;CPU - Current Context/r12;CPU - Current Context/sp(r13);CPU - Current Context/lr(r14);CPU - Current Context/pc(r15);CPU - Current Context/apsr;CPU/r0;CPU/r1;CPU/r2;CPU/r3;CPU/r4;CPU/r5;CPU/r6;CPU/r7;CPU/r8;CPU/r9;CPU/r10;CPU/r11;CPU/r12;CPU/sp(r13);CPU/lr(r14);CPU/pc(r15);CPU/xpsr;CPU/msp;CPU/psp;CPU/cfbp" binaryNodes="" asciiNodes="" openNodes="CPU - Current Context" name="Hello" decimalNodes="" octalNodes="" unsignedNodes=""/>
@@ -466,8 +464,6 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="9" y="802" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="1" top="777" codecName="Default"/>
- </Files>
+ <Files/>
  <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
