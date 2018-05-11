@@ -415,8 +415,6 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;display"/>
-  <ProjectSessionItem path="display;display;drivers"/>
-  <ProjectSessionItem path="display;display;drivers;src"/>
   <ProjectSessionItem path="display;display;system"/>
  </Project>
  <Register1>
@@ -469,6 +467,9 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="64" y="139" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="1" top="125" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="362" useTextEdit="1" useBinaryEdit="0" left="0" path="drivers/Inc/stm32f4xx_hal_gpio_ex.h" debugPath="drivers/Inc/stm32f4xx_hal_gpio_ex.h" selected="0" top="358" codecName="Default"/>
+ </Files>
  <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

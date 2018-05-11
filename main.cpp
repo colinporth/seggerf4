@@ -18,11 +18,12 @@ public:
   //    x  GND     5v     DISP   CS    SCLK    GND  x
   //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-  #define SCK_PIN     GPIO_PIN_13  //  SPI2  PB13  SCK
-  #define MOSI_PIN    GPIO_PIN_15  //  SPI2  PB15  MOSI
-  #define CS_PIN      GPIO_PIN_12  //  SPI2  PB12  CS/NSS active hi
-  #define DISP_PIN    GPIO_PIN_14  //  GPIO  PB14  DISP active hi
-  #define VCOM_PIN    GPIO_PIN_11  //  GPIO  PB11  VCOM - TIM2 CH4 1Hz flip
+  #define SCK_PIN        GPIO_PIN_13  //  SPI2  PB13  SCK
+  #define MOSI_PIN       GPIO_PIN_15  //  SPI2  PB15  MOSI
+  #define CS_PIN         GPIO_PIN_12  //  SPI2  PB12  CS/NSS active hi
+  #define DISP_PIN       GPIO_PIN_14  //  GPIO  PB14  DISP active hi, disp_pwm
+  #define VCOM_PIN       GPIO_PIN_11  //  GPIO  PB11  VCOM - TIM2 CH4 1Hz flip
+  #define LCD_POWER_PIN  GPIO_PIN_8   //  GPIO  PD8   LCD_POWER
 
   #define paddingByte 0x00
   #define clearByte   0x20 // unused
@@ -43,11 +44,15 @@ public:
     // config CS, DISP, init lo
     __HAL_RCC_GPIOB_CLK_ENABLE();
     GPIO_InitTypeDef gpioInit;
-    gpioInit.Pin = CS_PIN | DISP_PIN;
+    gpioInit.Pin = CS_PIN;
     gpioInit.Mode = GPIO_MODE_OUTPUT_PP;
     gpioInit.Pull = GPIO_PULLUP;
     gpioInit.Speed = GPIO_SPEED_FAST;
     HAL_GPIO_Init (GPIOB, &gpioInit);
+
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    gpioInit.Pin = LCD_POWER_PIN;
+    HAL_GPIO_Init (GPIOD, &gpioInit);
 
     //{{{  init tim2
     // config VCOM GPIOB as TIM2 CH4
@@ -84,7 +89,41 @@ public:
 
     //}}}
     if (HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_4))
-      printf ("HAL_TIM_PWM_Start failed\n");
+      printf ("HAL_TIM2_PWM_Start failed\n");
+
+    //{{{  init tim12
+    // config VCOM GPIOB as TIM2 CH4
+    gpioInit.Pin = DISP_PIN;
+    gpioInit.Mode = GPIO_MODE_AF_PP;
+    gpioInit.Alternate = GPIO_AF9_TIM13;
+    HAL_GPIO_Init (GPIOB, &gpioInit);
+
+    __HAL_RCC_TIM12_CLK_ENABLE();
+
+    timHandle.Instance = TIM12;
+    timHandle.Init.Period = 1000 - 1;
+    timHandle.Init.Prescaler = 1;
+    timHandle.Init.ClockDivision = 0;
+    timHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+
+    if (HAL_TIM_Base_Init (&timHandle))
+      printf ("HAL_TIM_Base_Init failed\n");
+
+    // init timOcInit
+    timOcInit.OCMode       = TIM_OCMODE_PWM1;
+    timOcInit.OCPolarity   = TIM_OCPOLARITY_HIGH;
+    timOcInit.OCFastMode   = TIM_OCFAST_DISABLE;
+    timOcInit.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+    timOcInit.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+    timOcInit.OCIdleState  = TIM_OCIDLESTATE_RESET;
+    timOcInit.Pulse =10 / 2;
+
+    if (HAL_TIM_PWM_ConfigChannel (&timHandle, &timOcInit, TIM_CHANNEL_1))
+      printf ("HAL_TIM_PWM_ConfigChannel failed\n");
+
+    //}}}
+    if (HAL_TIM_PWM_Start (&timHandle, TIM_CHANNEL_1))
+      printf ("HAL_TIM12_PWM_Start failed\n");
 
     //{{{  config SPI2 tx
     // config SPI2 GPIOB
@@ -102,7 +141,7 @@ public:
     mSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW; // SPI mode 0
     mSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;  // SPI mode 0
     mSpiHandle.Init.NSS               = SPI_NSS_SOFT;
-    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64; // 32 // 4 = 10.5mHz
+    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32; // 32 // 4 = 10.5mHz
     mSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     mSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLE;
     HAL_SPI_Init (&mSpiHandle);
@@ -158,7 +197,8 @@ public:
       printf ("cLcd::init frameBuf alloc fail\n");
 
     // enable DISP hi
-    GPIOB->BSRR = DISP_PIN;
+    //GPIOB->BSRR = DISP_PIN;
+    GPIOD->BSRR = LCD_POWER_PIN;
 
     return mFrameBuf;
     }
