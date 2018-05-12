@@ -1,12 +1,10 @@
 //{{{
 /*==============================================================================
-                                             User NOTES
 1. How To use this driver:
 --------------------------
    - This driver supports STM32F4xx devices on STM32F4-Discovery Kit:
         a) to play an audio file (all functions names start by BSP_AUDIO_OUT_xxx)
         b) to record an audio file through MP45DT02, ST MEMS (all functions names start by AUDIO_IN_xxx)
-
 a) PLAY A FILE:
 ==============
    + Call the function BSP_AUDIO_OUT_Init(
@@ -45,7 +43,6 @@ a) PLAY A FILE:
    + To Stop playing, to modify the volume level, the frequency or to mute, use the functions
        BSP_AUDIO_OUT_Stop(), BSP_AUDIO_OUT_SetVolume(), AUDIO_OUT_SetFrequency() BSP_AUDIO_OUT_SetOutputMode and BSP_AUDIO_OUT_SetMute().
    + The driver API and the callback functions are at the end of the stm32f4_discovery_audio.h file.
-
 Driver architecture:
 --------------------
    + This driver provide the High Audio Layer: consists of the function API exported in the stm32f4_discovery_audio.h file
@@ -53,7 +50,6 @@ Driver architecture:
    + This driver provide also the Media Access Layer (MAL): which consists of functions allowing to access the media containing/
        providing the audio file/stream. These functions are also included as local functions into
        the stm32f4_discovery_audio.c file (I2S3_Init()...)
-
 Known Limitations:
 -------------------
    1- When using the Speaker, if the audio file quality is not high enough, the speaker output
@@ -94,6 +90,72 @@ b) RECORD A FILE:
 ==============================================================================*/
 //}}}
 #include "stm32f4_discovery_audio.h"
+#include "cs43l22.h"
+#include "pdm2pcm_glo.h"
+
+//{{{  I2S3 peripheral configuration defines
+#define I2S3                            SPI3
+#define I2S3_CLK_ENABLE()               __HAL_RCC_SPI3_CLK_ENABLE()
+#define I2S3_CLK_DISABLE()              __HAL_RCC_SPI3_CLK_DISABLE()
+#define I2S3_SCK_SD_WS_AF               GPIO_AF6_SPI3
+#define I2S3_SCK_SD_CLK_ENABLE()        __HAL_RCC_GPIOC_CLK_ENABLE()
+#define I2S3_MCK_CLK_ENABLE()           __HAL_RCC_GPIOC_CLK_ENABLE()
+#define I2S3_WS_CLK_ENABLE()            __HAL_RCC_GPIOA_CLK_ENABLE()
+#define I2S3_WS_PIN                     GPIO_PIN_4
+#define I2S3_SCK_PIN                    GPIO_PIN_10
+#define I2S3_SD_PIN                     GPIO_PIN_12
+#define I2S3_MCK_PIN                    GPIO_PIN_7
+#define I2S3_SCK_SD_GPIO_PORT           GPIOC
+#define I2S3_WS_GPIO_PORT               GPIOA
+#define I2S3_MCK_GPIO_PORT              GPIOC
+
+// I2S DMA Stream definitions
+#define I2S3_DMAx_CLK_ENABLE()          __HAL_RCC_DMA1_CLK_ENABLE()
+#define I2S3_DMAx_CLK_DISABLE()         __HAL_RCC_DMA1_CLK_DISABLE()
+#define I2S3_DMAx_STREAM                DMA1_Stream7
+#define I2S3_DMAx_CHANNEL               DMA_CHANNEL_0
+#define I2S3_DMAx_IRQ                   DMA1_Stream7_IRQn
+#define I2S3_DMAx_PERIPH_DATA_SIZE      DMA_PDATAALIGN_HALFWORD
+#define I2S3_DMAx_MEM_DATA_SIZE         DMA_MDATAALIGN_HALFWORD
+#define DMA_MAX_SZE                     0xFFFF
+
+#define I2S3_IRQHandler                 DMA1_Stream7_IRQHandler
+
+// Select the interrupt preemption priority and subpriority for the DMA interrupt */
+#define AUDIO_OUT_IRQ_PREPRIO           0x0E   /* Select the preemption priority level(0 is the highest) */
+//}}}
+//{{{  I2S2 Configuration defines
+#define I2S2                            SPI2
+#define I2S2_CLK_ENABLE()               __HAL_RCC_SPI2_CLK_ENABLE()
+#define I2S2_CLK_DISABLE()              __HAL_RCC_SPI2_CLK_DISABLE()
+#define I2S2_SCK_PIN                    GPIO_PIN_10
+#define I2S2_SCK_GPIO_PORT              GPIOB
+#define I2S2_SCK_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
+#define I2S2_SCK_AF                     GPIO_AF5_SPI2
+
+#define I2S2_MOSI_PIN                   GPIO_PIN_3
+#define I2S2_MOSI_GPIO_PORT             GPIOC
+#define I2S2_MOSI_GPIO_CLK_ENABLE()     __HAL_RCC_GPIOC_CLK_ENABLE()
+#define I2S2_MOSI_AF                    GPIO_AF5_SPI2
+
+// I2S DMA Stream Rx definitions
+#define I2S2_DMAx_CLK_ENABLE()          __HAL_RCC_DMA1_CLK_ENABLE()
+#define I2S2_DMAx_CLK_DISABLE()         __HAL_RCC_DMA1_CLK_DISABLE()
+#define I2S2_DMAx_STREAM                DMA1_Stream3
+#define I2S2_DMAx_CHANNEL               DMA_CHANNEL_0
+#define I2S2_DMAx_IRQ                   DMA1_Stream3_IRQn
+#define I2S2_DMAx_PERIPH_DATA_SIZE      DMA_PDATAALIGN_HALFWORD
+#define I2S2_DMAx_MEM_DATA_SIZE         DMA_MDATAALIGN_HALFWORD
+
+#define I2S2_IRQHandler                 DMA1_Stream3_IRQHandler
+
+// Select the interrupt preemption priority and subpriority for the IT/DMA interrupt
+#define AUDIO_IN_IRQ_PREPRIO            0x0F   /* Select the preemption priority level(0 is the highest) */
+//}}}
+
+#define AUDIODATA_SIZE                  2   /* 16-bits audio data size */
+#define DMA_MAX(_X_)                (((_X_) <= DMA_MAX_SZE)? (_X_):DMA_MAX_SZE)
+#define HTONS(A)  ((((uint16_t)(A) & 0xff00) >> 8) | (((uint16_t)(A) & 0x00ff) << 8))
 
 /* These PLL parameters are valid when the f(VCO clock) = 1Mhz */
 const uint32_t I2SFreq[8] = {8000, 11025, 16000, 22050, 32000, 44100, 48000, 96000};
@@ -109,79 +171,72 @@ PDM_Filter_Config_t PDM_FilterConfig[2];
 __IO uint16_t AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
 
 //{{{
-__weak void BSP_AUDIO_OUT_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params)
-{
-  RCC_PeriphCLKInitTypeDef rccclkinit;
-  uint8_t index = 0, freqindex = 0xFF;
+__weak void BSP_AUDIO_OUT_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params) {
 
-  for(index = 0; index < 8; index++)
-  {
-    if(I2SFreq[index] == AudioFreq)
-    {
+  uint8_t index = 0;
+  uint8_t freqindex = 0xFF;
+  for (index = 0; index < 8; index++)
+    if (I2SFreq[index] == AudioFreq)
       freqindex = index;
-    }
-  }
-  /* Enable PLLI2S clock */
+
+  // Enable PLLI2S clock */
+  RCC_PeriphCLKInitTypeDef rccclkinit;
   HAL_RCCEx_GetPeriphCLKConfig(&rccclkinit);
-  /* PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-  if ((freqindex & 0x7) == 0)
-  {
-    /* I2S clock config
-    PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-    I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR */
+
+  // PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz
+  if ((freqindex & 0x7) == 0) {
+    // I2S clock config
+    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
+    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
     rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
     rccclkinit.PLLI2S.PLLI2SN = I2SPLLN[freqindex];
     rccclkinit.PLLI2S.PLLI2SR = I2SPLLR[freqindex];
     HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
-  }
-  else
-  {
-    /* I2S clock config
-    PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-    I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR */
+    }
+  else {
+    // I2S clock config
+    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
+    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
     rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
     rccclkinit.PLLI2S.PLLI2SN = 258;
     rccclkinit.PLLI2S.PLLI2SR = 3;
     HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
+    }
   }
-}
 //}}}
 //{{{
-__weak void BSP_AUDIO_OUT_MspInit (I2S_HandleTypeDef *hi2s, void *Params)
-{
-  static DMA_HandleTypeDef hdma_i2sTx;
-  GPIO_InitTypeDef  GPIO_InitStruct;
+__weak void BSP_AUDIO_OUT_MspInit (I2S_HandleTypeDef *hi2s, void *Params) {
 
-  /* Enable I2S3 clock */
+  static DMA_HandleTypeDef hdma_i2sTx;
+
+  // Enable I2S3 clock
   I2S3_CLK_ENABLE();
 
-  /*** Configure the GPIOs ***/
-  /* Enable I2S GPIO clocks */
+  // Enable I2S GPIO clocks
   I2S3_SCK_SD_CLK_ENABLE();
   I2S3_WS_CLK_ENABLE();
 
-  /* I2S3 pins configuration: WS, SCK and SD pins ----------------------------*/
-  GPIO_InitStruct.Pin         = I2S3_SCK_PIN | I2S3_SD_PIN;
-  GPIO_InitStruct.Mode        = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull        = GPIO_NOPULL;
-  GPIO_InitStruct.Speed       = GPIO_SPEED_FAST;
-  GPIO_InitStruct.Alternate   = I2S3_SCK_SD_WS_AF;
-  HAL_GPIO_Init(I2S3_SCK_SD_GPIO_PORT, &GPIO_InitStruct);
+  // I2S3 pins configuration: WS, SCK and SD pins
+  GPIO_InitTypeDef  GPIO_InitStruct;
+  GPIO_InitStruct.Pin = I2S3_SCK_PIN | I2S3_SD_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStruct.Alternate = I2S3_SCK_SD_WS_AF;
+  HAL_GPIO_Init (I2S3_SCK_SD_GPIO_PORT, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin         = I2S3_WS_PIN ;
-  HAL_GPIO_Init(I2S3_WS_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = I2S3_WS_PIN ;
+  HAL_GPIO_Init (I2S3_WS_GPIO_PORT, &GPIO_InitStruct);
 
-  /* I2S3 pins configuration: MCK pin */
+  // I2S3 pins configuration: MCK pin
   I2S3_MCK_CLK_ENABLE();
-  GPIO_InitStruct.Pin         = I2S3_MCK_PIN;
-  HAL_GPIO_Init(I2S3_MCK_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = I2S3_MCK_PIN;
+  HAL_GPIO_Init (I2S3_MCK_GPIO_PORT, &GPIO_InitStruct);
 
-  /* Enable the I2S DMA clock */
+  // Enable the I2S DMA clock
   I2S3_DMAx_CLK_ENABLE();
-
-  if(hi2s->Instance == I2S3)
-  {
-    /* Configure the hdma_i2sTx handle parameters */
+  if (hi2s->Instance == I2S3) {
+    hdma_i2sTx.Instance                 = I2S3_DMAx_STREAM;
     hdma_i2sTx.Init.Channel             = I2S3_DMAx_CHANNEL;
     hdma_i2sTx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
     hdma_i2sTx.Init.PeriphInc           = DMA_PINC_DISABLE;
@@ -194,75 +249,50 @@ __weak void BSP_AUDIO_OUT_MspInit (I2S_HandleTypeDef *hi2s, void *Params)
     hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
     hdma_i2sTx.Init.MemBurst            = DMA_MBURST_SINGLE;
     hdma_i2sTx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
+    __HAL_LINKDMA (hi2s, hdmatx, hdma_i2sTx);
+    HAL_DMA_DeInit (&hdma_i2sTx);
+    HAL_DMA_Init (&hdma_i2sTx);
+    }
 
-    hdma_i2sTx.Instance                 = I2S3_DMAx_STREAM;
-
-    /* Associate the DMA handle */
-    __HAL_LINKDMA(hi2s, hdmatx, hdma_i2sTx);
-
-    /* Deinitialize the Stream for new transfer */
-    HAL_DMA_DeInit(&hdma_i2sTx);
-
-    /* Configure the DMA Stream */
-    HAL_DMA_Init(&hdma_i2sTx);
+  // I2S DMA IRQ Channel configuration
+  HAL_NVIC_SetPriority (I2S3_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
+  HAL_NVIC_EnableIRQ (I2S3_DMAx_IRQ);
   }
-
-  /* I2S DMA IRQ Channel configuration */
-  HAL_NVIC_SetPriority(I2S3_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
-  HAL_NVIC_EnableIRQ(I2S3_DMAx_IRQ);
-}
 //}}}
 //{{{
-__weak void BSP_AUDIO_OUT_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
-{
+__weak void BSP_AUDIO_OUT_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params) {
+
   GPIO_InitTypeDef  GPIO_InitStruct;
 
-  /* I2S DMA IRQ Channel deactivation */
-  HAL_NVIC_DisableIRQ(I2S3_DMAx_IRQ);
+  // I2S DMA IRQ Channel deactivation */
+  HAL_NVIC_DisableIRQ (I2S3_DMAx_IRQ);
 
-  if(hi2s->Instance == I2S3)
-  {
-    /* Deinitialize the Stream for new transfer */
-    HAL_DMA_DeInit(hi2s->hdmatx);
-  }
+  if (hi2s->Instance == I2S3)
+    // Deinitialize the Stream for new transfer */
+    HAL_DMA_DeInit (hi2s->hdmatx);
 
- /* Disable I2S block */
-  __HAL_I2S_DISABLE(hi2s);
+  // Disable I2S block */
+  __HAL_I2S_DISABLE (hi2s);
 
-  /* CODEC_I2S pins configuration: SCK and SD pins */
+  // CODEC_I2S pins configuration: SCK and SD pins */
   GPIO_InitStruct.Pin = I2S3_SCK_PIN | I2S3_SD_PIN;
-  HAL_GPIO_DeInit(I2S3_SCK_SD_GPIO_PORT, GPIO_InitStruct.Pin);
+  HAL_GPIO_DeInit (I2S3_SCK_SD_GPIO_PORT, GPIO_InitStruct.Pin);
 
-  /* CODEC_I2S pins configuration: WS pin */
+  // CODEC_I2S pins configuration: WS pin */
   GPIO_InitStruct.Pin = I2S3_WS_PIN;
-  HAL_GPIO_DeInit(I2S3_WS_GPIO_PORT, GPIO_InitStruct.Pin);
+  HAL_GPIO_DeInit (I2S3_WS_GPIO_PORT, GPIO_InitStruct.Pin);
 
-  /* CODEC_I2S pins configuration: MCK pin */
+  // CODEC_I2S pins configuration: MCK pin */
   GPIO_InitStruct.Pin = I2S3_MCK_PIN;
-  HAL_GPIO_DeInit(I2S3_MCK_GPIO_PORT, GPIO_InitStruct.Pin);
+  HAL_GPIO_DeInit (I2S3_MCK_GPIO_PORT, GPIO_InitStruct.Pin);
 
-  /* Disable I2S clock */
+  // Disable I2S clock */
   I2S3_CLK_DISABLE();
-
-  /* GPIO pins clock and DMA clock can be shut down in the applic
-     by surcgarging this __weak function */
-}
+  }
 //}}}
-//{{{
-__weak void BSP_AUDIO_OUT_TransferComplete_CallBack()
-{
-}
-//}}}
-//{{{
-__weak void BSP_AUDIO_OUT_HalfTransfer_CallBack()
-{
-}
-//}}}
-//{{{
-__weak void BSP_AUDIO_OUT_Error_CallBack()
-{
-}
-//}}}
+__weak void BSP_AUDIO_OUT_TransferComplete_CallBack() {}
+__weak void BSP_AUDIO_OUT_HalfTransfer_CallBack() {}
+__weak void BSP_AUDIO_OUT_Error_CallBack() {}
 
 //{{{
 __weak void BSP_AUDIO_IN_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params)
@@ -295,19 +325,19 @@ __weak void BSP_AUDIO_IN_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFre
 }
 //}}}
 //{{{
-__weak void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params)
-{
+__weak void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params) {
+
   static DMA_HandleTypeDef hdma_i2sRx;
   GPIO_InitTypeDef  GPIO_InitStruct;
 
-  /* Enable the I2S2 peripheral clock */
+  // Enable the I2S2 peripheral clock */
   I2S2_CLK_ENABLE();
 
-  /* Enable I2S GPIO clocks */
+  // Enable I2S GPIO clocks */
   I2S2_SCK_GPIO_CLK_ENABLE();
   I2S2_MOSI_GPIO_CLK_ENABLE();
 
-  /* I2S2 pins configuration: SCK and MOSI pins ------------------------------*/
+  // I2S2 pins configuration: SCK and MOSI pins
   GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull      = GPIO_NOPULL;
   GPIO_InitStruct.Speed     = GPIO_SPEED_FAST;
@@ -320,11 +350,10 @@ __weak void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params)
   GPIO_InitStruct.Alternate = I2S2_MOSI_AF;
   HAL_GPIO_Init(I2S2_MOSI_GPIO_PORT, &GPIO_InitStruct);
 
-  /* Enable the DMA clock */
+  // Enable the DMA clock */
   I2S2_DMAx_CLK_ENABLE();
 
-  if(hi2s->Instance == I2S2)
-  {
+  if(hi2s->Instance == I2S2) {
     /* Configure the hdma_i2sRx handle parameters */
     hdma_i2sRx.Init.Channel             = I2S2_DMAx_CHANNEL;
     hdma_i2sRx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
@@ -341,20 +370,20 @@ __weak void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params)
 
     hdma_i2sRx.Instance = I2S2_DMAx_STREAM;
 
-    /* Associate the DMA handle */
+    // Associate the DMA handle */
     __HAL_LINKDMA(hi2s, hdmarx, hdma_i2sRx);
 
-    /* Deinitialize the Stream for new transfer */
+    // Deinitialize the Stream for new transfer */
     HAL_DMA_DeInit(&hdma_i2sRx);
 
-    /* Configure the DMA Stream */
+    // Configure the DMA Stream */
     HAL_DMA_Init(&hdma_i2sRx);
-  }
+    }
 
-  /* I2S DMA IRQ Channel configuration */
+  // I2S DMA IRQ Channel configuration */
   HAL_NVIC_SetPriority(I2S2_DMAx_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
   HAL_NVIC_EnableIRQ(I2S2_DMAx_IRQ);
-}
+  }
 //}}}
 //{{{
 __weak void BSP_AUDIO_IN_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
@@ -386,50 +415,26 @@ __weak void BSP_AUDIO_IN_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
      by surcgarging this __weak function */
 }
 //}}}
-//{{{
-__weak void BSP_AUDIO_IN_TransferComplete_CallBack()
-{
-  /* This function should be implemented by the user application.
-     It is called into this driver when the current buffer is filled
-     to prepare the next buffer pointer and its size. */
-}
-//}}}
-//{{{
-__weak void BSP_AUDIO_IN_HalfTransfer_CallBack()
-{
-  /* This function should be implemented by the user application.
-     It is called into this driver when the current buffer is filled
-     to prepare the next buffer pointer and its size. */
-}
-//}}}
-//{{{
-__weak void BSP_AUDIO_IN_Error_Callback()
-{
-  /* This function is called when an Interrupt due to transfer error on or peripheral
-     error occurs. */
-}
-//}}}
+__weak void BSP_AUDIO_IN_TransferComplete_CallBack() {}
+__weak void BSP_AUDIO_IN_HalfTransfer_CallBack() {}
+__weak void BSP_AUDIO_IN_Error_Callback() {}
 
 //{{{
-void HAL_I2S_TxCpltCallback (I2S_HandleTypeDef *hi2s)
-{
-  if(hi2s->Instance == I2S3)
-  {
+void HAL_I2S_TxCpltCallback (I2S_HandleTypeDef *hi2s) {
+
+  if (hi2s->Instance == I2S3)
     /* Call the user function which will manage directly transfer complete */
     BSP_AUDIO_OUT_TransferComplete_CallBack();
   }
-}
 //}}}
 //{{{
-void HAL_I2S_TxHalfCpltCallback (I2S_HandleTypeDef *hi2s)
-{
+void HAL_I2S_TxHalfCpltCallback (I2S_HandleTypeDef *hi2s) {
+
   if(hi2s->Instance == I2S3)
-  {
     /* Manage the remaining file size and new address offset: This function should
        be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */
     BSP_AUDIO_OUT_HalfTransfer_CallBack();
   }
-}
 //}}}
 //{{{
 void HAL_I2S_RxCpltCallback (I2S_HandleTypeDef *hi2s)
@@ -439,36 +444,31 @@ void HAL_I2S_RxCpltCallback (I2S_HandleTypeDef *hi2s)
 }
 //}}}
 //{{{
-void HAL_I2S_RxHalfCpltCallback (I2S_HandleTypeDef *hi2s)
-{
+void HAL_I2S_RxHalfCpltCallback (I2S_HandleTypeDef *hi2s) {
   /* Manage the remaining file size and new address offset: This function
      should be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */
   BSP_AUDIO_IN_HalfTransfer_CallBack();
-}
+  }
 //}}}
 //{{{
-void HAL_I2S_ErrorCallback (I2S_HandleTypeDef *hi2s)
-{
+void HAL_I2S_ErrorCallback (I2S_HandleTypeDef *hi2s) {
+
   /* Manage the error generated on DMA FIFO: This function
      should be coded by user (its prototype is already declared in stm32f4_discovery_audio.h) */
-  if(hi2s->Instance == I2S3)
-  {
+  if (hi2s->Instance == I2S3)
     BSP_AUDIO_OUT_Error_CallBack();
-  }
-  if(hi2s->Instance == I2S2)
-  {
+  if (hi2s->Instance == I2S2)
     BSP_AUDIO_IN_Error_Callback();
   }
-}
 //}}}
 
 //{{{
-static uint8_t I2S3_Init (uint32_t AudioFreq)
-{
+static uint8_t I2S3_Init (uint32_t AudioFreq) {
+
   /* Initialize the hAudioOutI2s Instance parameter */
   hAudioOutI2s.Instance         = I2S3;
 
- /* Disable I2S block */
+  /* Disable I2S block */
   __HAL_I2S_DISABLE(&hAudioOutI2s);
 
   /* I2S3 peripheral configuration */
@@ -481,25 +481,20 @@ static uint8_t I2S3_Init (uint32_t AudioFreq)
   hAudioOutI2s.Init.Standard    = I2S_STANDARD;
   /* Initialize the I2S peripheral with the structure above */
   if(HAL_I2S_Init(&hAudioOutI2s) != HAL_OK)
-  {
     return AUDIO_ERROR;
-  }
   else
-  {
     return AUDIO_OK;
   }
-}
 //}}}
 //{{{
-static void PDMDecoder_Init (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut)
-{
+static void PDMDecoder_Init (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut) {
+
   uint32_t index = 0;
 
   /* Enable CRC peripheral to unlock the PDM library */
   __HAL_RCC_CRC_CLK_ENABLE();
 
-  for(index = 0; index < ChnlNbrIn; index++)
-  {
+  for (index = 0; index < ChnlNbrIn; index++) {
     /* Init PDM filters */
     PDM_FilterHandler[index].bit_order  = PDM_FILTER_BIT_ORDER_LSB;
     PDM_FilterHandler[index].endianness = PDM_FILTER_ENDIANNESS_LE;
@@ -513,12 +508,12 @@ static void PDMDecoder_Init (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t Ch
     PDM_FilterConfig[index].mic_gain = 24;
     PDM_FilterConfig[index].decimation_factor = PDM_FILTER_DEC_FACTOR_64;
     PDM_Filter_setConfig((PDM_Filter_Handler_t *)&PDM_FilterHandler[index], &PDM_FilterConfig[index]);
+    }
   }
-}
 //}}}
 //{{{
-static uint8_t I2S2_Init (uint32_t AudioFreq)
-{
+static uint8_t I2S2_Init (uint32_t AudioFreq) {
+
   /* Initialize the hAudioInI2s Instance parameter */
   hAudioInI2s.Instance          = I2S2;
 
@@ -536,236 +531,190 @@ static uint8_t I2S2_Init (uint32_t AudioFreq)
 
   /* Initialize the I2S peripheral with the structure above */
   if(HAL_I2S_Init(&hAudioInI2s) != HAL_OK)
-  {
     return AUDIO_ERROR;
-  }
   else
-  {
     return AUDIO_OK;
   }
-}
 //}}}
 
 //{{{
-uint8_t BSP_AUDIO_OUT_Init (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq)
-{
+uint8_t BSP_AUDIO_OUT_Init (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq) {
+
   uint8_t ret = AUDIO_OK;
 
-  /* PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups) */
-  BSP_AUDIO_OUT_ClockConfig(&hAudioOutI2s, AudioFreq, NULL);
+  // PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups) */
+  BSP_AUDIO_OUT_ClockConfig (&hAudioOutI2s, AudioFreq, NULL);
 
-  /* I2S data transfer preparation:
-  Prepare the Media to be used for the audio transfer from memory to I2S peripheral */
+  // I2S data transfer preparation:
+  // Prepare the Media to be used for the audio transfer from memory to I2S peripheral */
   hAudioOutI2s.Instance = I2S3;
-  if(HAL_I2S_GetState(&hAudioOutI2s) == HAL_I2S_STATE_RESET)
-  {
-    /* Init the I2S MSP: this __weak function can be redefined by the application*/
-    BSP_AUDIO_OUT_MspInit(&hAudioOutI2s, NULL);
-  }
+  if (HAL_I2S_GetState (&hAudioOutI2s) == HAL_I2S_STATE_RESET)
+    // Init the I2S MSP: this __weak function can be redefined by the application*/
+    BSP_AUDIO_OUT_MspInit (&hAudioOutI2s, NULL);
 
-  /* I2S data transfer preparation:
-  Prepare the Media to be used for the audio transfer from memory to I2S peripheral */
-  /* Configure the I2S peripheral */
-  if(I2S3_Init(AudioFreq) != AUDIO_OK)
-  {
+  // I2S data transfer preparation:
+  // Prepare the Media to be used for the audio transfer from memory to I2S peripheral */
+  // Configure the I2S peripheral */
+  if (I2S3_Init (AudioFreq) != AUDIO_OK)
     ret = AUDIO_ERROR;
-  }
 
-  if(ret == AUDIO_OK)
-  {
-    /* Retieve audio codec identifier */
-    if(((cs43l22_drv.ReadID(AUDIO_I2C_ADDRESS)) & CS43L22_ID_MASK) == CS43L22_ID)
-    {
-      /* Initialize the audio driver structure */
+  if (ret == AUDIO_OK) {
+    // Retieve audio codec identifier */
+    if(((cs43l22_drv.ReadID (AUDIO_I2C_ADDRESS)) & CS43L22_ID_MASK) == CS43L22_ID)
+      // Initialize the audio driver structure */
       pAudioDrv = &cs43l22_drv;
-    }
     else
-    {
       ret = AUDIO_ERROR;
     }
-  }
 
-  if(ret == AUDIO_OK)
-  {
-    pAudioDrv->Init(AUDIO_I2C_ADDRESS, OutputDevice, Volume, AudioFreq);
-  }
+  if (ret == AUDIO_OK)
+    pAudioDrv->Init (AUDIO_I2C_ADDRESS, OutputDevice, Volume, AudioFreq);
 
   return ret;
-}
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_Play (uint16_t* pBuffer, uint32_t Size)
-{
-  /* Call the audio Codec Play function */
-  if(pAudioDrv->Play(AUDIO_I2C_ADDRESS, pBuffer, Size) != 0)
-  {
+uint8_t BSP_AUDIO_OUT_Play (uint16_t* pBuffer, uint32_t Size) {
+
+  // Call the audio Codec Play function */
+  if (pAudioDrv->Play(AUDIO_I2C_ADDRESS, pBuffer, Size) != 0)
     return AUDIO_ERROR;
-  }
-  else
-  {
+  else {
     /* Update the Media layer and enable it for play */
     HAL_I2S_Transmit_DMA(&hAudioOutI2s, pBuffer, DMA_MAX(Size/AUDIODATA_SIZE));
 
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
+    }
   }
-}
 //}}}
 //{{{
-void BSP_AUDIO_OUT_ChangeBuffer (uint16_t *pData, uint16_t Size)
-{
-  HAL_I2S_Transmit_DMA(&hAudioOutI2s, pData, Size);
-}
+void BSP_AUDIO_OUT_ChangeBuffer (uint16_t *pData, uint16_t Size) {
+  HAL_I2S_Transmit_DMA (&hAudioOutI2s, pData, Size);
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_Pause()
-{
+uint8_t BSP_AUDIO_OUT_Pause() {
   /* Call the Audio Codec Pause/Resume function */
   if(pAudioDrv->Pause(AUDIO_I2C_ADDRESS) != 0)
-  {
     return AUDIO_ERROR;
-  }
-  else
-  {
+  else {
     /* Call the Media layer pause function */
     HAL_I2S_DMAPause(&hAudioOutI2s);
 
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
+    }
   }
-}
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_Resume()
-{
+uint8_t BSP_AUDIO_OUT_Resume() {
+
   /* Call the Audio Codec Pause/Resume function */
-  if(pAudioDrv->Resume(AUDIO_I2C_ADDRESS) != 0)
-  {
+  if (pAudioDrv->Resume(AUDIO_I2C_ADDRESS) != 0)
     return AUDIO_ERROR;
-  }
-  else
-  {
+  else {
     /* Call the Media layer resume function */
     HAL_I2S_DMAResume(&hAudioOutI2s);
 
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
+    }
   }
-}
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_Stop (uint32_t Option)
-{
+uint8_t BSP_AUDIO_OUT_Stop (uint32_t Option) {
+
   /* Call DMA Stop to disable DMA stream before stopping codec */
   HAL_I2S_DMAStop(&hAudioOutI2s);
 
   /* Call Audio Codec Stop function */
   if(pAudioDrv->Stop(AUDIO_I2C_ADDRESS, Option) != 0)
-  {
     return AUDIO_ERROR;
-  }
-  else
-  {
-    if(Option == CODEC_PDWN_HW)
-    {
+  else {
+    if(Option == CODEC_PDWN_HW) {
       /* Wait at least 1ms */
       HAL_Delay(1);
 
       /* Reset the pin */
       HAL_GPIO_WritePin(AUDIO_RESET_GPIO, AUDIO_RESET_PIN, GPIO_PIN_RESET);
-    }
+     }
 
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
+    }
   }
-}
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_SetVolume (uint8_t Volume)
-{
-  /* Call the codec volume control function with converted volume value */
-  if(pAudioDrv->SetVolume(AUDIO_I2C_ADDRESS, Volume) != 0)
-  {
+uint8_t BSP_AUDIO_OUT_SetVolume (uint8_t Volume) {
+/* Call the codec volume control function with converted volume value */
+
+  if (pAudioDrv->SetVolume(AUDIO_I2C_ADDRESS, Volume) != 0)
     return AUDIO_ERROR;
-  }
   else
-  {
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
   }
-}
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_SetMute (uint32_t Cmd)
-{
+uint8_t BSP_AUDIO_OUT_SetMute (uint32_t Cmd) {
+
   /* Call the Codec Mute function */
   if(pAudioDrv->SetMute(AUDIO_I2C_ADDRESS, Cmd) != 0)
-  {
     return AUDIO_ERROR;
-  }
   else
-  {
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
   }
-}
 //}}}
 //{{{
-uint8_t BSP_AUDIO_OUT_SetOutputMode (uint8_t Output)
-{
+uint8_t BSP_AUDIO_OUT_SetOutputMode (uint8_t Output) {
+
   /* Call the Codec output Device function */
   if(pAudioDrv->SetOutputMode(AUDIO_I2C_ADDRESS, Output) != 0)
-  {
     return AUDIO_ERROR;
-  }
   else
-  {
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
   }
-}
 //}}}
 //{{{
-void BSP_AUDIO_OUT_SetFrequency (uint32_t AudioFreq)
-{
-  /* PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups) */
+void BSP_AUDIO_OUT_SetFrequency (uint32_t AudioFreq) {
+
+  // PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups)
   BSP_AUDIO_OUT_ClockConfig(&hAudioOutI2s, AudioFreq, NULL);
 
-  /* Update the I2S audio frequency configuration */
+  // Update the I2S audio frequency configuration */
   I2S3_Init(AudioFreq);
-}
+  }
 //}}}
 
 //{{{
-uint8_t BSP_AUDIO_IN_Init (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr)
-{
+uint8_t BSP_AUDIO_IN_Init (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr) {
 
-  /* Configure PLL clock */
+  // Configure PLL clock */
   BSP_AUDIO_IN_ClockConfig(&hAudioInI2s, AudioFreq, NULL);
 
-  /* Configure the PDM library */
-  /* On STM32F4-Discovery a single microphone is mounted, samples are duplicated
-     to make stereo audio streams */
+  // Configure the PDM library */
+  // On STM32F4-Discovery a single microphone is mounted, samples are duplicated to make stereo audio streams */
   PDMDecoder_Init(AudioFreq, ChnlNbr, 2);
 
-  /* Configure the I2S peripheral */
+  // Configure the I2S peripheral */
   hAudioInI2s.Instance = I2S2;
   if(HAL_I2S_GetState(&hAudioInI2s) == HAL_I2S_STATE_RESET)
-  {
     /* Initialize the I2S Msp: this __weak function can be rewritten by the application */
     BSP_AUDIO_IN_MspInit(&hAudioInI2s, NULL);
-  }
 
-  /* Configure the I2S2 */
+  // Configure the I2S2 */
   I2S2_Init(AudioFreq);
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
-}
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_Record (uint16_t* pbuf, uint32_t size)
-{
+uint8_t BSP_AUDIO_IN_Record (uint16_t* pbuf, uint32_t size) {
+
   uint32_t ret = AUDIO_ERROR;
 
   /* Start the process receive DMA */
@@ -775,11 +724,11 @@ uint8_t BSP_AUDIO_IN_Record (uint16_t* pbuf, uint32_t size)
   ret = AUDIO_OK;
 
   return ret;
-}
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_Stop()
-{
+uint8_t BSP_AUDIO_IN_Stop() {
+
   uint32_t ret = AUDIO_ERROR;
 
   /* Call the Media layer pause function */
@@ -789,63 +738,57 @@ uint8_t BSP_AUDIO_IN_Stop()
   ret = AUDIO_OK;
 
   return ret;
-}
-
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_Pause()
-{
+uint8_t BSP_AUDIO_IN_Pause() {
+
   /* Call the Media layer pause function */
   HAL_I2S_DMAPause(&hAudioInI2s);
 
   /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
-}
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_Resume()
-{
+uint8_t BSP_AUDIO_IN_Resume() {
+
   /* Call the Media layer pause/resume function */
   HAL_I2S_DMAResume(&hAudioInI2s);
 
   /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
-}
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_SetVolume (uint8_t Volume)
-{
-  /* Set the Global variable AudioInVolume */
+uint8_t BSP_AUDIO_IN_SetVolume (uint8_t Volume) {
+
+  // Set the Global variable AudioInVolume */
   AudioInVolume = Volume;
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
-}
+  }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_PDMToPCM (uint16_t *PDMBuf, uint16_t *PCMBuf)
-{
+uint8_t BSP_AUDIO_IN_PDMToPCM (uint16_t *PDMBuf, uint16_t *PCMBuf) {
+
   uint16_t AppPDM[INTERNAL_BUFF_SIZE/2];
   uint32_t index = 0;
 
   /* PDM Demux */
   for(index = 0; index<INTERNAL_BUFF_SIZE/2; index++)
-  {
     AppPDM[index] = HTONS(PDMBuf[index]);
-  }
 
   for(index = 0; index < DEFAULT_AUDIO_IN_CHANNEL_NBR; index++)
-  {
     /* PDM to PCM filter */
-  PDM_Filter((uint8_t*)&AppPDM[index], (uint16_t*)&(PCMBuf[index]), &PDM_FilterHandler[index]);
-  }
+    PDM_Filter((uint8_t*)&AppPDM[index], (uint16_t*)&(PCMBuf[index]), &PDM_FilterHandler[index]);
+
   /* Duplicate samples since a single microphone in mounted on STM32F4-Discovery */
   for(index = 0; index < PCM_OUT_SIZE; index++)
-  {
     PCMBuf[(index<<1)+1] = PCMBuf[index<<1];
-  }
 
   /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
-}
+  }
 //}}}

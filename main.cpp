@@ -6,6 +6,7 @@
 
 #include "stm32f4xx.h"
 #include "stm32f4_discovery.h"
+#include "stm32f4_discovery_audio.h"
 #include "accelerometer.h"
 //}}}
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
@@ -1190,6 +1191,13 @@ public:
     mAdc.init();
     mRtc.init();
 
+    mValues0 = (int16_t*)malloc (getWidth() * 2);
+    memset (mValues0, 0, getWidth() * 2);
+    mValues1 = (int16_t*)malloc (getWidth() * 2);
+    memset (mValues1, 0, getWidth() * 2);
+    mValues2 = (int16_t*)malloc (getWidth() * 2);
+    memset (mValues2, 0, getWidth() * 2);
+
     mValues = (int16_t*)malloc (getWidth() * 2);
     memset (mValues, 0, getWidth() * 2);
     if (mValues)
@@ -1250,9 +1258,13 @@ public:
 
       int16_t values[3];
       BSP_ACCELERO_GetXYZ (values);
-      drawString (eOff, eSmall, eLeft,
-                  dec (values[0]) + " "  + dec (values[1]) + " "  + dec (values[2]),
-                  cPoint(0,20));
+      mValues0[getFrameNum() % getWidth()] = values[0];
+      mValues1[getFrameNum() % getWidth()] = values[1];
+      mValues2[getFrameNum() % getWidth()] = values[2];
+
+      drawString (eOff, eSmall, eLeft, dec (values[0]), cPoint(0,20));
+      drawString (eOff, eSmall, eLeft, dec (values[1]), cPoint(0,40));
+      drawString (eOff, eSmall, eLeft, dec (values[2]), cPoint(0,60));
 
       //drawString (eOff, eSmall, eLeft,
       //            dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "vref  " +
@@ -1268,9 +1280,9 @@ public:
       int r = getFrameNum() / 2;
       if (r > getHeight()/2)
         r = getHeight()/2;
-      drawClock (getCentre(), r);
-      //drawValues();
-      drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
+      //drawClock (getCentre(), r);
+      drawAcc();
+      //drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
       present();
       }
     }
@@ -1320,6 +1332,33 @@ private:
     }
   //}}}
   //{{{
+  void drawAcc() {
+
+    int32_t valueIndex = getFrameNum() - getWidth();
+    for (int i = 0; i < getWidth(); i++) {
+      int16_t value = valueIndex > 0 ? mValues0[valueIndex % getWidth()] : 0;
+      int16_t x = 16 * value / 60;
+      int16_t x1 = x < 0 ? 16 + x : 16;
+      int16_t x2 = x < 0 ? 16 : 16 + x;
+      fillRect (eOff, cRect (i, x1, i+1, x2));
+
+      value = valueIndex > 0 ? mValues1[valueIndex % getWidth()] : 0;
+      x = 16 * value / 60;
+      x1 = x < 0 ? 48 + x : 48;
+      x2 = x < 0 ? 48 : 48 + x;
+      fillRect (eOff, cRect (i, x1, i+1, x2));
+
+      value = valueIndex > 0 ? mValues2[valueIndex % getWidth()] : 0;
+      x = 16 * value / 60;
+      x1 = x < 0 ? 80 + x : 80;
+      x2 = x < 0 ? 80 : 80 + x;
+      fillRect (eOff, cRect (i, x1, i+1, x2));
+
+      valueIndex++;
+      }
+    }
+  //}}}
+  //{{{
   void drawTests() {
 
     eDraw draw = eOff;
@@ -1344,6 +1383,9 @@ private:
   bool mPowerOnReset = false;
 
   int16_t* mValues = nullptr;
+  int16_t* mValues0 = nullptr;
+  int16_t* mValues1 = nullptr;
+  int16_t* mValues2 = nullptr;
   int16_t mMinValue1 = 4096;
   int16_t mMaxValue1 = 0;
   int16_t mMinValue2 = 4096;
@@ -1431,6 +1473,8 @@ int main() {
 
   BSP_ACCELERO_Init();
   BSP_ACCELERO_ReadID();
+
+  BSP_AUDIO_OUT_Init (2, 100, 441000);
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
