@@ -1,35 +1,9 @@
-#pragma once
-//{{{
-#ifdef __cplusplus
- extern "C" {
-#endif
-//}}}
-#include "accelero.h"
+#include "accelerometer.h"
+#include "stm32f4_discovery.h"
+#include <stdint.h>
 
-typedef struct {
-  uint8_t Power_Mode;                         /* Power-down/Active Mode */
-  uint8_t Output_DataRate;                    /* OUT data rate 100 Hz / 400 Hz */
-  uint8_t Axes_Enable;                        /* Axes enable */
-  uint8_t Full_Scale;                         /* Full scale */
-  uint8_t Self_Test;                          /* Self test */
-  } LIS302DL_InitTypeDef;
-
-/* Interrupt struct */
-typedef struct {
-  uint8_t Latch_Request;                      /* Latch interrupt request into CLICK_SRC register*/
-  uint8_t SingleClick_Axes;                   /* Single Click Axes Interrupts */
-  uint8_t DoubleClick_Axes;                   /* Double Click Axes Interrupts */
-  } LIS302DL_InterruptConfigTypeDef;
-
-/* High Pass Filter struct */
-typedef struct {
-  uint8_t HighPassFilter_Data_Selection;      /* Internal filter bypassed or data from internal filter send to output register*/
-  uint8_t HighPassFilter_CutOff_Frequency;    /* High pass filter cut-off frequency */
-  uint8_t HighPassFilter_Interrupt;           /* High pass filter enabled for Freefall/WakeUp #1 or #2 */
-  } LIS302DL_FilterConfigTypeDef;
-
-#define LIS302DL_WHO_AM_I_ADDR                  0x0F
-
+//{{{  defines
+#define LIS302DL_WHO_AM_I_ADDR             0x0F
 //{{{  CTRL_REG1
 /*******************************************************************************
 *  CTRL_REG1 Register: Control Register 1
@@ -61,10 +35,9 @@ typedef struct {
 *         1- X axis enabled
 *******************************************************************************/
 //}}}
-#define LIS302DL_CTRL_REG1_ADDR                 0x20
+#define LIS302DL_CTRL_REG1_ADDR            0x20
 //{{{  CTRL_REG2
-/*******************************************************************************
-*  CTRL_REG2 Regsiter: Control Register 2
+/* CTRL_REG2 Regsiter: Control Register 2
 *  Read Write register
 *  Default value: 0x00
 *  7 SIM: SPI Serial Interface Mode Selection.
@@ -98,9 +71,9 @@ typedef struct {
 *              01     |    1      |     4     |
 *              10     |    0.5    |     2     |
 *              11     |    0.25   |     1     |
-*******************************************************************************/
+*/
 //}}}
-#define LIS302DL_CTRL_REG2_ADDR              0x21
+#define LIS302DL_CTRL_REG2_ADDR            0x21
 //{{{  CTRL_REG3
 /*******************************************************************************
 *  CTRL_REG3 Register: Interrupt Control Register
@@ -124,7 +97,7 @@ typedef struct {
 *              1     |      1       |       1      | Click interrupt
 *******************************************************************************/
 //}}}
-#define LIS302DL_CTRL_REG3_ADDR              0x22
+#define LIS302DL_CTRL_REG3_ADDR            0x22
 //{{{  HP_FILTER_RESET
 /*******************************************************************************
 *  HP_FILTER_RESET Register: Dummy register. Reading at this address zeroes
@@ -135,7 +108,7 @@ typedef struct {
 *  Default value: Dummy
 *******************************************************************************/
 //}}}
-#define LIS302DL_HP_FILTER_RESET_REG_ADDR     0x23
+#define LIS302DL_HP_FILTER_RESET_REG_ADDR  0x23
 //{{{  STATUS_REG
 /*******************************************************************************
 *  STATUS_REG Register: Status Register
@@ -166,7 +139,7 @@ typedef struct {
 *         1: a new data for X axis is available
 *******************************************************************************/
 //}}}
-#define LIS302DL_STATUS_REG_ADDR             0x27
+#define LIS302DL_STATUS_REG_ADDR           0x27
 //{{{  OUT_X
 /*******************************************************************************
 *  OUT_X Register: X-axis output Data
@@ -175,7 +148,7 @@ typedef struct {
 *  7:0 XD7-XD0: X-axis output Data
 *******************************************************************************/
 //}}}
-#define LIS302DL_OUT_X_ADDR                  0x29
+#define LIS302DL_OUT_X_ADDR                0x29
 //{{{  OUT_Y
 /*******************************************************************************
 *  OUT_Y Register: Y-axis output Data
@@ -184,7 +157,7 @@ typedef struct {
 *  7:0 YD7-YD0: Y-axis output Data
 *******************************************************************************/
 //}}}
-#define LIS302DL_OUT_Y_ADDR                  0x2B
+#define LIS302DL_OUT_Y_ADDR                0x2B
 //{{{  OUT_Z
 /*******************************************************************************
 *  OUT_Z Register: Z-axis output Data
@@ -193,7 +166,7 @@ typedef struct {
 *  7:0 ZD7-ZD0: Z-axis output Data
 *******************************************************************************/
 //}}}
-#define LIS302DL_OUT_Z_ADDR                  0x2D
+#define LIS302DL_OUT_Z_ADDR                0x2D
 //{{{  FF_WW_CFG_1
 /*******************************************************************************
 *  FF_WW_CFG_1 Register: Configuration register for Interrupt 1 source.
@@ -225,7 +198,7 @@ typedef struct {
 *          1: enable interrupt request on measured accel. value lower than preset threshold
 *******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_CFG1_REG_ADDR         0x30
+#define LIS302DL_FF_WU_CFG1_REG_ADDR       0x30
 //{{{  FF_WU_SRC_1
 /*******************************************************************************
 *  FF_WU_SRC_1 Register: Interrupt 1 source register.
@@ -258,7 +231,7 @@ typedef struct {
 *        1: XL event has occurred
 *******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_SRC1_REG_ADDR           0x31
+#define LIS302DL_FF_WU_SRC1_REG_ADDR       0x31
 //{{{  FF_WU_THS_1
 /*******************************************************************************
 *  FF_WU_THS_1 Register: Threshold register
@@ -270,7 +243,7 @@ typedef struct {
 *  6 THS6-THS0: Free-fall/wake-up threshold value.
 *******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_THS1_REG_ADDR          0x32
+#define LIS302DL_FF_WU_THS1_REG_ADDR       0x32
 //{{{  FF_WU_DURATION_1
 /*******************************************************************************
 *  FF_WU_DURATION_1 Register: duration Register
@@ -279,7 +252,7 @@ typedef struct {
 *  7:0 D7-D0 Duration value. (Duration steps and maximum values depend on the ODR chosen)
  ******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_DURATION1_REG_ADDR     0x33
+#define LIS302DL_FF_WU_DURATION1_REG_ADDR  0x33
 //{{{  FF_WW_CFG_2
 /*******************************************************************************
 *  FF_WW_CFG_2 Register: Configuration register for Interrupt 2 source.
@@ -311,7 +284,7 @@ typedef struct {
 *          1: enable interrupt request on measured accel. value lower than preset threshold
 *******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_CFG2_REG_ADDR         0x34
+#define LIS302DL_FF_WU_CFG2_REG_ADDR       0x34
 //{{{  FF_WU_SRC_2
 /*******************************************************************************
 *  FF_WU_SRC_2 Register: Interrupt 2 source register.
@@ -344,7 +317,7 @@ typedef struct {
 *        1: XL event has occurred
 *******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_SRC2_REG_ADDR           0x35
+#define LIS302DL_FF_WU_SRC2_REG_ADDR       0x35
 //{{{  FF_WU_THS_2
 /*******************************************************************************
 *  FF_WU_THS_2 Register: Threshold register
@@ -356,7 +329,7 @@ typedef struct {
 *  6 THS6-THS0: Free-fall/wake-up threshold value.
 *******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_THS2_REG_ADDR          0x36
+#define LIS302DL_FF_WU_THS2_REG_ADDR       0x36
 //{{{  FF_WU_DURATION_2
 /*******************************************************************************
 *  FF_WU_DURATION_2 Register: duration Register
@@ -365,7 +338,7 @@ typedef struct {
 *  7:0 D7-D0 Duration value. (Duration steps and maximum values depend on the ODR chosen)
  ******************************************************************************/
 //}}}
-#define LIS302DL_FF_WU_DURATION2_REG_ADDR     0x37
+#define LIS302DL_FF_WU_DURATION2_REG_ADDR  0x37
 //{{{  FF_WU_DURATION_2
 /******************************************************************************
 *  FF_WU_DURATION_2 Register: click Register
@@ -395,7 +368,7 @@ typedef struct {
 *              1: enable interrupt request
  ******************************************************************************/
 //}}}
-#define LIS302DL_CLICK_CFG_REG_ADDR     0x38
+#define LIS302DL_CLICK_CFG_REG_ADDR        0x38
 //{{{  CLICK_SRC
 /******************************************************************************
 *  CLICK_SRC Register: click status Register
@@ -435,7 +408,7 @@ typedef struct {
 *  3:0 THSx3-THSx0: Click threshold on X axis, step 0.5g
 *******************************************************************************/
 //}}}
-#define LIS302DL_CLICK_THSY_X_REG_ADDR        0x3B
+#define LIS302DL_CLICK_THSY_X_REG_ADDR     0x3B
 //{{{  CLICK_THSZ
 /*******************************************************************************
 *  CLICK_THSZ Register: Click threshold Z register
@@ -445,7 +418,7 @@ typedef struct {
 *  3:0 THSz3-THSz0: Click threshold on Z axis, step 0.5g
 *******************************************************************************/
 //}}}
-#define LIS302DL_CLICK_THSZ_REG_ADDR         0x3C
+#define LIS302DL_CLICK_THSZ_REG_ADDR       0x3C
 //{{{  CLICK_TimeLimit
 /*******************************************************************************
 *  CLICK_TimeLimit Register: Time Limit register
@@ -454,7 +427,7 @@ typedef struct {
 *  7:0 Dur7-Dur0: Time Limit value, step 0.5g
 *******************************************************************************/
 //}}}
-#define LIS302DL_CLICK_TIMELIMIT_REG_ADDR        0x3D
+#define LIS302DL_CLICK_TIMELIMIT_REG_ADDR  0x3D
 //{{{  CLICK_Latency
 /*******************************************************************************
 *  CLICK_Latency Register: Latency register
@@ -463,7 +436,7 @@ typedef struct {
 *  7:0 Lat7-Lat0: Latency value, step 1msec
 *******************************************************************************/
 //}}}
-#define LIS302DL_CLICK_LATENCY_REG_ADDR        0x3E
+#define LIS302DL_CLICK_LATENCY_REG_ADDR    0x3E
 //{{{  CLICK_Window
 /*******************************************************************************
 *  CLICK_Window Register: Window register
@@ -472,89 +445,399 @@ typedef struct {
 *  7:0 Win7-Win0: Window value, step 1msec
 *******************************************************************************/
 //}}}
-#define LIS302DL_CLICK_WINDOW_REG_ADDR        0x3F
+#define LIS302DL_CLICK_WINDOW_REG_ADDR     0x3F
 
-#define I_AM_LIS302DL                                     0x3B
+#define I_AM_LIS302DL                      0x3B
 
-#define LIS302DL_SENSITIVITY_2_3G                         18  /* 18 mg/digit*/
-#define LIS302DL_SENSITIVITY_9_2G                         72  /* 72 mg/digit*/
+#define LIS302DL_SENSITIVITY_2_3G          18  /* 18 mg/digit*/
+#define LIS302DL_SENSITIVITY_9_2G          72  /* 72 mg/digit*/
 
-#define LIS302DL_DATARATE_100                             ((uint8_t)0x00)
-#define LIS302DL_DATARATE_400                             ((uint8_t)0x80)
+#define LIS302DL_DATARATE_100              ((uint8_t)0x00)
+#define LIS302DL_DATARATE_400              ((uint8_t)0x80)
 
-#define LIS302DL_LOWPOWERMODE_POWERDOWN                   ((uint8_t)0x00)
-#define LIS302DL_LOWPOWERMODE_ACTIVE                      ((uint8_t)0x40)
+#define LIS302DL_LOWPOWERMODE_POWERDOWN    ((uint8_t)0x00)
+#define LIS302DL_LOWPOWERMODE_ACTIVE       ((uint8_t)0x40)
 
-#define LIS302DL_FULLSCALE_2_3                            ((uint8_t)0x00)
-#define LIS302DL_FULLSCALE_9_2                            ((uint8_t)0x20)
+#define LIS302DL_FULLSCALE_2_3             ((uint8_t)0x00)
+#define LIS302DL_FULLSCALE_9_2             ((uint8_t)0x20)
 
-#define LIS302DL_SELFTEST_NORMAL                          ((uint8_t)0x00)
-#define LIS302DL_SELFTEST_P                               ((uint8_t)0x10)
-#define LIS302DL_SELFTEST_M                               ((uint8_t)0x08)
+#define LIS302DL_SELFTEST_NORMAL           ((uint8_t)0x00)
+#define LIS302DL_SELFTEST_P                ((uint8_t)0x10)
+#define LIS302DL_SELFTEST_M                ((uint8_t)0x08)
 
-#define LIS302DL_X_ENABLE                                 ((uint8_t)0x01)
-#define LIS302DL_Y_ENABLE                                 ((uint8_t)0x02)
-#define LIS302DL_Z_ENABLE                                 ((uint8_t)0x04)
-#define LIS302DL_XYZ_ENABLE                               ((uint8_t)0x07)
+#define LIS302DL_X_ENABLE                  ((uint8_t)0x01)
+#define LIS302DL_Y_ENABLE                  ((uint8_t)0x02)
+#define LIS302DL_Z_ENABLE                  ((uint8_t)0x04)
+#define LIS302DL_XYZ_ENABLE                ((uint8_t)0x07)
 
-#define LIS302DL_SERIALINTERFACE_4WIRE                    ((uint8_t)0x00)
-#define LIS302DL_SERIALINTERFACE_3WIRE                    ((uint8_t)0x80)
+#define LIS302DL_SERIALINTERFACE_4WIRE     ((uint8_t)0x00)
+#define LIS302DL_SERIALINTERFACE_3WIRE     ((uint8_t)0x80)
 
-#define LIS302DL_BOOT_NORMALMODE                          ((uint8_t)0x00)
-#define LIS302DL_BOOT_REBOOTMEMORY                        ((uint8_t)0x40)
+#define LIS302DL_BOOT_NORMALMODE           ((uint8_t)0x00)
+#define LIS302DL_BOOT_REBOOTMEMORY         ((uint8_t)0x40)
 
-#define LIS302DL_FILTEREDDATASELECTION_BYPASSED           ((uint8_t)0x00)
-#define LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER     ((uint8_t)0x20)
+#define LIS302DL_FILTEREDDATASELECTION_BYPASSED        ((uint8_t)0x00)
+#define LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER  ((uint8_t)0x20)
 
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_OFF              ((uint8_t)0x00)
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_1                ((uint8_t)0x04)
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_2                ((uint8_t)0x08)
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_1_2              ((uint8_t)0x0C)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_OFF       ((uint8_t)0x00)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_1         ((uint8_t)0x04)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_2         ((uint8_t)0x08)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_1_2       ((uint8_t)0x0C)
 
-#define LIS302DL_HIGHPASSFILTER_LEVEL_0                   ((uint8_t)0x00)
-#define LIS302DL_HIGHPASSFILTER_LEVEL_1                   ((uint8_t)0x01)
-#define LIS302DL_HIGHPASSFILTER_LEVEL_2                   ((uint8_t)0x02)
-#define LIS302DL_HIGHPASSFILTER_LEVEL_3                   ((uint8_t)0x03)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_0            ((uint8_t)0x00)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_1            ((uint8_t)0x01)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_2            ((uint8_t)0x02)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_3            ((uint8_t)0x03)
 
-#define LIS302DL_INTERRUPTREQUEST_NOTLATCHED              ((uint8_t)0x00)
-#define LIS302DL_INTERRUPTREQUEST_LATCHED                 ((uint8_t)0x40)
+#define LIS302DL_INTERRUPTREQUEST_NOTLATCHED       ((uint8_t)0x00)
+#define LIS302DL_INTERRUPTREQUEST_LATCHED          ((uint8_t)0x40)
 
-#define LIS302DL_CLICKINTERRUPT_XYZ_DISABLE               ((uint8_t)0x00)
-#define LIS302DL_CLICKINTERRUPT_X_ENABLE                  ((uint8_t)0x01)
-#define LIS302DL_CLICKINTERRUPT_Y_ENABLE                  ((uint8_t)0x04)
-#define LIS302DL_CLICKINTERRUPT_Z_ENABLE                  ((uint8_t)0x10)
-#define LIS302DL_CLICKINTERRUPT_XYZ_ENABLE                ((uint8_t)0x15)
+#define LIS302DL_CLICKINTERRUPT_XYZ_DISABLE        ((uint8_t)0x00)
+#define LIS302DL_CLICKINTERRUPT_X_ENABLE           ((uint8_t)0x01)
+#define LIS302DL_CLICKINTERRUPT_Y_ENABLE           ((uint8_t)0x04)
+#define LIS302DL_CLICKINTERRUPT_Z_ENABLE           ((uint8_t)0x10)
+#define LIS302DL_CLICKINTERRUPT_XYZ_ENABLE         ((uint8_t)0x15)
 
-#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_DISABLE         ((uint8_t)0x00)
-#define LIS302DL_DOUBLECLICKINTERRUPT_X_ENABLE            ((uint8_t)0x02)
-#define LIS302DL_DOUBLECLICKINTERRUPT_Y_ENABLE            ((uint8_t)0x08)
-#define LIS302DL_DOUBLECLICKINTERRUPT_Z_ENABLE            ((uint8_t)0x20)
-#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_ENABLE          ((uint8_t)0x2A)
+#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_DISABLE  ((uint8_t)0x00)
+#define LIS302DL_DOUBLECLICKINTERRUPT_X_ENABLE     ((uint8_t)0x02)
+#define LIS302DL_DOUBLECLICKINTERRUPT_Y_ENABLE     ((uint8_t)0x08)
+#define LIS302DL_DOUBLECLICKINTERRUPT_Z_ENABLE     ((uint8_t)0x20)
+#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_ENABLE   ((uint8_t)0x2A)
+//}}}
+//{{{  LIS302DL_InitTypeDef
+typedef struct {
+  uint8_t Power_Mode;                         /* Power-down/Active Mode */
+  uint8_t Output_DataRate;                    /* OUT data rate 100 Hz / 400 Hz */
+  uint8_t Axes_Enable;                        /* Axes enable */
+  uint8_t Full_Scale;                         /* Full scale */
+  uint8_t Self_Test;                          /* Self test */
+  } LIS302DL_InitTypeDef;
+//}}}
+//{{{  ACCELERO_InitTypeDef
+typedef struct {
+  uint8_t Power_Mode;                         /* Power-down/Normal Mode */
+  uint8_t AccOutput_DataRate;                 /* OUT data rate */
+  uint8_t Axes_Enable;                        /* Axes enable */
+  uint8_t High_Resolution;                    /* High Resolution enabling/disabling */
+  uint8_t BlockData_Update;                   /* Block Data Update */
+  uint8_t Endianness;                         /* Endian Data selection */
+  uint8_t AccFull_Scale;                      /* Full Scale selection */
+  uint8_t Communication_Mode;
+  } ACCELERO_InitTypeDef;
+//}}}
 
-void    LIS302DL_Init (uint16_t InitStruct);
-void    LIS302DL_DeInit();
-uint8_t LIS302DL_ReadID();
-void    LIS302DL_FilterConfig (uint8_t FilterStruct);
-void    LIS302DL_InterruptConfig (LIS302DL_InterruptConfigTypeDef *LIS302DL_IntConfigStruct);
-void    LIS302DL_Click_IntConfig();
-void    LIS302DL_Click_IntClear();
-void    LIS302DL_LowpowerCmd (uint8_t LowPowerMode);
-void    LIS302DL_FullScaleCmd (uint8_t FS_value);
-void    LIS302DL_DataRateCmd (uint8_t DataRateValue);
-void    LIS302DL_RebootCmd();
-void    LIS302DL_ReadACC (int16_t *pData);
+//{{{  LIS302DL_FilterConfigTypeDef
+/* High Pass Filter struct */
+typedef struct {
+  uint8_t HighPassFilter_Data_Selection;      /* Internal filter bypassed or data from internal filter send to output register*/
+  uint8_t HighPassFilter_CutOff_Frequency;    /* High pass filter cut-off frequency */
+  uint8_t HighPassFilter_Interrupt;           /* High pass filter enabled for Freefall/WakeUp #1 or #2 */
+  } LIS302DL_FilterConfigTypeDef;
+//}}}
+//{{{  ACCELERO_FilterConfigTypeDef
+/* ACCELERO High Pass Filter struct */
+typedef struct {
+  uint8_t HighPassFilter_Mode_Selection;      /* Internal filter mode */
+  uint8_t HighPassFilter_CutOff_Frequency;    /* High pass filter cut-off frequency */
+  uint8_t HighPassFilter_AOI1;                /* HPF_enabling/disabling for AOI function on interrupt 1 */
+  uint8_t HighPassFilter_AOI2;                /* HPF_enabling/disabling for AOI function on interrupt 2 */
+  uint8_t HighPassFilter_Data_Sel;
+  uint8_t HighPassFilter_Stat;
+  } ACCELERO_FilterConfigTypeDef;
+//}}}
 
-/* Accelerometer driver structure */
-extern ACCELERO_DrvTypeDef Lis302dlDrv;
+//{{{  LIS302DL_InterruptConfigTypeDef
+/* Interrupt struct */
+typedef struct {
+  uint8_t Latch_Request;                      /* Latch interrupt request into CLICK_SRC register*/
+  uint8_t SingleClick_Axes;                   /* Single Click Axes Interrupts */
+  uint8_t DoubleClick_Axes;                   /* Double Click Axes Interrupts */
+  } LIS302DL_InterruptConfigTypeDef;
+//}}}
 
 /* Accelerometer IO functions */
-void    ACCELERO_IO_Init();
-void    ACCELERO_IO_ITConfig();
-void    ACCELERO_IO_Write(uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite);
-void    ACCELERO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead);
+//{{{
+void LIS302DL_Init (uint16_t InitStruct) {
+
+  uint8_t ctrl = 0x00;
+
+  // Configure the low level interface */
+  ACCELERO_IO_Init();
+
+  ctrl = (uint8_t)InitStruct;
+
+  // Write value to MEMS CTRL_REG1 register */
+  ACCELERO_IO_Write (&ctrl, LIS302DL_CTRL_REG1_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_FilterConfig (uint8_t FilterStruct) {
+
+  uint8_t ctrl = 0x00;
+
+  // Read CTRL_REG2 register */
+  ACCELERO_IO_Read(&ctrl, LIS302DL_CTRL_REG2_ADDR, 1);
+
+  // Clear high pass filter cut-off level, interrupt and data selection bits */
+  ctrl &= (uint8_t)~(LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER | \
+                     LIS302DL_HIGHPASSFILTER_LEVEL_3 | \
+                     LIS302DL_HIGHPASSFILTERINTERRUPT_1_2);
+
+  ctrl |= FilterStruct;
+
+  // Write value to MEMS CTRL_REG2 register */
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CTRL_REG2_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_InterruptConfig (LIS302DL_InterruptConfigTypeDef *LIS302DL_IntConfigStruct) {
+
+  uint8_t ctrl = 0x00;
+
+  // Read CLICK_CFG register */
+  ACCELERO_IO_Read(&ctrl, LIS302DL_CLICK_CFG_REG_ADDR, 1);
+
+  // Configure latch Interrupt request, click interrupts and double click interrupts */
+  ctrl = (uint8_t)(LIS302DL_IntConfigStruct->Latch_Request| \
+                   LIS302DL_IntConfigStruct->SingleClick_Axes | \
+                   LIS302DL_IntConfigStruct->DoubleClick_Axes);
+
+  // Write value to MEMS CLICK_CFG register */
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_CFG_REG_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_Click_IntConfig() {
+
+  uint8_t ctrl = 0x00;
+  LIS302DL_InterruptConfigTypeDef   LIS302DL_InterruptStruct;
+
+  ACCELERO_IO_ITConfig();
+
+  /* Set configuration of Internal High Pass Filter of LIS302DL */
+  LIS302DL_InterruptStruct.Latch_Request = LIS302DL_INTERRUPTREQUEST_LATCHED;
+  LIS302DL_InterruptStruct.SingleClick_Axes = LIS302DL_CLICKINTERRUPT_Z_ENABLE;
+  LIS302DL_InterruptStruct.DoubleClick_Axes = LIS302DL_DOUBLECLICKINTERRUPT_Z_ENABLE;
+  LIS302DL_InterruptConfig(&LIS302DL_InterruptStruct);
+
+  /* Configure Interrupt control register: enable Click interrupt on INT1 and
+  INT2 on Z axis high event */
+  ctrl = 0x3F;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CTRL_REG3_ADDR, 1);
+
+  /* Enable Interrupt generation on click on Z axis */
+  ctrl = 0x50;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_CFG_REG_ADDR, 1);
+
+  /* Configure Click Threshold on X/Y axis (10 x 0.5g) */
+  ctrl = 0xAA;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_THSY_X_REG_ADDR, 1);
+
+  /* Configure Click Threshold on Z axis (10 x 0.5g) */
+  ctrl = 0x0A;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_THSZ_REG_ADDR, 1);
+
+  /* Enable interrupt on Y axis high event */
+  ctrl = 0x4C;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_FF_WU_CFG1_REG_ADDR, 1);
+
+  /* Configure Time Limit */
+  ctrl = 0x03;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_TIMELIMIT_REG_ADDR, 1);
+
+  /* Configure Latency */
+  ctrl = 0x7F;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_LATENCY_REG_ADDR, 1);
+
+  /* Configure Click Window */
+  ctrl = 0x7F;
+  ACCELERO_IO_Write(&ctrl, LIS302DL_CLICK_WINDOW_REG_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_Click_IntClear() {
+
+  // Read click and status registers if the available MEMS Accelerometer is LIS302DL
+  uint8_t clickreg = 0;
+  ACCELERO_IO_Read (&clickreg, LIS302DL_CLICK_SRC_REG_ADDR, 1);
+
+  uint8_t buffer[6];
+  ACCELERO_IO_Read (buffer, LIS302DL_STATUS_REG_ADDR, 6);
+  }
+//}}}
+//{{{
+void LIS302DL_LowpowerCmd (uint8_t LowPowerMode) {
+
+  // Read CTRL_REG1 register
+  uint8_t tmpreg;
+  ACCELERO_IO_Read (&tmpreg, LIS302DL_CTRL_REG1_ADDR, 1);
+
+  // Set new low power mode configuration
+  tmpreg &= (uint8_t)~LIS302DL_LOWPOWERMODE_ACTIVE;
+  tmpreg |= LowPowerMode;
+
+  // Write value to MEMS CTRL_REG1 register
+  ACCELERO_IO_Write (&tmpreg, LIS302DL_CTRL_REG1_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_DataRateCmd (uint8_t DataRateValue) {
+
+  // Read CTRL_REG1 register
+  uint8_t tmpreg;
+  ACCELERO_IO_Read (&tmpreg, LIS302DL_CTRL_REG1_ADDR, 1);
+
+  // Set new Data rate configuration
+  tmpreg &= (uint8_t)~LIS302DL_DATARATE_400;
+  tmpreg |= DataRateValue;
+
+  // Write value to MEMS CTRL_REG1 register
+  ACCELERO_IO_Write (&tmpreg, LIS302DL_CTRL_REG1_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_FullScaleCmd (uint8_t FS_value) {
+
+  // Read CTRL_REG1 register
+  uint8_t tmpreg;
+  ACCELERO_IO_Read (&tmpreg, LIS302DL_CTRL_REG1_ADDR, 1);
+
+  // Set new full scale configuration
+  tmpreg &= (uint8_t)~LIS302DL_FULLSCALE_9_2;
+  tmpreg |= FS_value;
+
+  // Write value to MEMS CTRL_REG1 register
+  ACCELERO_IO_Write (&tmpreg, LIS302DL_CTRL_REG1_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_RebootCmd() {
+
+  // Read CTRL_REG2 register
+  uint8_t tmpreg;
+  ACCELERO_IO_Read (&tmpreg, LIS302DL_CTRL_REG2_ADDR, 1);
+
+  // Enable or Disable the reboot memory
+  tmpreg |= LIS302DL_BOOT_REBOOTMEMORY;
+
+  // Write value to MEMS CTRL_REG2 register
+  ACCELERO_IO_Write (&tmpreg, LIS302DL_CTRL_REG2_ADDR, 1);
+  }
+//}}}
+//{{{
+void LIS302DL_ReadACC (int16_t *pData) {
+
+
+  uint8_t crtl;
+  ACCELERO_IO_Read (&crtl, LIS302DL_CTRL_REG1_ADDR, 1);
+
+  int8_t buffer[6];
+  ACCELERO_IO_Read ((uint8_t*)buffer, LIS302DL_OUT_X_ADDR, 6);
+
+  int16_t pnRawData[3];
+  for (uint8_t i = 0; i < 3; i++)
+    pnRawData[i] = buffer[2*i];
+
+  uint8_t sensitivity = LIS302DL_SENSITIVITY_2_3G;
+  switch (crtl & LIS302DL_FULLSCALE_9_2) {
+    // FS bit = 0 ==> Sensitivity typical value = 18milligals / digit
+    case LIS302DL_FULLSCALE_2_3:
+      sensitivity = LIS302DL_SENSITIVITY_2_3G;
+      break;
+
+    // FS bit = 1 ==> Sensitivity typical value = 72milligals / digit
+    case LIS302DL_FULLSCALE_9_2:
+      sensitivity = LIS302DL_SENSITIVITY_9_2G;
+      break;
+
+    default:
+      break;
+    }
+
+  // Obtain the mg value for the three axis
+  for (uint8_t i = 0; i < 3; i++)
+    pData[i] = (pnRawData[i] * sensitivity);
+  }
+//}}}
 
 //{{{
-#ifdef __cplusplus
+uint8_t BSP_ACCELERO_Init() {
+
+  BSP_ACCELERO_ReadID();
+
+  // Set configuration of LIS302DL MEMS Accelerometer
+  LIS302DL_InitTypeDef lis302dl_initstruct;
+  lis302dl_initstruct.Power_Mode = LIS302DL_LOWPOWERMODE_ACTIVE;
+  lis302dl_initstruct.Output_DataRate = LIS302DL_DATARATE_100;
+  lis302dl_initstruct.Axes_Enable = LIS302DL_XYZ_ENABLE;
+  lis302dl_initstruct.Full_Scale = LIS302DL_FULLSCALE_2_3;
+  lis302dl_initstruct.Self_Test = LIS302DL_SELFTEST_NORMAL;
+  // Configure MEMS: data rate, power mode, full scale, self test and axes
+  uint16_t ctrl = (uint16_t) (lis302dl_initstruct.Output_DataRate | lis302dl_initstruct.Power_Mode |
+                              lis302dl_initstruct.Full_Scale | lis302dl_initstruct.Self_Test |
+                              lis302dl_initstruct.Axes_Enable);
+  LIS302DL_Init (ctrl);
+
+  // MEMS High Pass Filter configuration
+  LIS302DL_FilterConfigTypeDef lis302dl_filter = {0,0,0};
+  lis302dl_filter.HighPassFilter_Data_Selection = LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER;
+  lis302dl_filter.HighPassFilter_CutOff_Frequency = LIS302DL_HIGHPASSFILTER_LEVEL_1;
+  lis302dl_filter.HighPassFilter_Interrupt = LIS302DL_HIGHPASSFILTERINTERRUPT_1_2;
+  // Configure MEMS high pass filter cut-off level, interrupt and data selection bits
+  ctrl = (uint8_t)(lis302dl_filter.HighPassFilter_Data_Selection |
+                   lis302dl_filter.HighPassFilter_CutOff_Frequency |
+                   lis302dl_filter.HighPassFilter_Interrupt);
+  // Configure the accelerometer LPF main parameters
+  LIS302DL_FilterConfig (ctrl);
+
+  return ACCELERO_OK;
+  }
+//}}}
+//{{{
+uint8_t BSP_ACCELERO_ReadID() {
+
+  // Configure the low level interface
+  ACCELERO_IO_Init();
+
+  // Read WHO_AM_I register
+  uint8_t tmp = 0;
+  ACCELERO_IO_Read (&tmp, LIS302DL_WHO_AM_I_ADDR, 1);
+
+  // Return the ID
+  return tmp;
+  }
+//}}}
+//{{{
+void BSP_ACCELERO_Reset()
+{
+
+    LIS302DL_RebootCmd();
+
 }
-#endif
+//}}}
+//{{{
+void BSP_ACCELERO_Click_ITConfig()
+{
+  LIS302DL_Click_IntConfig();
+}
+//}}}
+//{{{
+void BSP_ACCELERO_Click_ITClear()
+{
+
+   LIS302DL_Click_IntClear();
+
+}
+//}}}
+//{{{
+void BSP_ACCELERO_GetXYZ (int16_t* pDataXYZ) {
+
+  LIS302DL_ReadACC (pDataXYZ);
+
+  // Switch X and Y Axes in case of LIS302DL MEMS */
+  int16_t SwitchXY = pDataXYZ[0];
+  pDataXYZ[0] = pDataXYZ[1];
+  // Invert Y Axis to be compliant with LIS3DSH MEMS */
+  pDataXYZ[1] = -SwitchXY;
+  }
 //}}}

@@ -1,43 +1,12 @@
-/**
-  ******************************************************************************
-  * @file    pdm2pcm_glo.h
-  * @author  MCD Application Team
-  * @version V3.0.0
-  * @date    28-February-2017
-  * @brief   Global header for PDM2PCM conversion code
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT 2011 STMicroelectronics</center></h2>
-  *
-  * Licensed under MCD-ST Image SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_image_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  *
-  *
-  ******************************************************************************
-  */
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __PDM2PCM_FILTER_H
-#define __PDM2PCM_FILTER_H
-
+#pragma once
+//{{{
 #ifdef __cplusplus
  extern "C" {
 #endif
+//}}}
 
-/* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
-/* Exported constants --------------------------------------------------------*/
 #define PDM_FILTER_ENDIANNESS_LE     ((uint16_t)0x0000)
 #define PDM_FILTER_ENDIANNESS_BE     ((uint16_t)0x0001)
 
@@ -62,7 +31,6 @@
 #define PDM_FILTER_SAMPLES_NUMBER_ERROR ((uint16_t)0x0080)
 #define PDM2PCM_INTERNAL_MEMORY_SIZE 16
 
-/* Exported types ------------------------------------------------------------*/
 typedef struct{
   uint16_t bit_order;
   uint16_t endianness;
@@ -78,20 +46,14 @@ typedef struct{
   int16_t  mic_gain;
 }PDM_Filter_Config_t;
 
-/* Exported macros -----------------------------------------------------------*/
+uint32_t PDM_Filter_Init (PDM_Filter_Handler_t *pHandler);
+uint32_t PDM_Filter_setConfig (PDM_Filter_Handler_t *pHandler, PDM_Filter_Config_t *pConfig);
+uint32_t PDM_Filter_getConfig (PDM_Filter_Handler_t *pHandler, PDM_Filter_Config_t *pConfig);
+uint32_t PDM_Filter_deInterleave (void *pDataIn, void *pDataOut, PDM_Filter_Handler_t * pHandler);
+uint32_t PDM_Filter (void *pDataIn, void *pDataOut, PDM_Filter_Handler_t *pHandler);
 
-/* Exported functions ------------------------------------------------------- */
-uint32_t PDM_Filter_Init(PDM_Filter_Handler_t *pHandler);
-uint32_t PDM_Filter_setConfig(PDM_Filter_Handler_t *pHandler, PDM_Filter_Config_t *pConfig); 
-uint32_t PDM_Filter_getConfig(PDM_Filter_Handler_t *pHandler, PDM_Filter_Config_t *pConfig);
-uint32_t PDM_Filter_deInterleave(void *pDataIn, void *pDataOut, PDM_Filter_Handler_t * pHandler);
-uint32_t PDM_Filter(void *pDataIn, void *pDataOut, PDM_Filter_Handler_t *pHandler);
-
+//{{{
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __PDM2PCM_FILTER_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
+//}}}

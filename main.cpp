@@ -3,8 +3,10 @@
 #include "common/utils.h"
 #include "common/cPointRect.h"
 #include "common/font.h"
- 
+
 #include "stm32f4xx.h"
+#include "stm32f4_discovery.h"
+#include "accelerometer.h"
 //}}}
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
@@ -1230,6 +1232,8 @@ public:
           mAverageVbat = vbat;
         else
           mAverageVbat = ((mAverageVbat * 9.f) + vbat) / 10.f;
+
+        BSP_LED_Toggle (LED6);
         }
 
       // temp slope 2.5mV / degC
@@ -1243,6 +1247,12 @@ public:
                   dec (int(mAverageVin)) + "." + dec (int(mAverageVin*1000.f) % 1000, 3) + " " +
                   dec (getTookTicks()),
                   cPoint(0,0));
+
+      int16_t values[3];
+      BSP_ACCELERO_GetXYZ (values);
+      drawString (eOff, eSmall, eLeft,
+                  dec (values[0]) + " "  + dec (values[1]) + " "  + dec (values[2]),
+                  cPoint(0,20));
 
       //drawString (eOff, eSmall, eLeft,
       //            dec (int(mAverageVdd)) + "." + dec (int(mAverageVdd*1000.f) % 1000, 3) + "vref  " +
@@ -1292,6 +1302,10 @@ private:
 
     float subSecondRadius = radius * 1.f;
     drawLine (eOff, centre, centre + cPoint (int16_t(subSecondRadius * sin (subSecondAngle)), int16_t(subSecondRadius * cos (subSecondAngle))));
+
+    subSecondAngle > 0 ? BSP_LED_On (LED3) : BSP_LED_Off (LED3);
+    subSecondAngle <0 ? BSP_LED_On (LED4) : BSP_LED_Off (LED4);
+    BSP_PB_GetState (BUTTON_KEY) ? BSP_LED_On (LED5) : BSP_LED_Off (LED5);
     }
   //}}}
   //{{{
@@ -1409,6 +1423,14 @@ int main() {
 
   HAL_Init();
   systemClockInit();
+  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
+  BSP_LED_Init (LED3);
+  BSP_LED_Init (LED4);
+  BSP_LED_Init (LED5);
+  BSP_LED_Init (LED6);
+
+  BSP_ACCELERO_Init();
+  BSP_ACCELERO_ReadID();
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);

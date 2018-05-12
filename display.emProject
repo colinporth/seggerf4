@@ -158,10 +158,9 @@
       </folder>
     </folder>
     <file file_name="stm32f4_discovery.c" />
-    <file file_name="stm32f4_discovery_accelerometer.c" />
     <file file_name="stm32f4_discovery_audio.c" />
-    <file file_name="lis302dl.c" />
     <file file_name="cs43l22.c" />
+    <file file_name="accelerometer.c" />
   </project>
   <configuration
     Name="Debug"
