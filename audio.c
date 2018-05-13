@@ -200,7 +200,6 @@ PDM_Filter_Handler_t PDM_FilterHandler[2];
 PDM_Filter_Config_t PDM_FilterConfig[2];
 uint16_t AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
 
-
 void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
 void I2S3_IRQHandler() { HAL_DMA_IRQHandler (hAudioOutI2s.hdmatx); }
 

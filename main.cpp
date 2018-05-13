@@ -12,6 +12,7 @@
 #define BIG
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
+uint16_t* audBuf;
 
 //{{{
 class cLcd {
@@ -1478,6 +1479,11 @@ void systemClockInit() {
   }
 //}}}
 
+void BSP_AUDIO_OUT_TransferComplete_CallBack() {
+  //printf ("BSP_AUDIO_OUT_TransferComplete_CallBack\n");
+  BSP_AUDIO_OUT_ChangeBuffer (audBuf, 4096);
+  }
+
 int main() {
 
   HAL_Init();
@@ -1492,12 +1498,12 @@ int main() {
   BSP_ACCELERO_ReadID();
 
   const float kPi = 3.1415926f;
-  uint16_t* audBuf = (uint16_t*)malloc (4096);
-  for (int i = 0; i < 2048; i++)
-    audBuf[i] = int16_t(0x4000 * sin (i * kPi / 1024));
+  audBuf = (uint16_t*)malloc (8192);
+  for (int i = 0; i < 4096; i++)
+    audBuf[i] = int16_t(0x0800 * sin ((((i % 256) / 256.f)-128.f) * kPi));
 
   BSP_AUDIO_OUT_Init (OUTPUT_DEVICE_HEADPHONE, 100, 44100);
-  BSP_AUDIO_OUT_Play (audBuf, 2048);
+  BSP_AUDIO_OUT_Play (audBuf, 4096);
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);

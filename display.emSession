@@ -1,7 +1,6 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="1475" column="-1" path="C:/projects/seggerf4/main.cpp" number="278" extra="cApp::mApp->run();" color="5"/>
   <BookmarkItem objectName="" line="26" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="42" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="47" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -311,37 +310,51 @@
   <BookmarkItem objectName="" line="1369" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="315" extra="osKernelStart();" color="5"/>
   <BookmarkItem objectName="" line="12" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };" color="5"/>
   <BookmarkItem objectName="" line="13" column="-1" path="C:/projects/seggerf4/main.cpp" number="2" extra="const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };" color="5"/>
+  <BookmarkItem objectName="" line="37" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="#define POLY_X(Z) ((int32_t)((points + Z)->x))" color="5"/>
+  <BookmarkItem objectName="" line="38" column="-1" path="C:/projects/seggerf4/main.cpp" number="2" extra="#define POLY_Y(Z) ((int32_t)((points + Z)->y))" color="5"/>
+  <BookmarkItem objectName="" line="39" column="-1" path="C:/projects/seggerf4/main.cpp" number="3" extra="#define ABS(X) ((X) > 0 ? (X) : -(X))" color="5"/>
   <BookmarkItem objectName="" line="40" column="-1" path="C:/projects/seggerf4/main.cpp" number="3" extra="enum eDraw { eInvert, eOff, eOn };" color="5"/>
   <BookmarkItem objectName="" line="41" column="-1" path="C:/projects/seggerf4/main.cpp" number="4" extra="enum eFont { eSmall, eMedium, eBig, eBigger };" color="5"/>
   <BookmarkItem objectName="" line="42" column="-1" path="C:/projects/seggerf4/main.cpp" number="5" extra="enum eAlign { eLeft, eCentre, eRight };" color="5"/>
+  <BookmarkItem objectName="" line="46" column="-1" path="C:/projects/seggerf4/main.cpp" number="4" extra="bool init() {" color="5"/>
   <BookmarkItem objectName="" line="48" column="-1" path="C:/projects/seggerf4/main.cpp" number="6" extra="__HAL_RCC_GPIOB_CLK_ENABLE();" color="5"/>
+  <BookmarkItem objectName="" line="49" column="-1" path="C:/projects/seggerf4/main.cpp" number="5" extra="__HAL_RCC_GPIOB_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="54" column="-1" path="C:/projects/seggerf4/main.cpp" number="7" extra="HAL_GPIO_Init (GPIOB, &amp;gpioInit);" color="5"/>
   <BookmarkItem objectName="" line="56" column="-1" path="C:/projects/seggerf4/main.cpp" number="8" extra="__HAL_RCC_GPIOD_CLK_ENABLE();" color="5"/>
+  <BookmarkItem objectName="" line="57" column="-1" path="C:/projects/seggerf4/main.cpp" number="6" extra="__HAL_RCC_GPIOD_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="58" column="-1" path="C:/projects/seggerf4/main.cpp" number="9" extra="HAL_GPIO_Init (GPIOD, &amp;gpioInit);" color="5"/>
   <BookmarkItem objectName="" line="61" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="timHandle.Init.Prescaler = (uint32_t) ((SystemCoreClock /2) / 10000) - 1;" color="5"/>
   <BookmarkItem objectName="" line="65" column="-1" path="C:/projects/seggerf4/main.cpp" number="10" extra="HAL_GPIO_Init (GPIOB, &amp;gpioInit);" color="5"/>
   <BookmarkItem objectName="" line="67" column="-1" path="C:/projects/seggerf4/main.cpp" number="11" extra="__HAL_RCC_TIM2_CLK_ENABLE();" color="5"/>
+  <BookmarkItem objectName="" line="68" column="-1" path="C:/projects/seggerf4/main.cpp" number="7" extra="__HAL_RCC_TIM2_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="69" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="TIM_HandleTypeDef timHandle = {0};" color="5"/>
-  <BookmarkItem objectName="" line="77" column="-1" path="C:/projects/seggerf4/main.cpp" number="13" extra="printf (&quot;HAL_TIM_Base_Init failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="77" column="-1" path="C:/projects/seggerf4/main.cpp" number="8" extra="if (HAL_TIM_Base_Init (&amp;timHandle))" color="5"/>
+  <BookmarkItem objectName="" line="78" column="-1" path="C:/projects/seggerf4/main.cpp" number="9" extra="printf (&quot;HAL_TIM_Base_Init failed\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="80" column="-1" path="C:/projects/seggerf4/main.cpp" number="14" extra="TIM_OC_InitTypeDef timOcInit = {0};" color="5"/>
-  <BookmarkItem objectName="" line="91" column="-1" path="C:/projects/seggerf4/main.cpp" number="15" extra="printf (&quot;HAL_TIM_PWM_ConfigChannel failed\n&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="95" column="-1" path="C:/projects/seggerf4/main.cpp" number="16" extra="printf (&quot;HAL_TIM2_PWM_Start failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="91" column="-1" path="C:/projects/seggerf4/main.cpp" number="10" extra="if (HAL_TIM_PWM_ConfigChannel (&amp;timHandle, &amp;timOcInit, TIM_CHANNEL_4))" color="5"/>
+  <BookmarkItem objectName="" line="92" column="-1" path="C:/projects/seggerf4/main.cpp" number="11" extra="printf (&quot;HAL_TIM_PWM_ConfigChannel failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="95" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="if (HAL_TIM_PWM_Start (&amp;timHandle, TIM_CHANNEL_4))" color="5"/>
+  <BookmarkItem objectName="" line="96" column="-1" path="C:/projects/seggerf4/main.cpp" number="13" extra="printf (&quot;HAL_TIM2_PWM_Start failed\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="102" column="-1" path="C:/projects/seggerf4/main.cpp" number="17" extra="HAL_GPIO_Init (GPIOB, &amp;gpioInit);" color="5"/>
   <BookmarkItem objectName="" line="104" column="-1" path="C:/projects/seggerf4/main.cpp" number="18" extra="__HAL_RCC_TIM12_CLK_ENABLE();" color="5"/>
-  <BookmarkItem objectName="" line="113" column="-1" path="C:/projects/seggerf4/main.cpp" number="19" extra="printf (&quot;HAL_TIM_Base_Init failed\n&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="125" column="-1" path="C:/projects/seggerf4/main.cpp" number="20" extra="printf (&quot;HAL_TIM_PWM_ConfigChannel failed\n&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="129" column="-1" path="C:/projects/seggerf4/main.cpp" number="21" extra="printf (&quot;HAL_TIM12_PWM_Start failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="105" column="-1" path="C:/projects/seggerf4/main.cpp" number="14" extra="__HAL_RCC_TIM12_CLK_ENABLE();" color="5"/>
+  <BookmarkItem objectName="" line="113" column="-1" path="C:/projects/seggerf4/main.cpp" number="15" extra="if (HAL_TIM_Base_Init (&amp;timHandle))" color="5"/>
+  <BookmarkItem objectName="" line="114" column="-1" path="C:/projects/seggerf4/main.cpp" number="16" extra="printf (&quot;HAL_TIM_Base_Init failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="125" column="-1" path="C:/projects/seggerf4/main.cpp" number="17" extra="if (HAL_TIM_PWM_ConfigChannel (&amp;timHandle, &amp;timOcInit, TIM_CHANNEL_1))" color="5"/>
+  <BookmarkItem objectName="" line="126" column="-1" path="C:/projects/seggerf4/main.cpp" number="18" extra="printf (&quot;HAL_TIM_PWM_ConfigChannel failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="129" column="-1" path="C:/projects/seggerf4/main.cpp" number="19" extra="if (HAL_TIM_PWM_Start (&amp;timHandle, TIM_CHANNEL_1))" color="5"/>
+  <BookmarkItem objectName="" line="130" column="-1" path="C:/projects/seggerf4/main.cpp" number="20" extra="printf (&quot;HAL_TIM12_PWM_Start failed\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="135" column="-1" path="C:/projects/seggerf4/main.cpp" number="22" extra="HAL_GPIO_Init (GPIOB, &amp;gpioInit);" color="5"/>
   <BookmarkItem objectName="" line="137" column="-1" path="C:/projects/seggerf4/main.cpp" number="4" extra="const int frameBufLen = 1 + (((getWidth()/8) + 2) * getHeight()) + 1;" color="5"/>
   <BookmarkItem objectName="" line="138" column="-1" path="C:/projects/seggerf4/main.cpp" number="23" extra="__HAL_RCC_SPI2_CLK_ENABLE();" color="5"/>
-  <BookmarkItem objectName="" line="139" column="-1" path="C:/projects/seggerf4/main.cpp" number="24" extra="SPI_HandleTypeDef SPI_Handle = {0};" color="5"/>
+  <BookmarkItem objectName="" line="139" column="-1" path="C:/projects/seggerf4/main.cpp" number="21" extra="__HAL_RCC_SPI2_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="149" column="-1" path="C:/projects/seggerf4/main.cpp" number="2" extra="const uint16_t getHeight() { return 240; }" color="5"/>
   <BookmarkItem objectName="" line="150" column="-1" path="C:/projects/seggerf4/main.cpp" number="3" extra="const cPoint getSize() { return cPoint (getWidth(), getHeight()); }" color="5"/>
   <BookmarkItem objectName="" line="151" column="-1" path="C:/projects/seggerf4/main.cpp" number="4" extra="const cRect getRect() { return cRect (getSize()); }" color="5"/>
   <BookmarkItem objectName="" line="152" column="-1" path="C:/projects/seggerf4/main.cpp" number="5" extra="const cPoint getCentre() { return getSize()/2; }" color="5"/>
   <BookmarkItem objectName="" line="154" column="-1" path="C:/projects/seggerf4/main.cpp" number="25" extra="HAL_SPI_Init (&amp;mSpiHandle);" color="5"/>
   <BookmarkItem objectName="" line="157" column="-1" path="C:/projects/seggerf4/main.cpp" number="26" extra="__HAL_RCC_DMA1_CLK_ENABLE();" color="5"/>
-  <BookmarkItem objectName="" line="158" column="-1" path="C:/projects/seggerf4/main.cpp" number="27" extra="mSpiTxDma = {0};" color="5"/>
+  <BookmarkItem objectName="" line="158" column="-1" path="C:/projects/seggerf4/main.cpp" number="22" extra="__HAL_RCC_DMA1_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="168" column="-1" path="C:/projects/seggerf4/main.cpp" number="6" extra="const cPoint getCentre() { return getSize()/2; }" color="5"/>
   <BookmarkItem objectName="" line="172" column="-1" path="C:/projects/seggerf4/main.cpp" number="28" extra="HAL_DMA_Init (&amp;mSpiTxDma);" color="5"/>
   <BookmarkItem objectName="" line="173" column="-1" path="C:/projects/seggerf4/main.cpp" number="29" extra="__HAL_LINKDMA (&amp;mSpiHandle, hdmatx, mSpiTxDma);" color="5"/>
@@ -350,43 +363,65 @@
   <BookmarkItem objectName="" line="178" column="-1" path="C:/projects/seggerf4/main.cpp" number="32" extra="HAL_NVIC_SetPriority (SPI2_IRQn, 0, 2);" color="5"/>
   <BookmarkItem objectName="" line="179" column="-1" path="C:/projects/seggerf4/main.cpp" number="33" extra="HAL_NVIC_EnableIRQ (SPI2_IRQn);" color="5"/>
   <BookmarkItem objectName="" line="180" column="-1" path="C:/projects/seggerf4/main.cpp" number="7" extra="auto framePtr = mFrameBuf + 2;" color="5"/>
-  <BookmarkItem objectName="" line="187" column="-1" path="C:/projects/seggerf4/main.cpp" number="34" extra="mFrameBuf = (uint8_t*)malloc (frameBufLen);" color="5"/>
+  <BookmarkItem objectName="" line="187" column="-1" path="C:/projects/seggerf4/main.cpp" number="23" extra="const int frameBufLen = 1 + (((getWidth()/8) + 2) * getHeight()) + 1;" color="5"/>
   <BookmarkItem objectName="" line="189" column="-1" path="C:/projects/seggerf4/main.cpp" number="35" extra="printf (&quot;cLcd::init frameBuf alloc:%d\n&quot;, frameBufLen);" color="5"/>
   <BookmarkItem objectName="" line="191" column="-1" path="C:/projects/seggerf4/main.cpp" number="36" extra="memset (mFrameBuf+1, 0, frameBufLen);" color="5"/>
   <BookmarkItem objectName="" line="193" column="-1" path="C:/projects/seggerf4/main.cpp" number="37" extra="for (uint16_t y = 0; y &lt; getHeight(); y++) {" color="5"/>
+  <BookmarkItem objectName="" line="194" column="-1" path="C:/projects/seggerf4/main.cpp" number="24" extra="for (uint16_t y = 0; y &lt; getHeight(); y++) {" color="5"/>
   <BookmarkItem objectName="" line="196" column="-1" path="C:/projects/seggerf4/main.cpp" number="38" extra="lineAddressByte = ((lineAddressByte &amp; 0xF0) >> 4) | ((lineAddressByte &amp; 0x0F) &lt;&lt; 4);" color="5"/>
   <BookmarkItem objectName="" line="197" column="-1" path="C:/projects/seggerf4/main.cpp" number="39" extra="lineAddressByte = ((lineAddressByte &amp; 0xCC) >> 2) | ((lineAddressByte &amp; 0x33) &lt;&lt; 2);" color="5"/>
   <BookmarkItem objectName="" line="198" column="-1" path="C:/projects/seggerf4/main.cpp" number="40" extra="lineAddressByte = ((lineAddressByte &amp; 0xAA) >> 1) | ((lineAddressByte &amp; 0x55) &lt;&lt; 1);" color="5"/>
+  <BookmarkItem objectName="" line="200" column="-1" path="C:/projects/seggerf4/main.cpp" number="25" extra="mFrameBuf [1 + (y*getPitch())] = lineAddressByte;" color="5"/>
   <BookmarkItem objectName="" line="201" column="-1" path="C:/projects/seggerf4/main.cpp" number="41" extra="present();" color="5"/>
+  <BookmarkItem objectName="" line="202" column="-1" path="C:/projects/seggerf4/main.cpp" number="26" extra="present();" color="5"/>
   <BookmarkItem objectName="" line="204" column="-1" path="C:/projects/seggerf4/main.cpp" number="42" extra="printf (&quot;cLcd::init frameBuf alloc fail\n&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="216" column="-1" path="C:/projects/seggerf4/main.cpp" number="43" extra="const cPoint getSize() { return cPoint (kWidth, kHeight); }" color="5"/>
-  <BookmarkItem objectName="" line="217" column="-1" path="C:/projects/seggerf4/main.cpp" number="44" extra="const cRect getRect() { return cRect (getSize()); }" color="5"/>
+  <BookmarkItem objectName="" line="205" column="-1" path="C:/projects/seggerf4/main.cpp" number="27" extra="printf (&quot;cLcd::init frameBuf alloc fail\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="215" column="-1" path="C:/projects/seggerf4/main.cpp" number="28" extra="const uint16_t getWidth() { return kWidth; }" color="5"/>
+  <BookmarkItem objectName="" line="216" column="-1" path="C:/projects/seggerf4/main.cpp" number="29" extra="const uint16_t getHeight() { return kHeight; }" color="5"/>
+  <BookmarkItem objectName="" line="217" column="-1" path="C:/projects/seggerf4/main.cpp" number="30" extra="const cPoint getSize() { return cPoint (kWidth, kHeight); }" color="5"/>
+  <BookmarkItem objectName="" line="218" column="-1" path="C:/projects/seggerf4/main.cpp" number="31" extra="const cRect getRect() { return cRect (getSize()); }" color="5"/>
+  <BookmarkItem objectName="" line="219" column="-1" path="C:/projects/seggerf4/main.cpp" number="32" extra="const cPoint getCentre() { return getSize()/2; }" color="5"/>
+  <BookmarkItem objectName="" line="221" column="-1" path="C:/projects/seggerf4/main.cpp" number="33" extra="uint32_t getFrameNum() { return mFrameNum; }" color="5"/>
+  <BookmarkItem objectName="" line="222" column="-1" path="C:/projects/seggerf4/main.cpp" number="34" extra="uint32_t getTookTicks() { return mTookTicks; }" color="5"/>
   <BookmarkItem objectName="" line="227" column="-1" path="C:/projects/seggerf4/main.cpp" number="45" extra="printf (&quot;cLcd::clear - eInvert clear\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="228" column="-1" path="C:/projects/seggerf4/main.cpp" number="35" extra="printf (&quot;cLcd::clear - eInvert clear\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="231" column="-1" path="C:/projects/seggerf4/main.cpp" number="46" extra="for (int y = 0; y &lt; getHeight(); y++) {" color="5"/>
-  <BookmarkItem objectName="" line="232" column="-1" path="C:/projects/seggerf4/main.cpp" number="47" extra="memset (framePtr, draw == eOn ? 0xFF : 0, getWidth()/8);" color="5"/>
-  <BookmarkItem objectName="" line="233" column="-1" path="C:/projects/seggerf4/main.cpp" number="48" extra="framePtr += getPitch();" color="5"/>
-  <BookmarkItem objectName="" line="244" column="-1" path="C:/projects/seggerf4/main.cpp" number="49" extra="rect.right = getWidth();" color="5"/>
-  <BookmarkItem objectName="" line="252" column="-1" path="C:/projects/seggerf4/main.cpp" number="50" extra="rect.bottom = getHeight();" color="5"/>
+  <BookmarkItem objectName="" line="232" column="-1" path="C:/projects/seggerf4/main.cpp" number="36" extra="for (int y = 0; y &lt; getHeight(); y++) {" color="5"/>
+  <BookmarkItem objectName="" line="233" column="-1" path="C:/projects/seggerf4/main.cpp" number="37" extra="memset (framePtr, draw == eOn ? 0xFF : 0, getWidth()/8);" color="5"/>
+  <BookmarkItem objectName="" line="234" column="-1" path="C:/projects/seggerf4/main.cpp" number="38" extra="framePtr += getPitch();" color="5"/>
+  <BookmarkItem objectName="" line="244" column="-1" path="C:/projects/seggerf4/main.cpp" number="39" extra="else if (rect.right > getWidth())" color="5"/>
+  <BookmarkItem objectName="" line="245" column="-1" path="C:/projects/seggerf4/main.cpp" number="40" extra="rect.right = getWidth();" color="5"/>
+  <BookmarkItem objectName="" line="252" column="-1" path="C:/projects/seggerf4/main.cpp" number="41" extra="else if (rect.bottom > getHeight())" color="5"/>
+  <BookmarkItem objectName="" line="253" column="-1" path="C:/projects/seggerf4/main.cpp" number="42" extra="rect.bottom = getHeight();" color="5"/>
   <BookmarkItem objectName="" line="260" column="-1" path="C:/projects/seggerf4/main.cpp" number="51" extra="uint8_t mask = kFirstMask[rect.left &amp; 7] &amp; kLastMask[(rect.right-1) &amp; 7];" color="5"/>
+  <BookmarkItem objectName="" line="264" column="-1" path="C:/projects/seggerf4/main.cpp" number="43" extra="for (uint16_t y = rect.top; y &lt; rect.bottom; y++) {" color="5"/>
   <BookmarkItem objectName="" line="269" column="-1" path="C:/projects/seggerf4/main.cpp" number="52" extra="framePtr += getPitch();" color="5"/>
+  <BookmarkItem objectName="" line="271" column="-1" path="C:/projects/seggerf4/main.cpp" number="44" extra="framePtr += getPitch();" color="5"/>
   <BookmarkItem objectName="" line="274" column="-1" path="C:/projects/seggerf4/main.cpp" number="53" extra="uint8_t firstMask = kFirstMask[rect.left &amp; 7];" color="5"/>
   <BookmarkItem objectName="" line="275" column="-1" path="C:/projects/seggerf4/main.cpp" number="54" extra="uint8_t lastMask = kLastMask[(rect.right-1) &amp; 7];" color="5"/>
+  <BookmarkItem objectName="" line="281" column="-1" path="C:/projects/seggerf4/main.cpp" number="45" extra="for (uint16_t y = rect.top; y &lt; rect.bottom; y++) {" color="5"/>
   <BookmarkItem objectName="" line="282" column="-1" path="C:/projects/seggerf4/main.cpp" number="57" extra="byte++;" color="5"/>
   <BookmarkItem objectName="" line="286" column="-1" path="C:/projects/seggerf4/main.cpp" number="58" extra="byte++;" color="5"/>
   <BookmarkItem objectName="" line="293" column="-1" path="C:/projects/seggerf4/main.cpp" number="8" extra="int16_t num = den / 2;" color="5"/>
+  <BookmarkItem objectName="" line="294" column="-1" path="C:/projects/seggerf4/main.cpp" number="46" extra="framePtr += getPitch() - (lastByte - firstByte) - 1;" color="5"/>
+  <BookmarkItem objectName="" line="300" column="-1" path="C:/projects/seggerf4/main.cpp" number="47" extra="for (uint16_t y = rect.top; y &lt; rect.bottom; y++) {" color="5"/>
   <BookmarkItem objectName="" line="301" column="-1" path="C:/projects/seggerf4/main.cpp" number="59" extra="byte++;" color="5"/>
   <BookmarkItem objectName="" line="305" column="-1" path="C:/projects/seggerf4/main.cpp" number="60" extra="byte++;" color="5"/>
   <BookmarkItem objectName="" line="312" column="-1" path="C:/projects/seggerf4/main.cpp" number="9" extra="if (numPoints &lt; 2)" color="5"/>
+  <BookmarkItem objectName="" line="313" column="-1" path="C:/projects/seggerf4/main.cpp" number="48" extra="framePtr += getPitch() - (lastByte - firstByte) - 1;" color="5"/>
+  <BookmarkItem objectName="" line="319" column="-1" path="C:/projects/seggerf4/main.cpp" number="49" extra="for (uint16_t y = rect.top; y &lt; rect.bottom; y++) {" color="5"/>
   <BookmarkItem objectName="" line="320" column="-1" path="C:/projects/seggerf4/main.cpp" number="61" extra="fillRect (draw, cRect (x, y, x+width, y+height));" color="5"/>
   <BookmarkItem objectName="" line="326" column="-1" path="C:/projects/seggerf4/main.cpp" number="62" extra="int16_t deltax = ABS(p2.x - p1.x); // The difference between the x's" color="5"/>
   <BookmarkItem objectName="" line="327" column="-1" path="C:/projects/seggerf4/main.cpp" number="63" extra="int16_t deltay = ABS(p2.y - p1.y); // The difference between the y's" color="5"/>
   <BookmarkItem objectName="" line="330" column="-1" path="C:/projects/seggerf4/main.cpp" number="64" extra="cPoint inc1 ((p2.x >= p1.x) ? 1 : -1, (p2.y >= p1.y) ? 1 : -1);" color="5"/>
+  <BookmarkItem objectName="" line="332" column="-1" path="C:/projects/seggerf4/main.cpp" number="50" extra="framePtr += getPitch() - (lastByte - firstByte) - 1;" color="5"/>
   <BookmarkItem objectName="" line="340" column="-1" path="C:/projects/seggerf4/main.cpp" number="10" extra="decision += (p.x &lt;&lt; 2) + 6;" color="5"/>
+  <BookmarkItem objectName="" line="341" column="-1" path="C:/projects/seggerf4/main.cpp" number="51" extra="fillRect (draw, cRect (x, y, x+width, y+height));" color="5"/>
   <BookmarkItem objectName="" line="342" column="-1" path="C:/projects/seggerf4/main.cpp" number="11" extra="decision += ((p.x - p.y) &lt;&lt; 2) + 10;" color="5"/>
   <BookmarkItem objectName="" line="347" column="-1" path="C:/projects/seggerf4/main.cpp" number="65" extra="drawPix (draw, p);" color="5"/>
   <BookmarkItem objectName="" line="356" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="int err = 2 - 2 * radius.x;" color="5"/>
   <BookmarkItem objectName="" line="364" column="-1" path="C:/projects/seggerf4/main.cpp" number="66" extra="drawLine (draw, *points, *(points + numPoints-1));" color="5"/>
-  <BookmarkItem objectName="" line="367" column="-1" path="C:/projects/seggerf4/main.cpp" number="67" extra="cPoint point = *points++;" color="5"/>
+  <BookmarkItem objectName="" line="367" column="-1" path="C:/projects/seggerf4/main.cpp" number="52" extra="for (int16_t pixel = 0; pixel &lt;= numPixels; pixel++) {" color="5"/>
   <BookmarkItem objectName="" line="368" column="-1" path="C:/projects/seggerf4/main.cpp" number="68" extra="drawLine (draw, point, *points);" color="5"/>
   <BookmarkItem objectName="" line="372" column="-1" path="C:/projects/seggerf4/main.cpp" number="14" extra="err += ++y *2 + 1;" color="5"/>
   <BookmarkItem objectName="" line="375" column="-1" path="C:/projects/seggerf4/main.cpp" number="69" extra="int32_t decision = 3 - (radius &lt;&lt; 1);" color="5"/>
@@ -398,9 +433,17 @@
   <BookmarkItem objectName="" line="383" column="-1" path="C:/projects/seggerf4/main.cpp" number="75" extra="drawPix (draw, centre + cPoint (p.x, p.y));" color="5"/>
   <BookmarkItem objectName="" line="384" column="-1" path="C:/projects/seggerf4/main.cpp" number="76" extra="drawPix (draw, centre + cPoint (-p.x, p.y));" color="5"/>
   <BookmarkItem objectName="" line="385" column="-1" path="C:/projects/seggerf4/main.cpp" number="77" extra="drawPix (draw, centre + cPoint (p.y, p.x));" color="5"/>
-  <BookmarkItem objectName="" line="386" column="-1" path="C:/projects/seggerf4/main.cpp" number="78" extra="drawPix (draw, centre + cPoint (-p.y, p.x));" color="5"/>
+  <BookmarkItem objectName="" line="386" column="-1" path="C:/projects/seggerf4/main.cpp" number="53" extra="drawLine (draw, *points, *(points + numPoints-1));" color="5"/>
   <BookmarkItem objectName="" line="392" column="-1" path="C:/projects/seggerf4/main.cpp" number="79" extra="p.y--;" color="5"/>
   <BookmarkItem objectName="" line="395" column="-1" path="C:/projects/seggerf4/main.cpp" number="80" extra="p.x++;" color="5"/>
+  <BookmarkItem objectName="" line="401" column="-1" path="C:/projects/seggerf4/main.cpp" number="54" extra="drawPix (draw, centre + cPoint (p.x, -p.y));" color="5"/>
+  <BookmarkItem objectName="" line="402" column="-1" path="C:/projects/seggerf4/main.cpp" number="55" extra="drawPix (draw, centre + cPoint (-p.x, -p.y));" color="5"/>
+  <BookmarkItem objectName="" line="403" column="-1" path="C:/projects/seggerf4/main.cpp" number="56" extra="drawPix (draw, centre + cPoint (p.y, -p.x));" color="5"/>
+  <BookmarkItem objectName="" line="404" column="-1" path="C:/projects/seggerf4/main.cpp" number="57" extra="drawPix (draw, centre + cPoint (-p.y, -p.x));" color="5"/>
+  <BookmarkItem objectName="" line="405" column="-1" path="C:/projects/seggerf4/main.cpp" number="58" extra="drawPix (draw, centre + cPoint (p.x, p.y));" color="5"/>
+  <BookmarkItem objectName="" line="406" column="-1" path="C:/projects/seggerf4/main.cpp" number="59" extra="drawPix (draw, centre + cPoint (-p.x, p.y));" color="5"/>
+  <BookmarkItem objectName="" line="407" column="-1" path="C:/projects/seggerf4/main.cpp" number="60" extra="drawPix (draw, centre + cPoint (p.y, p.x));" color="5"/>
+  <BookmarkItem objectName="" line="408" column="-1" path="C:/projects/seggerf4/main.cpp" number="61" extra="drawPix (draw, centre + cPoint (-p.y, p.x));" color="5"/>
   <BookmarkItem objectName="" line="410" column="-1" path="C:/projects/seggerf4/main.cpp" number="81" extra="drawPix (draw, centre + cPoint (-(int16_t)(x / k), y));" color="5"/>
   <BookmarkItem objectName="" line="411" column="-1" path="C:/projects/seggerf4/main.cpp" number="82" extra="drawPix (draw, centre + cPoint ((int16_t)(x / k), y));" color="5"/>
   <BookmarkItem objectName="" line="412" column="-1" path="C:/projects/seggerf4/main.cpp" number="83" extra="drawPix (draw, centre + cPoint ((int16_t)(x / k), -y));" color="5"/>
@@ -408,7 +451,10 @@
   <BookmarkItem objectName="" line="417" column="-1" path="C:/projects/seggerf4/main.cpp" number="85" extra="err += ++x * 2+ 1 ;" color="5"/>
   <BookmarkItem objectName="" line="421" column="-1" path="C:/projects/seggerf4/main.cpp" number="15" extra="num = deltax / 2;" color="5"/>
   <BookmarkItem objectName="" line="423" column="-1" path="C:/projects/seggerf4/main.cpp" number="86" extra="} while (y &lt;= 0);" color="5"/>
-  <BookmarkItem objectName="" line="432" column="-1" path="C:/projects/seggerf4/main.cpp" number="16" extra="num = deltay / 2;" color="5"/>
+  <BookmarkItem objectName="" line="432" column="-1" path="C:/projects/seggerf4/main.cpp" number="62" extra="drawPix (draw, centre + cPoint (-(int16_t)(x / k), y));" color="5"/>
+  <BookmarkItem objectName="" line="433" column="-1" path="C:/projects/seggerf4/main.cpp" number="63" extra="drawPix (draw, centre + cPoint ((int16_t)(x / k), y));" color="5"/>
+  <BookmarkItem objectName="" line="434" column="-1" path="C:/projects/seggerf4/main.cpp" number="64" extra="drawPix (draw, centre + cPoint ((int16_t)(x / k), -y));" color="5"/>
+  <BookmarkItem objectName="" line="435" column="-1" path="C:/projects/seggerf4/main.cpp" number="65" extra="drawPix (draw, centre + cPoint (- (int16_t)(x / k), - y));" color="5"/>
   <BookmarkItem objectName="" line="463" column="-1" path="C:/projects/seggerf4/main.cpp" number="87" extra="int16_t deltax = ABS (p2.x - p1.x); // The difference between the x's" color="5"/>
   <BookmarkItem objectName="" line="464" column="-1" path="C:/projects/seggerf4/main.cpp" number="88" extra="int16_t deltay = ABS (p2.y - p1.y); // The difference between the y's" color="5"/>
   <BookmarkItem objectName="" line="472" column="-1" path="C:/projects/seggerf4/main.cpp" number="17" extra="if (numPoints &lt; 2)" color="5"/>
@@ -418,10 +464,12 @@
   <BookmarkItem objectName="" line="505" column="-1" path="C:/projects/seggerf4/main.cpp" number="20" extra="fillRect (draw, centre.x - current_y, centre.y - current_x, 1, 2*current_y);" color="5"/>
   <BookmarkItem objectName="" line="508" column="-1" path="C:/projects/seggerf4/main.cpp" number="21" extra="fillRect (draw, centre.x - current_x, centre.y - current_y, 1, 2*current_x);" color="5"/>
   <BookmarkItem objectName="" line="509" column="-1" path="C:/projects/seggerf4/main.cpp" number="90" extra="pixel.x = POLY_X (counter);" color="5"/>
+  <BookmarkItem objectName="" line="511" column="-1" path="C:/projects/seggerf4/main.cpp" number="66" extra="for (int16_t curpixel = 0; curpixel &lt;= num_pixels; curpixel++) {" color="5"/>
   <BookmarkItem objectName="" line="512" column="-1" path="C:/projects/seggerf4/main.cpp" number="23" extra="decision += (current_x &lt;&lt; 2) + 6;" color="5"/>
   <BookmarkItem objectName="" line="514" column="-1" path="C:/projects/seggerf4/main.cpp" number="24" extra="decision += ((current_x - current_y) &lt;&lt; 2) + 10;" color="5"/>
   <BookmarkItem objectName="" line="515" column="-1" path="C:/projects/seggerf4/main.cpp" number="91" extra="pixel.y = POLY_Y(counter);" color="5"/>
   <BookmarkItem objectName="" line="528" column="-1" path="C:/projects/seggerf4/main.cpp" number="25" extra="int err = 2 - 2 * radius.x;" color="5"/>
+  <BookmarkItem objectName="" line="530" column="-1" path="C:/projects/seggerf4/main.cpp" number="67" extra="for (int16_t counter = 1; counter &lt; numPoints; counter++) {" color="5"/>
   <BookmarkItem objectName="" line="531" column="-1" path="C:/projects/seggerf4/main.cpp" number="92" extra="points++;" color="5"/>
   <BookmarkItem objectName="" line="532" column="-1" path="C:/projects/seggerf4/main.cpp" number="26" extra="fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));" color="5"/>
   <BookmarkItem objectName="" line="533" column="-1" path="C:/projects/seggerf4/main.cpp" number="27" extra="fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));" color="5"/>
@@ -447,30 +495,49 @@
   <BookmarkItem objectName="" line="587" column="-1" path="C:/projects/seggerf4/main.cpp" number="8" extra="const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };" color="5"/>
   <BookmarkItem objectName="" line="588" column="-1" path="C:/projects/seggerf4/main.cpp" number="9" extra="const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };" color="5"/>
   <BookmarkItem objectName="" line="593" column="-1" path="C:/projects/seggerf4/main.cpp" number="109" extra="} while (y &lt;= 0);" color="5"/>
+  <BookmarkItem objectName="" line="604" column="-1" path="C:/projects/seggerf4/main.cpp" number="68" extra="fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y + y), 1, (2 * (int16_t)(x / k) + 1));" color="5"/>
+  <BookmarkItem objectName="" line="605" column="-1" path="C:/projects/seggerf4/main.cpp" number="69" extra="fillRect (draw, (centre.x - (int16_t)(x/k)), (centre.y - y), 1, (2 * (int16_t)(x / k) + 1));" color="5"/>
   <BookmarkItem objectName="" line="615" column="-1" path="C:/projects/seggerf4/main.cpp" number="110" extra="size += getCharWidth (drawFont, ch);" color="5"/>
-  <BookmarkItem objectName="" line="642" column="-1" path="C:/projects/seggerf4/main.cpp" number="112" extra="auto fontChar = (fontChar_t*)(drawFont->glyphsBase + drawFont->glyphOffsets[ch - drawFont->firstChar]);" color="5"/>
+  <BookmarkItem objectName="" line="642" column="-1" path="C:/projects/seggerf4/main.cpp" number="70" extra="else if (p.x >= getWidth())" color="5"/>
+  <BookmarkItem objectName="" line="656" column="-1" path="C:/projects/seggerf4/main.cpp" number="71" extra="else if (p.x >= getWidth())" color="5"/>
   <BookmarkItem objectName="" line="659" column="-1" path="C:/projects/seggerf4/main.cpp" number="31" extra="uint16_t getPitch() { return 2 + getWidth()/8; }" color="5"/>
   <BookmarkItem objectName="" line="660" column="-1" path="C:/projects/seggerf4/main.cpp" number="32" extra="uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }" color="5"/>
   <BookmarkItem objectName="" line="662" column="-1" path="C:/projects/seggerf4/main.cpp" number="113" extra="charByte = (*charBytes) &lt;&lt; (8 - xbit);" color="5"/>
   <BookmarkItem objectName="" line="663" column="-1" path="C:/projects/seggerf4/main.cpp" number="114" extra="charBytes++;" color="5"/>
+  <BookmarkItem objectName="" line="664" column="-1" path="C:/projects/seggerf4/main.cpp" number="72" extra="if ((ch >= drawFont->firstChar) &amp;&amp; (ch &lt;= drawFont->lastChar)) {" color="5"/>
+  <BookmarkItem objectName="" line="665" column="-1" path="C:/projects/seggerf4/main.cpp" number="73" extra="auto fontChar = (fontChar_t*)(drawFont->glyphsBase + drawFont->glyphOffsets[ch - drawFont->firstChar]);" color="5"/>
+  <BookmarkItem objectName="" line="666" column="-1" path="C:/projects/seggerf4/main.cpp" number="74" extra="if (p.x + fontChar->left + fontChar->width &lt; getWidth()) {" color="5"/>
+  <BookmarkItem objectName="" line="671" column="-1" path="C:/projects/seggerf4/main.cpp" number="75" extra="for (uint16_t y = 0; y &lt; fontChar->height; y++) {" color="5"/>
   <BookmarkItem objectName="" line="688" column="-1" path="C:/projects/seggerf4/main.cpp" number="115" extra="printf (&quot;HAL_SPI_Transmit failed\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="690" column="-1" path="C:/projects/seggerf4/main.cpp" number="116" extra="HAL_Delay (1);" color="5"/>
+  <BookmarkItem objectName="" line="694" column="-1" path="C:/projects/seggerf4/main.cpp" number="76" extra="framePtr += getPitch() - (fontChar->width + 7)/8;" color="5"/>
   <BookmarkItem objectName="" line="695" column="-1" path="C:/projects/seggerf4/main.cpp" number="117" extra="auto ticks = HAL_GetTick();" color="5"/>
   <BookmarkItem objectName="" line="698" column="-1" path="C:/projects/seggerf4/main.cpp" number="118" extra="mFrameNum++;" color="5"/>
+  <BookmarkItem objectName="" line="705" column="-1" path="C:/projects/seggerf4/main.cpp" number="77" extra="void present() {" color="5"/>
+  <BookmarkItem objectName="" line="710" column="-1" path="C:/projects/seggerf4/main.cpp" number="78" extra="if (HAL_SPI_Transmit_DMA (&amp;mSpiHandle, mFrameBuf, 1 + getHeight() * getPitch() + 1))" color="5"/>
+  <BookmarkItem objectName="" line="711" column="-1" path="C:/projects/seggerf4/main.cpp" number="79" extra="printf (&quot;HAL_SPI_Transmit failed\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="715" column="-1" path="C:/projects/seggerf4/main.cpp" number="119" extra="uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }" color="5"/>
+  <BookmarkItem objectName="" line="718" column="-1" path="C:/projects/seggerf4/main.cpp" number="80" extra="auto ticks = HAL_GetTick();" color="5"/>
   <BookmarkItem objectName="" line="719" column="-1" path="C:/projects/seggerf4/main.cpp" number="120" extra="auto char8 = (uint8_t*)(font->glyphsBase + font->glyphOffsets[ascii - font->firstChar]);" color="5"/>
   <BookmarkItem objectName="" line="720" column="-1" path="C:/projects/seggerf4/main.cpp" number="121" extra="return char8[4];" color="5"/>
+  <BookmarkItem objectName="" line="726" column="-1" path="C:/projects/seggerf4/main.cpp" number="81" extra="SPI_HandleTypeDef* getSpiHandle() { return &amp;mSpiHandle; }" color="5"/>
   <BookmarkItem objectName="" line="729" column="-1" path="C:/projects/seggerf4/main.cpp" number="122" extra="uint8_t mask = 0x80 >> (p.x &amp; 7);" color="5"/>
   <BookmarkItem objectName="" line="731" column="-1" path="C:/projects/seggerf4/main.cpp" number="33" extra="adcChannelConfig.Rank = 2;" color="5"/>
+  <BookmarkItem objectName="" line="737" column="-1" path="C:/projects/seggerf4/main.cpp" number="82" extra="uint16_t getPitch() { return 2 + getWidth()/8; }" color="5"/>
+  <BookmarkItem objectName="" line="738" column="-1" path="C:/projects/seggerf4/main.cpp" number="83" extra="uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }" color="5"/>
+  <BookmarkItem objectName="" line="741" column="-1" path="C:/projects/seggerf4/main.cpp" number="84" extra="if ((ascii >= font->firstChar) &amp;&amp; (ascii &lt;= font->lastChar)) {" color="5"/>
+  <BookmarkItem objectName="" line="742" column="-1" path="C:/projects/seggerf4/main.cpp" number="85" extra="auto char8 = (uint8_t*)(font->glyphsBase + font->glyphOffsets[ascii - font->firstChar]);" color="5"/>
   <BookmarkItem objectName="" line="749" column="-1" path="C:/projects/seggerf4/main.cpp" number="123" extra="};" color="5"/>
   <BookmarkItem objectName="" line="758" column="-1" path="C:/projects/seggerf4/main.cpp" number="124" extra="__HAL_RCC_GPIOA_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="759" column="-1" path="C:/projects/seggerf4/main.cpp" number="125" extra="GPIO_InitTypeDef gpioInit = {0};" color="5"/>
   <BookmarkItem objectName="" line="763" column="-1" path="C:/projects/seggerf4/main.cpp" number="126" extra="HAL_GPIO_Init (GPIOA, &amp;gpioInit);" color="5"/>
   <BookmarkItem objectName="" line="766" column="-1" path="C:/projects/seggerf4/main.cpp" number="127" extra="__HAL_RCC_ADC1_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="767" column="-1" path="C:/projects/seggerf4/main.cpp" number="128" extra="mAdcHandle = {0};" color="5"/>
+  <BookmarkItem objectName="" line="778" column="-1" path="C:/projects/seggerf4/main.cpp" number="86" extra="void init() {" color="5"/>
   <BookmarkItem objectName="" line="780" column="-1" path="C:/projects/seggerf4/main.cpp" number="129" extra="HAL_ADC_Init (&amp;mAdcHandle);" color="5"/>
+  <BookmarkItem objectName="" line="781" column="-1" path="C:/projects/seggerf4/main.cpp" number="87" extra="__HAL_RCC_GPIOA_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="783" column="-1" path="C:/projects/seggerf4/main.cpp" number="130" extra="ADC_ChannelConfTypeDef adcChannelConfig = {0};" color="5"/>
-  <BookmarkItem objectName="" line="789" column="-1" path="C:/projects/seggerf4/main.cpp" number="131" extra="HAL_ADC_ConfigChannel (&amp;mAdcHandle, &amp;adcChannelConfig);" color="5"/>
+  <BookmarkItem objectName="" line="789" column="-1" path="C:/projects/seggerf4/main.cpp" number="88" extra="__HAL_RCC_ADC1_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="795" column="-1" path="C:/projects/seggerf4/main.cpp" number="132" extra="HAL_ADC_ConfigChannel (&amp;mAdcHandle, &amp;adcChannelConfig);" color="5"/>
   <BookmarkItem objectName="" line="801" column="-1" path="C:/projects/seggerf4/main.cpp" number="133" extra="HAL_ADC_ConfigChannel (&amp;mAdcHandle, &amp;adcChannelConfig);" color="5"/>
   <BookmarkItem objectName="" line="807" column="-1" path="C:/projects/seggerf4/main.cpp" number="134" extra="HAL_ADC_ConfigChannel (&amp;mAdcHandle, &amp;adcChannelConfig);" color="5"/>
@@ -478,68 +545,121 @@
   <BookmarkItem objectName="" line="823" column="-1" path="C:/projects/seggerf4/main.cpp" number="136" extra="value2 = getValue();" color="5"/>
   <BookmarkItem objectName="" line="827" column="-1" path="C:/projects/seggerf4/main.cpp" number="137" extra="value3 = getValue();" color="5"/>
   <BookmarkItem objectName="" line="831" column="-1" path="C:/projects/seggerf4/main.cpp" number="138" extra="value4 = getValue();" color="5"/>
+  <BookmarkItem objectName="" line="837" column="-1" path="C:/projects/seggerf4/main.cpp" number="89" extra="if (!start())" color="5"/>
+  <BookmarkItem objectName="" line="840" column="-1" path="C:/projects/seggerf4/main.cpp" number="90" extra="if (!poll())" color="5"/>
+  <BookmarkItem objectName="" line="842" column="-1" path="C:/projects/seggerf4/main.cpp" number="91" extra="value1 = getValue();" color="5"/>
+  <BookmarkItem objectName="" line="844" column="-1" path="C:/projects/seggerf4/main.cpp" number="92" extra="if (!poll())" color="5"/>
   <BookmarkItem objectName="" line="845" column="-1" path="C:/projects/seggerf4/main.cpp" number="139" extra="uint32_t getValue() { return HAL_ADC_GetValue (&amp;mAdcHandle); }" color="5"/>
-  <BookmarkItem objectName="" line="848" column="-1" path="C:/projects/seggerf4/main.cpp" number="140" extra="};" color="5"/>
+  <BookmarkItem objectName="" line="846" column="-1" path="C:/projects/seggerf4/main.cpp" number="93" extra="value2 = getValue();" color="5"/>
+  <BookmarkItem objectName="" line="848" column="-1" path="C:/projects/seggerf4/main.cpp" number="94" extra="if (!poll())" color="5"/>
+  <BookmarkItem objectName="" line="850" column="-1" path="C:/projects/seggerf4/main.cpp" number="95" extra="value3 = getValue();" color="5"/>
+  <BookmarkItem objectName="" line="852" column="-1" path="C:/projects/seggerf4/main.cpp" number="96" extra="if (!poll())" color="5"/>
+  <BookmarkItem objectName="" line="854" column="-1" path="C:/projects/seggerf4/main.cpp" number="97" extra="value4 = getValue();" color="5"/>
+  <BookmarkItem objectName="" line="856" column="-1" path="C:/projects/seggerf4/main.cpp" number="98" extra="if (!stop())" color="5"/>
   <BookmarkItem objectName="" line="857" column="-1" path="C:/projects/seggerf4/main.cpp" number="141" extra="RCC_OscInitTypeDef rccOscInitStruct = {0};" color="5"/>
   <BookmarkItem objectName="" line="863" column="-1" path="C:/projects/seggerf4/main.cpp" number="142" extra="printf (&quot;HAL_RCC_OscConfig failed\n&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="865" column="-1" path="C:/projects/seggerf4/main.cpp" number="143" extra="RCC_PeriphCLKInitTypeDef periphClkInitStruct = {0};" color="5"/>
+  <BookmarkItem objectName="" line="864" column="-1" path="C:/projects/seggerf4/main.cpp" number="99" extra="bool start() { return HAL_ADC_Start (&amp;mAdcHandle) == HAL_OK; }" color="5"/>
+  <BookmarkItem objectName="" line="865" column="-1" path="C:/projects/seggerf4/main.cpp" number="100" extra="bool stop() { return HAL_ADC_Stop (&amp;mAdcHandle) == HAL_OK; }" color="5"/>
+  <BookmarkItem objectName="" line="866" column="-1" path="C:/projects/seggerf4/main.cpp" number="101" extra="bool poll() { return HAL_ADC_PollForConversion (&amp;mAdcHandle, 40) == HAL_OK; }" color="5"/>
+  <BookmarkItem objectName="" line="868" column="-1" path="C:/projects/seggerf4/main.cpp" number="102" extra="uint32_t getValue() { return HAL_ADC_GetValue (&amp;mAdcHandle); }" color="5"/>
   <BookmarkItem objectName="" line="869" column="-1" path="C:/projects/seggerf4/main.cpp" number="144" extra="printf (&quot;HAL_RCCEx_PeriphCLKConfig failed\n&quot;);" color="5"/>
   <BookmarkItem objectName="" line="870" column="-1" path="C:/projects/seggerf4/main.cpp" number="145" extra="__HAL_RCC_RTC_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="873" column="-1" path="C:/projects/seggerf4/main.cpp" number="146" extra="writeProtectDisable();" color="5"/>
-  <BookmarkItem objectName="" line="877" column="-1" path="C:/projects/seggerf4/main.cpp" number="147" extra="RTC->PRER = (uint32_t)(0x00FF);" color="5"/>
+  <BookmarkItem objectName="" line="877" column="-1" path="C:/projects/seggerf4/main.cpp" number="103" extra="void init() {" color="5"/>
   <BookmarkItem objectName="" line="878" column="-1" path="C:/projects/seggerf4/main.cpp" number="148" extra="RTC->PRER |= (uint32_t)(0x7F &lt;&lt; 16U);" color="5"/>
-  <BookmarkItem objectName="" line="886" column="-1" path="C:/projects/seggerf4/main.cpp" number="149" extra="printf (&quot;timeout waiting for synchro\n&quot;);" color="5"/>
-  <BookmarkItem objectName="" line="892" column="-1" path="C:/projects/seggerf4/main.cpp" number="150" extra="writeProtectEnable();" color="5"/>
+  <BookmarkItem objectName="" line="885" column="-1" path="C:/projects/seggerf4/main.cpp" number="104" extra="if (HAL_RCC_OscConfig (&amp;rccOscInitStruct))" color="5"/>
+  <BookmarkItem objectName="" line="886" column="-1" path="C:/projects/seggerf4/main.cpp" number="105" extra="printf (&quot;HAL_RCC_OscConfig failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="891" column="-1" path="C:/projects/seggerf4/main.cpp" number="106" extra="if (HAL_RCCEx_PeriphCLKConfig (&amp;periphClkInitStruct))" color="5"/>
+  <BookmarkItem objectName="" line="892" column="-1" path="C:/projects/seggerf4/main.cpp" number="107" extra="printf (&quot;HAL_RCCEx_PeriphCLKConfig failed\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="893" column="-1" path="C:/projects/seggerf4/main.cpp" number="108" extra="__HAL_RCC_RTC_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="894" column="-1" path="C:/projects/seggerf4/main.cpp" number="151" extra="loadDateTime();" color="5"/>
   <BookmarkItem objectName="" line="895" column="-1" path="C:/projects/seggerf4/main.cpp" number="152" extra="uint32_t clockDateTimeValue = mDateTime.getValue();" color="5"/>
-  <BookmarkItem objectName="" line="897" column="-1" path="C:/projects/seggerf4/main.cpp" number="153" extra="cDateTime buildDateTime (mBuildDate, mBuildTime);" color="5"/>
+  <BookmarkItem objectName="" line="896" column="-1" path="C:/projects/seggerf4/main.cpp" number="109" extra="writeProtectDisable();" color="5"/>
+  <BookmarkItem objectName="" line="897" column="-1" path="C:/projects/seggerf4/main.cpp" number="110" extra="if (enterInitMode()) {" color="5"/>
   <BookmarkItem objectName="" line="898" column="-1" path="C:/projects/seggerf4/main.cpp" number="154" extra="uint32_t buildDateTimeValue = buildDateTime.getValue();" color="5"/>
   <BookmarkItem objectName="" line="901" column="-1" path="C:/projects/seggerf4/main.cpp" number="155" extra="mDateTime.setFromValue (buildDateTimeValue + kBuildSecs);" color="5"/>
   <BookmarkItem objectName="" line="902" column="-1" path="C:/projects/seggerf4/main.cpp" number="156" extra="printf (&quot;cRtc::init set clock &lt; build %d &lt; %d\n&quot;, clockDateTimeValue, buildDateTimeValue);" color="5"/>
   <BookmarkItem objectName="" line="903" column="-1" path="C:/projects/seggerf4/main.cpp" number="157" extra="saveDateTime();" color="5"/>
+  <BookmarkItem objectName="" line="908" column="-1" path="C:/projects/seggerf4/main.cpp" number="111" extra="if (!waitForSynchro())" color="5"/>
+  <BookmarkItem objectName="" line="909" column="-1" path="C:/projects/seggerf4/main.cpp" number="112" extra="printf (&quot;timeout waiting for synchro\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="915" column="-1" path="C:/projects/seggerf4/main.cpp" number="113" extra="writeProtectEnable();" color="5"/>
+  <BookmarkItem objectName="" line="917" column="-1" path="C:/projects/seggerf4/main.cpp" number="114" extra="loadDateTime();" color="5"/>
+  <BookmarkItem objectName="" line="918" column="-1" path="C:/projects/seggerf4/main.cpp" number="115" extra="uint32_t clockDateTimeValue = mDateTime.getValue();" color="5"/>
+  <BookmarkItem objectName="" line="921" column="-1" path="C:/projects/seggerf4/main.cpp" number="116" extra="uint32_t buildDateTimeValue = buildDateTime.getValue();" color="5"/>
   <BookmarkItem objectName="" line="925" column="-1" path="C:/projects/seggerf4/main.cpp" number="159" extra="return mDateTime.getTimeString();" color="5"/>
+  <BookmarkItem objectName="" line="926" column="-1" path="C:/projects/seggerf4/main.cpp" number="117" extra="saveDateTime();" color="5"/>
   <BookmarkItem objectName="" line="931" column="-1" path="C:/projects/seggerf4/main.cpp" number="160" extra="return mDateTime.getTimeDateString();" color="5"/>
+  <BookmarkItem objectName="" line="933" column="-1" path="C:/projects/seggerf4/main.cpp" number="118" extra="bool getClockSet() {" color="5"/>
+  <BookmarkItem objectName="" line="940" column="-1" path="C:/projects/seggerf4/main.cpp" number="119" extra="loadDateTime();" color="5"/>
   <BookmarkItem objectName="" line="941" column="-1" path="C:/projects/seggerf4/main.cpp" number="10" extra="const float kPi = 3.1415926f;" color="5"/>
-  <BookmarkItem objectName="" line="942" column="-1" path="C:/projects/seggerf4/main.cpp" number="11" extra="const char* kMonth[12] = { &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;, &quot;Jul&quot;, &quot;Aug&quot;, &quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot;};" color="5"/>
-  <BookmarkItem objectName="" line="944" column="-1" path="C:/projects/seggerf4/main.cpp" number="161" extra="return ((byte / 10) &lt;&lt; 4) | (byte % 10);" color="5"/>
-  <BookmarkItem objectName="" line="949" column="-1" path="C:/projects/seggerf4/main.cpp" number="162" extra="return (((bcd &amp; 0xF0) >> 4) * 10) + (bcd &amp; 0x0F);" color="5"/>
-  <BookmarkItem objectName="" line="961" column="-1" path="C:/projects/seggerf4/main.cpp" number="163" extra="mDateTime.Hours = getByteFromBcd ((tr &amp; (RTC_TR_HT | RTC_TR_HU)) >> 16U);" color="5"/>
+  <BookmarkItem objectName="" line="942" column="-1" path="C:/projects/seggerf4/main.cpp" number="120" extra="hours = (1.f - ((mDateTime.Hours + (mDateTime.Minutes / 60.f)) / 6.f)) * kPi;" color="5"/>
+  <BookmarkItem objectName="" line="943" column="-1" path="C:/projects/seggerf4/main.cpp" number="121" extra="minutes = (1.f - ((mDateTime.Minutes + (mDateTime.Seconds / 60.f))/ 30.f)) * kPi;" color="5"/>
+  <BookmarkItem objectName="" line="944" column="-1" path="C:/projects/seggerf4/main.cpp" number="122" extra="seconds = (1.f - (mDateTime.Seconds / 30.f)) * kPi;" color="5"/>
+  <BookmarkItem objectName="" line="945" column="-1" path="C:/projects/seggerf4/main.cpp" number="123" extra="subSeconds = (1.f - ((255 - mDateTime.SubSeconds) / 128.f)) * kPi;" color="5"/>
+  <BookmarkItem objectName="" line="949" column="-1" path="C:/projects/seggerf4/main.cpp" number="124" extra="std::string getClockTimeString() {" color="5"/>
+  <BookmarkItem objectName="" line="951" column="-1" path="C:/projects/seggerf4/main.cpp" number="125" extra="return mDateTime.getTimeString();" color="5"/>
+  <BookmarkItem objectName="" line="955" column="-1" path="C:/projects/seggerf4/main.cpp" number="126" extra="std::string getClockTimeDateString() {" color="5"/>
+  <BookmarkItem objectName="" line="957" column="-1" path="C:/projects/seggerf4/main.cpp" number="127" extra="return mDateTime.getTimeDateString();" color="5"/>
+  <BookmarkItem objectName="" line="961" column="-1" path="C:/projects/seggerf4/main.cpp" number="128" extra="std::string getBuildTimeDateString() {" color="5"/>
   <BookmarkItem objectName="" line="962" column="-1" path="C:/projects/seggerf4/main.cpp" number="164" extra="mDateTime.Minutes = getByteFromBcd ((tr &amp; (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);" color="5"/>
   <BookmarkItem objectName="" line="963" column="-1" path="C:/projects/seggerf4/main.cpp" number="165" extra="mDateTime.Seconds = getByteFromBcd (tr &amp; (RTC_TR_ST | RTC_TR_SU));" color="5"/>
   <BookmarkItem objectName="" line="966" column="-1" path="C:/projects/seggerf4/main.cpp" number="166" extra="mDateTime.Year = getByteFromBcd ((dr &amp; (RTC_DR_YT | RTC_DR_YU)) >> 16U);" color="5"/>
   <BookmarkItem objectName="" line="968" column="-1" path="C:/projects/seggerf4/main.cpp" number="167" extra="mDateTime.Month = getByteFromBcd ((dr &amp; (RTC_DR_MT | RTC_DR_MU)) >> 8U);" color="5"/>
   <BookmarkItem objectName="" line="969" column="-1" path="C:/projects/seggerf4/main.cpp" number="168" extra="mDateTime.Date = getByteFromBcd (dr &amp; (RTC_DR_DT | RTC_DR_DU));" color="5"/>
   <BookmarkItem objectName="" line="975" column="-1" path="C:/projects/seggerf4/main.cpp" number="169" extra="writeProtectDisable();" color="5"/>
+  <BookmarkItem objectName="" line="980" column="-1" path="C:/projects/seggerf4/main.cpp" number="129" extra="void loadDateTime() {" color="5"/>
   <BookmarkItem objectName="" line="981" column="-1" path="C:/projects/seggerf4/main.cpp" number="170" extra="mDateTime.Month = (uint8_t)((mDateTime.Month &amp; (uint8_t)~(0x10U)) + (uint8_t)0x0AU);" color="5"/>
-  <BookmarkItem objectName="" line="987" column="-1" path="C:/projects/seggerf4/main.cpp" number="171" extra="(mDateTime.WeekDay &lt;&lt; 13);" color="5"/>
-  <BookmarkItem objectName="" line="988" column="-1" path="C:/projects/seggerf4/main.cpp" number="172" extra="RTC->DR = (uint32_t)(tmp &amp; RTC_DR_RESERVED_MASK);" color="5"/>
+  <BookmarkItem objectName="" line="987" column="-1" path="C:/projects/seggerf4/main.cpp" number="130" extra="mDateTime.Hours = getByteFromBcd ((tr &amp; (RTC_TR_HT | RTC_TR_HU)) >> 16U);" color="5"/>
+  <BookmarkItem objectName="" line="988" column="-1" path="C:/projects/seggerf4/main.cpp" number="131" extra="mDateTime.Minutes = getByteFromBcd ((tr &amp; (RTC_TR_MNT | RTC_TR_MNU)) >> 8U);" color="5"/>
+  <BookmarkItem objectName="" line="989" column="-1" path="C:/projects/seggerf4/main.cpp" number="132" extra="mDateTime.Seconds = getByteFromBcd (tr &amp; (RTC_TR_ST | RTC_TR_SU));" color="5"/>
+  <BookmarkItem objectName="" line="992" column="-1" path="C:/projects/seggerf4/main.cpp" number="133" extra="mDateTime.Year = getByteFromBcd ((dr &amp; (RTC_DR_YT | RTC_DR_YU)) >> 16U);" color="5"/>
   <BookmarkItem objectName="" line="993" column="-1" path="C:/projects/seggerf4/main.cpp" number="173" extra="(mDateTime.TimeFormat) &lt;&lt; 16);" color="5"/>
-  <BookmarkItem objectName="" line="994" column="-1" path="C:/projects/seggerf4/main.cpp" number="174" extra="RTC->TR = (uint32_t)(tmp &amp; RTC_TR_RESERVED_MASK);" color="5"/>
-  <BookmarkItem objectName="" line="1002" column="-1" path="C:/projects/seggerf4/main.cpp" number="34" extra="if ((buildDateStr[0] == *kMonth[i]) &amp;&amp; (buildDateStr[1] == *(kMonth[i]+1)) &amp;&amp; (buildDateStr[2] == *(kMonth[i]+2))) {" color="5"/>
-  <BookmarkItem objectName="" line="1007" column="-1" path="C:/projects/seggerf4/main.cpp" number="175" extra="printf (&quot;setDateTime - timeout waiting for synchro\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="994" column="-1" path="C:/projects/seggerf4/main.cpp" number="134" extra="mDateTime.Month = getByteFromBcd ((dr &amp; (RTC_DR_MT | RTC_DR_MU)) >> 8U);" color="5"/>
+  <BookmarkItem objectName="" line="995" column="-1" path="C:/projects/seggerf4/main.cpp" number="135" extra="mDateTime.Date = getByteFromBcd (dr &amp; (RTC_DR_DT | RTC_DR_DU));" color="5"/>
+  <BookmarkItem objectName="" line="999" column="-1" path="C:/projects/seggerf4/main.cpp" number="136" extra="void saveDateTime() {" color="5"/>
+  <BookmarkItem objectName="" line="1001" column="-1" path="C:/projects/seggerf4/main.cpp" number="137" extra="writeProtectDisable();" color="5"/>
+  <BookmarkItem objectName="" line="1002" column="-1" path="C:/projects/seggerf4/main.cpp" number="138" extra="if (enterInitMode()) {" color="5"/>
+  <BookmarkItem objectName="" line="1007" column="-1" path="C:/projects/seggerf4/main.cpp" number="139" extra="mDateTime.Month = (uint8_t)((mDateTime.Month &amp; (uint8_t)~(0x10U)) + (uint8_t)0x0AU);" color="5"/>
   <BookmarkItem objectName="" line="1010" column="-1" path="C:/projects/seggerf4/main.cpp" number="176" extra="writeProtectEnable();" color="5"/>
   <BookmarkItem objectName="" line="1021" column="-1" path="C:/projects/seggerf4/main.cpp" number="35" extra="return dec(Hours,2) + &quot;:&quot; + dec(Minutes,2) + &quot;:&quot; + dec(Seconds,2);" color="5"/>
   <BookmarkItem objectName="" line="1027" column="-1" path="C:/projects/seggerf4/main.cpp" number="36" extra="return std::string(kMonth[Month]) + &quot; &quot; + dec(Date,2) + &quot; &quot; + dec(2000 + Year,4);" color="5"/>
   <BookmarkItem objectName="" line="1029" column="-1" path="C:/projects/seggerf4/main.cpp" number="177" extra="uint32_t tickstart = HAL_GetTick();" color="5"/>
   <BookmarkItem objectName="" line="1032" column="-1" path="C:/projects/seggerf4/main.cpp" number="37" extra="return dec(Hours,2) + &quot;:&quot; + dec(Minutes,2) + &quot;:&quot; + dec(Seconds,2) + &quot; &quot; +" color="5"/>
-  <BookmarkItem objectName="" line="1033" column="-1" path="C:/projects/seggerf4/main.cpp" number="38" extra="kMonth[Month] + &quot; &quot; + dec(Date,2) + &quot; &quot; + dec(2000 + Year,4);" color="5"/>
+  <BookmarkItem objectName="" line="1033" column="-1" path="C:/projects/seggerf4/main.cpp" number="140" extra="if (!waitForSynchro())" color="5"/>
+  <BookmarkItem objectName="" line="1034" column="-1" path="C:/projects/seggerf4/main.cpp" number="141" extra="printf (&quot;setDateTime - timeout waiting for synchro\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1037" column="-1" path="C:/projects/seggerf4/main.cpp" number="142" extra="writeProtectEnable();" color="5"/>
+  <BookmarkItem objectName="" line="1042" column="-1" path="C:/projects/seggerf4/main.cpp" number="143" extra="void writeProtectDisable() {" color="5"/>
   <BookmarkItem objectName="" line="1046" column="-1" path="C:/projects/seggerf4/main.cpp" number="178" extra="uint32_t tickstart = HAL_GetTick();" color="5"/>
+  <BookmarkItem objectName="" line="1048" column="-1" path="C:/projects/seggerf4/main.cpp" number="144" extra="bool enterInitMode() {" color="5"/>
+  <BookmarkItem objectName="" line="1056" column="-1" path="C:/projects/seggerf4/main.cpp" number="145" extra="uint32_t tickstart = HAL_GetTick();" color="5"/>
+  <BookmarkItem objectName="" line="1060" column="-1" path="C:/projects/seggerf4/main.cpp" number="146" extra="if ((HAL_GetTick() - tickstart ) > RTC_TIMEOUT_VALUE)" color="5"/>
+  <BookmarkItem objectName="" line="1068" column="-1" path="C:/projects/seggerf4/main.cpp" number="147" extra="bool waitForSynchro() {" color="5"/>
+  <BookmarkItem objectName="" line="1073" column="-1" path="C:/projects/seggerf4/main.cpp" number="148" extra="uint32_t tickstart = HAL_GetTick();" color="5"/>
   <BookmarkItem objectName="" line="1075" column="-1" path="C:/projects/seggerf4/main.cpp" number="179" extra="Date = ((buildDateStr[4] == ' ') ? 0 : buildDateStr[4] - 0x30) * 10 + (buildDateStr[5] -0x30);" color="5"/>
   <BookmarkItem objectName="" line="1076" column="-1" path="C:/projects/seggerf4/main.cpp" number="180" extra="Year = (buildDateStr[9] - 0x30) * 10 + (buildDateStr[10] -0x30);" color="5"/>
+  <BookmarkItem objectName="" line="1077" column="-1" path="C:/projects/seggerf4/main.cpp" number="149" extra="if ((HAL_GetTick() - tickstart ) > RTC_TIMEOUT_VALUE)" color="5"/>
   <BookmarkItem objectName="" line="1081" column="-1" path="C:/projects/seggerf4/main.cpp" number="12" extra="static const int kMaxLen = 220;" color="5"/>
   <BookmarkItem objectName="" line="1082" column="-1" path="C:/projects/seggerf4/main.cpp" number="13" extra="static const int kMaxValues = 400;" color="5"/>
+  <BookmarkItem objectName="" line="1084" column="-1" path="C:/projects/seggerf4/main.cpp" number="150" extra="void writeProtectEnable() {" color="5"/>
   <BookmarkItem objectName="" line="1086" column="-1" path="C:/projects/seggerf4/main.cpp" number="181" extra="Hours = (buildTimeStr[0] - 0x30) * 10 + (buildTimeStr[1] -0x30);" color="5"/>
   <BookmarkItem objectName="" line="1087" column="-1" path="C:/projects/seggerf4/main.cpp" number="182" extra="Minutes = (buildTimeStr[3] - 0x30) * 10 + (buildTimeStr[4] -0x30);" color="5"/>
   <BookmarkItem objectName="" line="1088" column="-1" path="C:/projects/seggerf4/main.cpp" number="183" extra="Seconds = (buildTimeStr[6] - 0x30) * 10 + (buildTimeStr[7] -0x30);" color="5"/>
-  <BookmarkItem objectName="" line="1097" column="-1" path="C:/projects/seggerf4/main.cpp" number="39" extra="mValues = (int16_t*)malloc (getWidth() * 2);" color="5"/>
+  <BookmarkItem objectName="" line="1097" column="-1" path="C:/projects/seggerf4/main.cpp" number="151" extra="cDateTime() {}" color="5"/>
   <BookmarkItem objectName="" line="1098" column="-1" path="C:/projects/seggerf4/main.cpp" number="40" extra="memset (mValues, 0, getWidth() * 2);" color="5"/>
   <BookmarkItem objectName="" line="1099" column="-1" path="C:/projects/seggerf4/main.cpp" number="184" extra="return dec(Hours,2) + &quot;:&quot; + dec(Minutes,2) + &quot;:&quot; + dec(Seconds,2);" color="5"/>
   <BookmarkItem objectName="" line="1100" column="-1" path="C:/projects/seggerf4/main.cpp" number="185" extra="//dec(SubSeconds) + &quot; &quot; + dec(SecondFraction);" color="5"/>
+  <BookmarkItem objectName="" line="1102" column="-1" path="C:/projects/seggerf4/main.cpp" number="152" extra="Date = ((buildDateStr[4] == ' ') ? 0 : buildDateStr[4] - 0x30) * 10 + (buildDateStr[5] -0x30);" color="5"/>
   <BookmarkItem objectName="" line="1105" column="-1" path="C:/projects/seggerf4/main.cpp" number="186" extra="return std::string(kMonth[Month]) + &quot; &quot; + dec(Date,2) + &quot; &quot; + dec(2000 + Year,4);" color="5"/>
+  <BookmarkItem objectName="" line="1106" column="-1" path="C:/projects/seggerf4/main.cpp" number="153" extra="for (int i = 0; i &lt; 12; i++)" color="5"/>
+  <BookmarkItem objectName="" line="1107" column="-1" path="C:/projects/seggerf4/main.cpp" number="154" extra="if ((buildDateStr[0] == *kMonth[i]) &amp;&amp; (buildDateStr[1] == *(kMonth[i]+1)) &amp;&amp; (buildDateStr[2] == *(kMonth[i]+2))) {" color="5"/>
   <BookmarkItem objectName="" line="1111" column="-1" path="C:/projects/seggerf4/main.cpp" number="187" extra="kMonth[Month] + &quot; &quot; + dec(Date,2) + &quot; &quot; + dec(2000 + Year,4);" color="5"/>
   <BookmarkItem objectName="" line="1112" column="-1" path="C:/projects/seggerf4/main.cpp" number="188" extra="//dec(SubSeconds) + &quot; &quot; + dec(SecondFraction);" color="5"/>
   <BookmarkItem objectName="" line="1118" column="-1" path="C:/projects/seggerf4/main.cpp" number="42" extra="// 2.5mv /degC" color="5"/>
-  <BookmarkItem objectName="" line="1136" column="-1" path="C:/projects/seggerf4/main.cpp" number="43" extra="auto vin = 2.f * vdd * value2 / 4096.f;" color="5"/>
+  <BookmarkItem objectName="" line="1120" column="-1" path="C:/projects/seggerf4/main.cpp" number="155" extra="uint32_t getValue() {" color="5"/>
+  <BookmarkItem objectName="" line="1125" column="-1" path="C:/projects/seggerf4/main.cpp" number="156" extra="std::string getTimeString() {" color="5"/>
+  <BookmarkItem objectName="" line="1131" column="-1" path="C:/projects/seggerf4/main.cpp" number="157" extra="std::string getDateString() {" color="5"/>
+  <BookmarkItem objectName="" line="1132" column="-1" path="C:/projects/seggerf4/main.cpp" number="158" extra="return std::string(kMonth[Month]) + &quot; &quot; + dec(Date,2) + &quot; &quot; + dec(2000 + Year,4);" color="5"/>
+  <BookmarkItem objectName="" line="1136" column="-1" path="C:/projects/seggerf4/main.cpp" number="159" extra="std::string getTimeDateString() {" color="5"/>
   <BookmarkItem objectName="" line="1146" column="-1" path="C:/projects/seggerf4/main.cpp" number="44" extra="auto vbat = 2.f * vdd * value3 / 4096.f;" color="5"/>
   <BookmarkItem objectName="" line="1152" column="-1" path="C:/projects/seggerf4/main.cpp" number="189" extra="const char* kMonth[12] = { &quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;, &quot;Jul&quot;, &quot;Aug&quot;, &quot;Sep&quot;, &quot;Oct&quot;, &quot;Nov&quot;, &quot;Dec&quot;};" color="5"/>
   <BookmarkItem objectName="" line="1153" column="-1" path="C:/projects/seggerf4/main.cpp" number="190" extra="};" color="5"/>
@@ -557,8 +677,23 @@
   <BookmarkItem objectName="" line="1183" column="-1" path="C:/projects/seggerf4/main.cpp" number="201" extra="memset (mValues, 0, getWidth() * 2);" color="5"/>
   <BookmarkItem objectName="" line="1185" column="-1" path="C:/projects/seggerf4/main.cpp" number="202" extra="printf (&quot;cApp::init values alloc:%d\n&quot;, getWidth() * 2);" color="5"/>
   <BookmarkItem objectName="" line="1187" column="-1" path="C:/projects/seggerf4/main.cpp" number="203" extra="printf (&quot;cApp::init values alloc fail\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1194" column="-1" path="C:/projects/seggerf4/main.cpp" number="160" extra="bool init() {" color="5"/>
+  <BookmarkItem objectName="" line="1196" column="-1" path="C:/projects/seggerf4/main.cpp" number="161" extra="if (!cLcd::init())" color="5"/>
+  <BookmarkItem objectName="" line="1199" column="-1" path="C:/projects/seggerf4/main.cpp" number="162" extra="mAdc.init();" color="5"/>
+  <BookmarkItem objectName="" line="1200" column="-1" path="C:/projects/seggerf4/main.cpp" number="163" extra="mRtc.init();" color="5"/>
   <BookmarkItem objectName="" line="1201" column="-1" path="C:/projects/seggerf4/main.cpp" number="204" extra="mAdc.getValues (value1, value2, value3, value4);" color="5"/>
-  <BookmarkItem objectName="" line="1207" column="-1" path="C:/projects/seggerf4/main.cpp" number="205" extra="auto vdd = 1.2f / (value1 / 4096.f);" color="5"/>
+  <BookmarkItem objectName="" line="1202" column="-1" path="C:/projects/seggerf4/main.cpp" number="164" extra="mValues0 = (int8_t*)malloc (getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1203" column="-1" path="C:/projects/seggerf4/main.cpp" number="165" extra="memset (mValues0, 0, getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1204" column="-1" path="C:/projects/seggerf4/main.cpp" number="166" extra="mValues1 = (int8_t*)malloc (getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1205" column="-1" path="C:/projects/seggerf4/main.cpp" number="167" extra="memset (mValues1, 0, getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1206" column="-1" path="C:/projects/seggerf4/main.cpp" number="168" extra="mValues2 = (int8_t*)malloc (getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1207" column="-1" path="C:/projects/seggerf4/main.cpp" number="169" extra="memset (mValues2, 0, getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1209" column="-1" path="C:/projects/seggerf4/main.cpp" number="170" extra="mValues = (int16_t*)malloc (getWidth());" color="5"/>
+  <BookmarkItem objectName="" line="1210" column="-1" path="C:/projects/seggerf4/main.cpp" number="171" extra="memset (mValues, 0, getWidth() * 2);" color="5"/>
+  <BookmarkItem objectName="" line="1212" column="-1" path="C:/projects/seggerf4/main.cpp" number="172" extra="printf (&quot;cApp::init values alloc:%d\n&quot;, getWidth() * 2);" color="5"/>
+  <BookmarkItem objectName="" line="1214" column="-1" path="C:/projects/seggerf4/main.cpp" number="173" extra="printf (&quot;cApp::init values alloc fail\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1220" column="-1" path="C:/projects/seggerf4/main.cpp" number="174" extra="void run() {" color="5"/>
+  <BookmarkItem objectName="" line="1223" column="-1" path="C:/projects/seggerf4/main.cpp" number="175" extra="if ((getFrameNum() % 50) == 49) {" color="5"/>
   <BookmarkItem objectName="" line="1225" column="-1" path="C:/projects/seggerf4/main.cpp" number="206" extra="BSP_LED_Toggle (LED6);" color="5"/>
   <BookmarkItem objectName="" line="1230" column="-1" path="C:/projects/seggerf4/main.cpp" number="207" extra="uint16_t temp30 = *((uint16_t*)0x1fff7a2c); // value temp 30c 3.3vref" color="5"/>
   <BookmarkItem objectName="" line="1231" column="-1" path="C:/projects/seggerf4/main.cpp" number="208" extra="uint16_t temp110 = *((uint16_t*)0x1fff7a2e); // value temp 110c 3.3vref" color="5"/>
@@ -575,19 +710,35 @@
   <BookmarkItem objectName="" line="1252" column="-1" path="C:/projects/seggerf4/main.cpp" number="219" extra="drawString (eOff, eSmall, eLeft, dec (values[0]), cPoint(0,20));" color="5"/>
   <BookmarkItem objectName="" line="1253" column="-1" path="C:/projects/seggerf4/main.cpp" number="220" extra="drawString (eOff, eSmall, eLeft, dec (values[1]), cPoint(0,40));" color="5"/>
   <BookmarkItem objectName="" line="1254" column="-1" path="C:/projects/seggerf4/main.cpp" number="221" extra="drawString (eOff, eSmall, eLeft, dec (values[2]), cPoint(0,60));" color="5"/>
-  <BookmarkItem objectName="" line="1263" column="-1" path="C:/projects/seggerf4/main.cpp" number="222" extra="// cPoint(0,0));" color="5"/>
-  <BookmarkItem objectName="" line="1264" column="-1" path="C:/projects/seggerf4/main.cpp" number="223" extra="//drawString (eOff, eSmall, eLeft, &quot;Built &quot; + mRtc.getBuildTimeDateString(), cPoint(0,20));" color="5"/>
-  <BookmarkItem objectName="" line="1265" column="-1" path="C:/projects/seggerf4/main.cpp" number="224" extra="//drawString (eOff, eSmall, eLeft, dec (temp30) + &quot;:t30 &quot; + dec (temp110) + &quot;:t100 &quot; + dec (vref30) + &quot;:vref30 &quot;, cPoint(0,40));" color="5"/>
-  <BookmarkItem objectName="" line="1270" column="-1" path="C:/projects/seggerf4/main.cpp" number="225" extra="drawClock (getCentre(), r);" color="5"/>
-  <BookmarkItem objectName="" line="1271" column="-1" path="C:/projects/seggerf4/main.cpp" number="226" extra="drawAcc();" color="5"/>
+  <BookmarkItem objectName="" line="1263" column="-1" path="C:/projects/seggerf4/main.cpp" number="176" extra="dec (int(mAverageVin)) + &quot;.&quot; + dec (int(mAverageVin*1000.f) % 1000, 3) + &quot; &quot; +" color="5"/>
+  <BookmarkItem objectName="" line="1264" column="-1" path="C:/projects/seggerf4/main.cpp" number="177" extra="dec (getTookTicks())," color="5"/>
+  <BookmarkItem objectName="" line="1265" column="-1" path="C:/projects/seggerf4/main.cpp" number="178" extra="cPoint(0,0));" color="5"/>
+  <BookmarkItem objectName="" line="1269" column="-1" path="C:/projects/seggerf4/main.cpp" number="179" extra="mValues0[getFrameNum() % getWidth()] = values[0];" color="5"/>
+  <BookmarkItem objectName="" line="1270" column="-1" path="C:/projects/seggerf4/main.cpp" number="180" extra="mValues1[getFrameNum() % getWidth()] = values[1];" color="5"/>
+  <BookmarkItem objectName="" line="1271" column="-1" path="C:/projects/seggerf4/main.cpp" number="181" extra="mValues2[getFrameNum() % getWidth()] = values[2];" color="5"/>
   <BookmarkItem objectName="" line="1272" column="-1" path="C:/projects/seggerf4/main.cpp" number="227" extra="//drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));" color="5"/>
-  <BookmarkItem objectName="" line="1273" column="-1" path="C:/projects/seggerf4/main.cpp" number="228" extra="present();" color="5"/>
-  <BookmarkItem objectName="" line="1284" column="-1" path="C:/projects/seggerf4/main.cpp" number="229" extra="drawCircle (eOff, centre, radius);" color="5"/>
-  <BookmarkItem objectName="" line="1285" column="-1" path="C:/projects/seggerf4/main.cpp" number="230" extra="drawCircle (eOff, centre, radius-1);" color="5"/>
-  <BookmarkItem objectName="" line="1291" column="-1" path="C:/projects/seggerf4/main.cpp" number="231" extra="mRtc.getClockAngles (hourAngle, minuteAngle, secondAngle, subSecondAngle);" color="5"/>
-  <BookmarkItem objectName="" line="1294" column="-1" path="C:/projects/seggerf4/main.cpp" number="232" extra="drawLine (eOff, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));" color="5"/>
-  <BookmarkItem objectName="" line="1297" column="-1" path="C:/projects/seggerf4/main.cpp" number="233" extra="drawLine (eOff, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));" color="5"/>
-  <BookmarkItem objectName="" line="1300" column="-1" path="C:/projects/seggerf4/main.cpp" number="234" extra="drawLine (eOff, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));" color="5"/>
+  <BookmarkItem objectName="" line="1273" column="-1" path="C:/projects/seggerf4/main.cpp" number="182" extra="mAvX = ((mAvX * 3) + (58 + values[0]) * getWidth() / 116) / 4;" color="5"/>
+  <BookmarkItem objectName="" line="1274" column="-1" path="C:/projects/seggerf4/main.cpp" number="183" extra="mAvY = ((mAvY * 3) + (58 + values[1]) * getHeight() / 116) / 4;" color="5"/>
+  <BookmarkItem objectName="" line="1275" column="-1" path="C:/projects/seggerf4/main.cpp" number="184" extra="fillRect (eOff, cRect (mAvX, 0, mAvX+2, getHeight()));" color="5"/>
+  <BookmarkItem objectName="" line="1276" column="-1" path="C:/projects/seggerf4/main.cpp" number="185" extra="fillRect (eOff, cRect (0, mAvY, getWidth(), mAvY+2));" color="5"/>
+  <BookmarkItem objectName="" line="1279" column="-1" path="C:/projects/seggerf4/main.cpp" number="186" extra="drawString (eOff, eSmall, eLeft, dec (values[0]), cPoint(0,20));" color="5"/>
+  <BookmarkItem objectName="" line="1280" column="-1" path="C:/projects/seggerf4/main.cpp" number="187" extra="drawString (eOff, eSmall, eLeft, dec (values[1]), cPoint(0,40));" color="5"/>
+  <BookmarkItem objectName="" line="1281" column="-1" path="C:/projects/seggerf4/main.cpp" number="188" extra="drawString (eOff, eSmall, eLeft, dec (values[2]), cPoint(0,60));" color="5"/>
+  <BookmarkItem objectName="" line="1284" column="-1" path="C:/projects/seggerf4/main.cpp" number="189" extra="// dec (int(mAverageVdd)) + &quot;.&quot; + dec (int(mAverageVdd*1000.f) % 1000, 3) + &quot;vref &quot; +" color="5"/>
+  <BookmarkItem objectName="" line="1285" column="-1" path="C:/projects/seggerf4/main.cpp" number="190" extra="// dec (int(mAverageVin)) + &quot;.&quot; + dec (int(mAverageVin*1000.f) % 1000, 3) + &quot;vin &quot; +" color="5"/>
+  <BookmarkItem objectName="" line="1286" column="-1" path="C:/projects/seggerf4/main.cpp" number="191" extra="// dec (int(mAverageVbat)) + &quot;.&quot; + dec (int(mAverageVbat*1000.f) % 1000, 3) + &quot;vbat &quot; +" color="5"/>
+  <BookmarkItem objectName="" line="1288" column="-1" path="C:/projects/seggerf4/main.cpp" number="192" extra="// dec (getTookTicks()) + &quot; &quot; +" color="5"/>
+  <BookmarkItem objectName="" line="1289" column="-1" path="C:/projects/seggerf4/main.cpp" number="193" extra="// (mRtc.getClockSet() ? &quot;set &quot;: &quot;&quot;) + (mPowerOnReset ? &quot;pow &quot;: &quot;&quot;) + (mPinReset ? &quot;rst&quot; : &quot;&quot;)," color="5"/>
+  <BookmarkItem objectName="" line="1290" column="-1" path="C:/projects/seggerf4/main.cpp" number="194" extra="// cPoint(0,0));" color="5"/>
+  <BookmarkItem objectName="" line="1291" column="-1" path="C:/projects/seggerf4/main.cpp" number="195" extra="//drawString (eOff, eSmall, eLeft, &quot;Built &quot; + mRtc.getBuildTimeDateString(), cPoint(0,20));" color="5"/>
+  <BookmarkItem objectName="" line="1292" column="-1" path="C:/projects/seggerf4/main.cpp" number="196" extra="//drawString (eOff, eSmall, eLeft, dec (temp30) + &quot;:t30 &quot; + dec (temp110) + &quot;:t100 &quot; + dec (vref30) + &quot;:vref30 &quot;, cPoint(0,40));" color="5"/>
+  <BookmarkItem objectName="" line="1294" column="-1" path="C:/projects/seggerf4/main.cpp" number="197" extra="int r = getFrameNum()/2;" color="5"/>
+  <BookmarkItem objectName="" line="1295" column="-1" path="C:/projects/seggerf4/main.cpp" number="198" extra="if (r > (getHeight()/2) -1)" color="5"/>
+  <BookmarkItem objectName="" line="1296" column="-1" path="C:/projects/seggerf4/main.cpp" number="199" extra="r = (getHeight()/2) - 1;" color="5"/>
+  <BookmarkItem objectName="" line="1297" column="-1" path="C:/projects/seggerf4/main.cpp" number="200" extra="drawClock (getCentre(), r);" color="5"/>
+  <BookmarkItem objectName="" line="1298" column="-1" path="C:/projects/seggerf4/main.cpp" number="201" extra="drawAcc();" color="5"/>
+  <BookmarkItem objectName="" line="1299" column="-1" path="C:/projects/seggerf4/main.cpp" number="202" extra="//drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));" color="5"/>
+  <BookmarkItem objectName="" line="1300" column="-1" path="C:/projects/seggerf4/main.cpp" number="203" extra="present();" color="5"/>
   <BookmarkItem objectName="" line="1303" column="-1" path="C:/projects/seggerf4/main.cpp" number="235" extra="drawLine (eOff, centre, centre + cPoint (int16_t(subSecondRadius * sin (subSecondAngle)), int16_t(subSecondRadius * cos (subSecondAngle))));" color="5"/>
   <BookmarkItem objectName="" line="1305" column="-1" path="C:/projects/seggerf4/main.cpp" number="236" extra="subSecondAngle > 0 ? BSP_LED_On (LED3) : BSP_LED_Off (LED3);" color="5"/>
   <BookmarkItem objectName="" line="1306" column="-1" path="C:/projects/seggerf4/main.cpp" number="237" extra="subSecondAngle &lt;0 ? BSP_LED_On (LED4) : BSP_LED_Off (LED4);" color="5"/>
@@ -596,26 +747,56 @@
   <BookmarkItem objectName="" line="1314" column="-1" path="C:/projects/seggerf4/main.cpp" number="240" extra="for (int i = 0; i &lt; getWidth(); i++) {" color="5"/>
   <BookmarkItem objectName="" line="1316" column="-1" path="C:/projects/seggerf4/main.cpp" number="241" extra="fillRect (eOff, cRect (i, getHeight()-len, i+1, getHeight()));" color="5"/>
   <BookmarkItem objectName="" line="1317" column="-1" path="C:/projects/seggerf4/main.cpp" number="242" extra="valueIndex++;" color="5"/>
+  <BookmarkItem objectName="" line="1321" column="-1" path="C:/projects/seggerf4/main.cpp" number="204" extra="drawLine (eOff, centre, centre + cPoint (int16_t(hourRadius * sin (hourAngle)), int16_t(hourRadius * cos (hourAngle))));" color="5"/>
+  <BookmarkItem objectName="" line="1324" column="-1" path="C:/projects/seggerf4/main.cpp" number="205" extra="drawLine (eOff, centre, centre + cPoint (int16_t(minuteRadius * sin (minuteAngle)), int16_t(minuteRadius * cos (minuteAngle))));" color="5"/>
   <BookmarkItem objectName="" line="1325" column="-1" path="C:/projects/seggerf4/main.cpp" number="243" extra="int32_t valueIndex = getFrameNum() - getWidth();" color="5"/>
   <BookmarkItem objectName="" line="1326" column="-1" path="C:/projects/seggerf4/main.cpp" number="244" extra="for (int i = 0; i &lt; getWidth(); i++) {" color="5"/>
+  <BookmarkItem objectName="" line="1327" column="-1" path="C:/projects/seggerf4/main.cpp" number="206" extra="drawLine (eOff, centre, centre + cPoint (int16_t(secondRadius * sin (secondAngle)), int16_t(secondRadius * cos (secondAngle))));" color="5"/>
+  <BookmarkItem objectName="" line="1330" column="-1" path="C:/projects/seggerf4/main.cpp" number="207" extra="drawLine (eOff, centre, centre + cPoint (int16_t(subSecondRadius * sin (subSecondAngle)), int16_t(subSecondRadius * cos (subSecondAngle))));" color="5"/>
   <BookmarkItem objectName="" line="1331" column="-1" path="C:/projects/seggerf4/main.cpp" number="245" extra="fillRect (eOff, cRect (i, x1, i+1, x2));" color="5"/>
   <BookmarkItem objectName="" line="1337" column="-1" path="C:/projects/seggerf4/main.cpp" number="246" extra="fillRect (eOff, cRect (i, x1, i+1, x2));" color="5"/>
-  <BookmarkItem objectName="" line="1343" column="-1" path="C:/projects/seggerf4/main.cpp" number="247" extra="fillRect (eOff, cRect (i, x1, i+1, x2));" color="5"/>
+  <BookmarkItem objectName="" line="1338" column="-1" path="C:/projects/seggerf4/main.cpp" number="208" extra="void drawValues() {" color="5"/>
+  <BookmarkItem objectName="" line="1340" column="-1" path="C:/projects/seggerf4/main.cpp" number="209" extra="int32_t valueIndex = getFrameNum() - getWidth();" color="5"/>
+  <BookmarkItem objectName="" line="1341" column="-1" path="C:/projects/seggerf4/main.cpp" number="210" extra="for (int i = 0; i &lt; getWidth(); i++) {" color="5"/>
+  <BookmarkItem objectName="" line="1342" column="-1" path="C:/projects/seggerf4/main.cpp" number="211" extra="int16_t len = valueIndex > 0 ? (getHeight() * (mValues[valueIndex % getWidth()] - mMinValue2)) / (mMaxValue2 - mMinValue2) : 0;" color="5"/>
+  <BookmarkItem objectName="" line="1343" column="-1" path="C:/projects/seggerf4/main.cpp" number="212" extra="fillRect (eOff, cRect (i, getHeight()-len, i+1, getHeight()));" color="5"/>
   <BookmarkItem objectName="" line="1345" column="-1" path="C:/projects/seggerf4/main.cpp" number="248" extra="valueIndex++;" color="5"/>
+  <BookmarkItem objectName="" line="1349" column="-1" path="C:/projects/seggerf4/main.cpp" number="213" extra="void drawAcc() {" color="5"/>
+  <BookmarkItem objectName="" line="1351" column="-1" path="C:/projects/seggerf4/main.cpp" number="214" extra="auto graphHeight = getHeight() / 3 / 2;" color="5"/>
+  <BookmarkItem objectName="" line="1352" column="-1" path="C:/projects/seggerf4/main.cpp" number="215" extra="int32_t valueIndex = getFrameNum() - getWidth();" color="5"/>
+  <BookmarkItem objectName="" line="1353" column="-1" path="C:/projects/seggerf4/main.cpp" number="216" extra="for (int i = 0; i &lt; getWidth(); i++) {" color="5"/>
+  <BookmarkItem objectName="" line="1354" column="-1" path="C:/projects/seggerf4/main.cpp" number="217" extra="int16_t value = valueIndex > 0 ? mValues0[valueIndex % getWidth()] : 0;" color="5"/>
   <BookmarkItem objectName="" line="1356" column="-1" path="C:/projects/seggerf4/main.cpp" number="249" extra="fillRect (draw, cRect (i, i, i+1, i+i));" color="5"/>
+  <BookmarkItem objectName="" line="1358" column="-1" path="C:/projects/seggerf4/main.cpp" number="218" extra="fillRect (eOff, cRect (i, x1, i+1, x2));" color="5"/>
   <BookmarkItem objectName="" line="1359" column="-1" path="C:/projects/seggerf4/main.cpp" number="250" extra="fillRect (draw, cRect (100 + iteration, i, 100 + iteration + i, i + 1));" color="5"/>
+  <BookmarkItem objectName="" line="1360" column="-1" path="C:/projects/seggerf4/main.cpp" number="219" extra="value = valueIndex > 0 ? mValues1[valueIndex % getWidth()] : 0;" color="5"/>
   <BookmarkItem objectName="" line="1361" column="-1" path="C:/projects/seggerf4/main.cpp" number="251" extra="drawCircle (draw, getCentre(), getHeight() * iteration / 200);" color="5"/>
   <BookmarkItem objectName="" line="1363" column="-1" path="C:/projects/seggerf4/main.cpp" number="252" extra="drawEllipse (draw, getCentre(), getSize() * iteration / 200);" color="5"/>
+  <BookmarkItem objectName="" line="1364" column="-1" path="C:/projects/seggerf4/main.cpp" number="220" extra="fillRect (eOff, cRect (i, x1, i+1, x2));" color="5"/>
+  <BookmarkItem objectName="" line="1366" column="-1" path="C:/projects/seggerf4/main.cpp" number="221" extra="value = valueIndex > 0 ? mValues2[valueIndex % getWidth()] : 0;" color="5"/>
+  <BookmarkItem objectName="" line="1370" column="-1" path="C:/projects/seggerf4/main.cpp" number="222" extra="fillRect (eOff, cRect (i, x1, i+1, x2));" color="5"/>
+  <BookmarkItem objectName="" line="1377" column="-1" path="C:/projects/seggerf4/main.cpp" number="223" extra="void drawTests() {" color="5"/>
+  <BookmarkItem objectName="" line="1380" column="-1" path="C:/projects/seggerf4/main.cpp" number="224" extra="int16_t iteration = getFrameNum() % 100;" color="5"/>
+  <BookmarkItem objectName="" line="1382" column="-1" path="C:/projects/seggerf4/main.cpp" number="225" extra="for (int i = 0; i &lt; iteration; i++)" color="5"/>
+  <BookmarkItem objectName="" line="1383" column="-1" path="C:/projects/seggerf4/main.cpp" number="226" extra="fillRect (draw, cRect (i, i, i+1, i+i));" color="5"/>
+  <BookmarkItem objectName="" line="1385" column="-1" path="C:/projects/seggerf4/main.cpp" number="227" extra="for (int i = 0; i &lt; 220; i++)" color="5"/>
+  <BookmarkItem objectName="" line="1386" column="-1" path="C:/projects/seggerf4/main.cpp" number="228" extra="fillRect (draw, cRect (100 + iteration, i, 100 + iteration + i, i + 1));" color="5"/>
   <BookmarkItem objectName="" line="1387" column="-1" path="C:/projects/seggerf4/main.cpp" number="253" extra="};" color="5"/>
+  <BookmarkItem objectName="" line="1388" column="-1" path="C:/projects/seggerf4/main.cpp" number="229" extra="drawCircle (draw, getCentre(), getHeight() * iteration / 200);" color="5"/>
+  <BookmarkItem objectName="" line="1390" column="-1" path="C:/projects/seggerf4/main.cpp" number="230" extra="drawEllipse (draw, getCentre(), getSize() * iteration / 200);" color="5"/>
   <BookmarkItem objectName="" line="1394" column="-1" path="C:/projects/seggerf4/main.cpp" number="254" extra="void SysTick_Handler() { HAL_IncTick(); }" color="5"/>
   <BookmarkItem objectName="" line="1397" column="-1" path="C:/projects/seggerf4/main.cpp" number="255" extra="void SPI2_IRQHandler() { HAL_SPI_IRQHandler (cApp::mApp->getSpiHandle()); }" color="5"/>
   <BookmarkItem objectName="" line="1398" column="-1" path="C:/projects/seggerf4/main.cpp" number="256" extra="void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->getSpiHandle()->hdmatx); }" color="5"/>
   <BookmarkItem objectName="" line="1420" column="-1" path="C:/projects/seggerf4/main.cpp" number="257" extra="__HAL_RCC_PWR_CLK_ENABLE();" color="5"/>
-  <BookmarkItem objectName="" line="1423" column="-1" path="C:/projects/seggerf4/main.cpp" number="258" extra="__HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);" color="5"/>
+  <BookmarkItem objectName="" line="1423" column="-1" path="C:/projects/seggerf4/main.cpp" number="231" extra="void SysTick_Handler() { HAL_IncTick(); }" color="5"/>
+  <BookmarkItem objectName="" line="1426" column="-1" path="C:/projects/seggerf4/main.cpp" number="232" extra="void SPI2_IRQHandler() { HAL_SPI_IRQHandler (cApp::mApp->getSpiHandle()); }" color="5"/>
+  <BookmarkItem objectName="" line="1427" column="-1" path="C:/projects/seggerf4/main.cpp" number="233" extra="void DMA1_Stream4_IRQHandler() { HAL_DMA_IRQHandler (cApp::mApp->getSpiHandle()->hdmatx); }" color="5"/>
+  <BookmarkItem objectName="" line="1432" column="-1" path="C:/projects/seggerf4/main.cpp" number="234" extra="void systemClockInit() {" color="5"/>
   <BookmarkItem objectName="" line="1435" column="-1" path="C:/projects/seggerf4/main.cpp" number="259" extra="HAL_RCC_OscConfig (&amp;RCC_OscInit);" color="5"/>
   <BookmarkItem objectName="" line="1439" column="-1" path="C:/projects/seggerf4/main.cpp" number="260" extra="RCC_ClkInit.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);" color="5"/>
   <BookmarkItem objectName="" line="1444" column="-1" path="C:/projects/seggerf4/main.cpp" number="261" extra="HAL_RCC_ClockConfig (&amp;RCC_ClkInit, FLASH_LATENCY_5);" color="5"/>
   <BookmarkItem objectName="" line="1448" column="-1" path="C:/projects/seggerf4/main.cpp" number="262" extra="// __HAL_FLASH_PREFETCH_BUFFER_ENABLE();" color="5"/>
+  <BookmarkItem objectName="" line="1449" column="-1" path="C:/projects/seggerf4/main.cpp" number="235" extra="__HAL_RCC_PWR_CLK_ENABLE();" color="5"/>
   <BookmarkItem objectName="" line="1454" column="-1" path="C:/projects/seggerf4/main.cpp" number="263" extra="HAL_Init();" color="5"/>
   <BookmarkItem objectName="" line="1455" column="-1" path="C:/projects/seggerf4/main.cpp" number="264" extra="systemClockInit();" color="5"/>
   <BookmarkItem objectName="" line="1456" column="-1" path="C:/projects/seggerf4/main.cpp" number="265" extra="BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);" color="5"/>
@@ -631,10 +812,25 @@
   <BookmarkItem objectName="" line="1470" column="-1" path="C:/projects/seggerf4/main.cpp" number="275" extra="__HAL_RCC_CLEAR_RESET_FLAGS();" color="5"/>
   <BookmarkItem objectName="" line="1471" column="-1" path="C:/projects/seggerf4/main.cpp" number="276" extra="printf (&quot;main pin:%d power:%d cApp size:%d\n&quot;, pinReset, powerOnReset, sizeof (cApp));" color="5"/>
   <BookmarkItem objectName="" line="1473" column="-1" path="C:/projects/seggerf4/main.cpp" number="277" extra="cApp::mApp = new cApp (pinReset, powerOnReset);" color="5"/>
+  <BookmarkItem objectName="" line="1475" column="-1" path="C:/projects/seggerf4/main.cpp" number="278" extra="cApp::mApp->run();" color="5"/>
+  <BookmarkItem objectName="" line="1476" column="-1" path="C:/projects/seggerf4/main.cpp" number="236" extra="//if (HAL_GetREVID() == 0x1001) Enable the Flash prefetch" color="5"/>
+  <BookmarkItem objectName="" line="1477" column="-1" path="C:/projects/seggerf4/main.cpp" number="237" extra="// __HAL_FLASH_PREFETCH_BUFFER_ENABLE();" color="5"/>
+  <BookmarkItem objectName="" line="1481" column="-1" path="C:/projects/seggerf4/main.cpp" number="238" extra="void BSP_AUDIO_OUT_TransferComplete_CallBack() {" color="5"/>
+  <BookmarkItem objectName="" line="1482" column="-1" path="C:/projects/seggerf4/main.cpp" number="239" extra="//printf (&quot;BSP_AUDIO_OUT_TransferComplete_CallBack\n&quot;);" color="5"/>
+  <BookmarkItem objectName="" line="1486" column="-1" path="C:/projects/seggerf4/main.cpp" number="240" extra="int main() {" color="5"/>
+  <BookmarkItem objectName="" line="1488" column="-1" path="C:/projects/seggerf4/main.cpp" number="241" extra="HAL_Init();" color="5"/>
+  <BookmarkItem objectName="" line="1489" column="-1" path="C:/projects/seggerf4/main.cpp" number="242" extra="systemClockInit();" color="5"/>
+  <BookmarkItem objectName="" line="1496" column="-1" path="C:/projects/seggerf4/main.cpp" number="243" extra="BSP_ACCELERO_Init();" color="5"/>
+  <BookmarkItem objectName="" line="1497" column="-1" path="C:/projects/seggerf4/main.cpp" number="244" extra="BSP_ACCELERO_ReadID();" color="5"/>
+  <BookmarkItem objectName="" line="1501" column="-1" path="C:/projects/seggerf4/main.cpp" number="245" extra="for (int i = 0; i &lt; 4096; i++)" color="5"/>
+  <BookmarkItem objectName="" line="1502" column="-1" path="C:/projects/seggerf4/main.cpp" number="246" extra="audBuf[i] = int16_t(0x2000 * sin (((i % 64) / 128.f) * kPi));" color="5"/>
+  <BookmarkItem objectName="" line="1510" column="-1" path="C:/projects/seggerf4/main.cpp" number="247" extra="__HAL_RCC_CLEAR_RESET_FLAGS();" color="5"/>
+  <BookmarkItem objectName="" line="1511" column="-1" path="C:/projects/seggerf4/main.cpp" number="248" extra="printf (&quot;main pin:%d power:%d cApp size:%d\n&quot;, pinReset, powerOnReset, sizeof (cApp));" color="5"/>
+  <BookmarkItem objectName="" line="1514" column="-1" path="C:/projects/seggerf4/main.cpp" number="249" extra="if (cApp::mApp->init())" color="5"/>
+  <BookmarkItem objectName="" line="1515" column="-1" path="C:/projects/seggerf4/main.cpp" number="250" extra="cApp::mApp->run();" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="9" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="accelerometer.h" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="1498" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="583" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="stm32f4_discovery_audio.c" useHWbreakpoint="false"/>
   <Exceptions set="MemManage;UsageFault_Coprocessor;UsageFault_CheckingError;UsageFault_StateError;BusFault;ExceptionEntryReturnFault;HardFault"/>
  </Breakpoints>
@@ -731,8 +927,8 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="634" useTextEdit="1" useBinaryEdit="0" left="0" path="audio.c" debugPath="audio.c" selected="0" top="611" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1480" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="1" top="1465" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="634" useTextEdit="1" useBinaryEdit="0" left="0" path="audio.c" debugPath="audio.c" selected="0" top="611" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="1486" useTextEdit="1" useBinaryEdit="0" left="0" path="main.cpp" debugPath="main.cpp" selected="1" top="1480" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="display" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" debugSearchFileMap="C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

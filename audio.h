@@ -7,9 +7,9 @@
 #include "stm32f4xx_hal.h"
 
 // Audio status definition
-#define AUDIO_OK                        0
-#define AUDIO_ERROR                     1
-#define AUDIO_TIMEOUT                   2
+#define AUDIO_OK                 0
+#define AUDIO_ERROR              1
+#define AUDIO_TIMEOUT            2
 
 // Codec output DEVICE
 #define OUTPUT_DEVICE_SPEAKER    1
@@ -17,17 +17,18 @@
 #define OUTPUT_DEVICE_BOTH       3
 #define OUTPUT_DEVICE_AUTO       4
 
+// PCM buffer output size
+#define PCM_OUT_SIZE                    DEFAULT_AUDIO_IN_FREQ/1000
+#define CHANNEL_DEMUX_MASK              0x55
+
 // AudioFreq * DataSize (2 bytes) * NumChannels (Stereo: 2)
-#define DEFAULT_AUDIO_IN_FREQ                 I2S_AUDIOFREQ_16K
-#define DEFAULT_AUDIO_IN_BIT_RESOLUTION       16
-#define DEFAULT_AUDIO_IN_CHANNEL_NBR          1 // Mono = 1, Stereo = 2
-#define DEFAULT_AUDIO_IN_VOLUME               64
+#define DEFAULT_AUDIO_IN_FREQ           I2S_AUDIOFREQ_16K
+#define DEFAULT_AUDIO_IN_BIT_RESOLUTION 16
+#define DEFAULT_AUDIO_IN_CHANNEL_NBR    1 // Mono = 1, Stereo = 2
+#define DEFAULT_AUDIO_IN_VOLUME         64
 
 // PDM buffer input size
-#define INTERNAL_BUFF_SIZE                    128*DEFAULT_AUDIO_IN_FREQ/16000*DEFAULT_AUDIO_IN_CHANNEL_NBR
-// PCM buffer output size
-#define PCM_OUT_SIZE                          DEFAULT_AUDIO_IN_FREQ/1000
-#define CHANNEL_DEMUX_MASK                    0x55
+#define INTERNAL_BUFF_SIZE              128*DEFAULT_AUDIO_IN_FREQ/16000*DEFAULT_AUDIO_IN_CHANNEL_NBR
 
 extern uint16_t AudioInVolume;
 
