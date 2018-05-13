@@ -86,22 +86,17 @@
 #define MULTIPLEBYTE_CMD                  ((uint8_t)0x40)
 //}}}
 //{{{  accel defines
-
-/* Chip Select macro definition */
-#define ACCELERO_CS_LOW()       HAL_GPIO_WritePin(ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_RESET)
-#define ACCELERO_CS_HIGH()      HAL_GPIO_WritePin(ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET)
-
-#define ACCELERO_CS_PIN                        GPIO_PIN_3                 /* PE.03 */
-#define ACCELERO_CS_GPIO_PORT                  GPIOE                      /* GPIOE */
-#define ACCELERO_CS_GPIO_CLK_ENABLE()          __HAL_RCC_GPIOE_CLK_ENABLE()
-#define ACCELERO_CS_GPIO_CLK_DISABLE()         __HAL_RCC_GPIOE_CLK_DISABLE()
-#define ACCELERO_INT_GPIO_PORT                 GPIOE                      /* GPIOE */
-#define ACCELERO_INT_GPIO_CLK_ENABLE()         __HAL_RCC_GPIOE_CLK_ENABLE()
-#define ACCELERO_INT_GPIO_CLK_DISABLE()        __HAL_RCC_GPIOE_CLK_DISABLE()
-#define ACCELERO_INT1_PIN                      GPIO_PIN_0                 /* PE.00 */
-#define ACCELERO_INT1_EXTI_IRQn                EXTI0_IRQn
-#define ACCELERO_INT2_PIN                      GPIO_PIN_1                 /* PE.01 */
-#define ACCELERO_INT2_EXTI_IRQn                EXTI1_IRQn
+#define ACCELERO_CS_PIN                 GPIO_PIN_3
+#define ACCELERO_CS_GPIO_PORT           GPIOE
+#define ACCELERO_CS_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOE_CLK_ENABLE()
+#define ACCELERO_CS_GPIO_CLK_DISABLE()  __HAL_RCC_GPIOE_CLK_DISABLE()
+#define ACCELERO_INT_GPIO_PORT          GPIOE
+#define ACCELERO_INT_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOE_CLK_ENABLE()
+#define ACCELERO_INT_GPIO_CLK_DISABLE() __HAL_RCC_GPIOE_CLK_DISABLE()
+#define ACCELERO_INT1_PIN               GPIO_PIN_0
+#define ACCELERO_INT1_EXTI_IRQn         EXTI0_IRQn
+#define ACCELERO_INT2_PIN               GPIO_PIN_1
+#define ACCELERO_INT2_EXTI_IRQn         EXTI1_IRQn
 //}}}
 
 GPIO_TypeDef* GPIO_PORT[LEDn] = {LED4_GPIO_PORT, LED3_GPIO_PORT, LED5_GPIO_PORT, LED6_GPIO_PORT};
@@ -206,7 +201,7 @@ uint32_t BSP_PB_GetState (Button_TypeDef Button) {
 //{{{
 void ACCELERO_IO_Init() {
 
-  // config CS GPIO clock 
+  // config CS GPIO clock
   ACCELERO_CS_GPIO_CLK_ENABLE();
 
   // config GPIO PIN for LIS Chip select, deselect it
@@ -216,7 +211,7 @@ void ACCELERO_IO_Init() {
   GPIO_InitStructure.Pull  = GPIO_NOPULL;
   GPIO_InitStructure.Speed = GPIO_SPEED_MEDIUM;
   HAL_GPIO_Init(ACCELERO_CS_GPIO_PORT, &GPIO_InitStructure);
-  ACCELERO_CS_HIGH();
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET);
 
   // config SPI
   SpiHandle.Instance = DISCOVERY_SPIx;
@@ -238,7 +233,7 @@ void ACCELERO_IO_Init() {
   // enable SCK, MOSI and MISO GPIO clocks
   DISCOVERY_SPIx_GPIO_CLK_ENABLE();
 
-  // config SPI SCK, MOSI, MISO pins 
+  // config SPI SCK, MOSI, MISO pins
   GPIO_InitStructure.Pin = (DISCOVERY_SPIx_SCK_PIN | DISCOVERY_SPIx_MISO_PIN | DISCOVERY_SPIx_MOSI_PIN);
   GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStructure.Pull  = GPIO_PULLDOWN;
@@ -272,8 +267,8 @@ void ACCELERO_IO_ITConfig() {
 //{{{
 void ACCELERO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead) {
 
-  // Set chip select Low at the start of the transmission
-  ACCELERO_CS_LOW();
+  // CS lo
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_RESET);
 
   // send Address of indexed register
   if (NumByteToRead > 0x01)
@@ -293,15 +288,15 @@ void ACCELERO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRea
     pBuffer++;
     }
 
-  // Set chip select High at the end of the transmission
-  ACCELERO_CS_HIGH();
+  // CS high
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET);
   }
 //}}}
 //{{{
 void ACCELERO_IO_Write (uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite) {
 
   // set chip select Low at the start of the transmission
-  ACCELERO_CS_LOW();
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_RESET);
 
   // send Address of indexed register, Configure the MS bit:
   //  - When 0, the address will remain unchanged in multiple read/write commands
@@ -320,8 +315,8 @@ void ACCELERO_IO_Write (uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToW
     pBuffer++;
     }
 
-  // Set chip select High at the end of the transmission
-  ACCELERO_CS_HIGH ();
+  // CS high
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET);
   }
 //}}}
 
