@@ -4,7 +4,7 @@
  extern "C" {
 #endif
 //}}}
-#include "stm32f4_discovery.h"
+#include "stm32f4xx_hal.h"
 
 // Audio status definition
 #define AUDIO_OK                        0
@@ -23,7 +23,7 @@
 #define PCM_OUT_SIZE                          DEFAULT_AUDIO_IN_FREQ/1000
 #define CHANNEL_DEMUX_MASK                    0x55
 
-extern __IO uint16_t AudioInVolume;
+extern uint16_t AudioInVolume;
 
 uint8_t BSP_AUDIO_OUT_Init (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
 uint8_t BSP_AUDIO_OUT_Play (uint16_t* pBuffer, uint32_t Size);

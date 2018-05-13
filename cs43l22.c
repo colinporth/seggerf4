@@ -1,10 +1,133 @@
 #include "stdio.h"
 #include "cs43l22.h"
+#include "ledsButton.h"
 
+//{{{  i2c defines
+#define BSP_I2C_SPEED                            100000
+
+#define DISCOVERY_I2Cx                            I2C1
+#define DISCOVERY_I2Cx_CLK_ENABLE()               __HAL_RCC_I2C1_CLK_ENABLE()
+#define DISCOVERY_I2Cx_SCL_SDA_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOB_CLK_ENABLE()
+#define DISCOVERY_I2Cx_SCL_SDA_AF                 GPIO_AF4_I2C1
+#define DISCOVERY_I2Cx_SCL_SDA_GPIO_PORT          GPIOB
+#define DISCOVERY_I2Cx_SCL_PIN                    GPIO_PIN_6
+#define DISCOVERY_I2Cx_SDA_PIN                    GPIO_PIN_9
+
+#define DISCOVERY_I2Cx_FORCE_RESET()              __HAL_RCC_I2C1_FORCE_RESET()
+#define DISCOVERY_I2Cx_RELEASE_RESET()            __HAL_RCC_I2C1_RELEASE_RESET()
+
+/* I2C interrupt requests */
+#define DISCOVERY_I2Cx_EV_IRQn                    I2C1_EV_IRQn
+#define DISCOVERY_I2Cx_ER_IRQn                    I2C1_ER_IRQn
+
+#define I2Cx_TIMEOUT_MAX    0x1000 /*<! The value of the maximal timeout for BUS waiting loops */
+//}}}
 #define VOLUME_CONVERT(Volume) (((Volume) > 100) ? 255:((uint8_t)(((Volume) * 255) / 100)))
 
+uint32_t I2cxTimeout = I2Cx_TIMEOUT_MAX;
+static I2C_HandleTypeDef I2cHandle;
 static uint8_t Is_cs43l22_Stop = 1;
 volatile uint8_t OutputDev = 0;
+
+//{{{
+static void I2C_WriteData (uint8_t Addr, uint8_t Reg, uint8_t Value) {
+
+  if (HAL_I2C_Mem_Write(&I2cHandle, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT, &Value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
+    printf ("I2C_WriteData error\n");
+  }
+//}}}
+//{{{
+static uint8_t I2C_ReadData (uint8_t Addr, uint8_t Reg) {
+
+  uint8_t value = 0;
+  if (HAL_I2C_Mem_Read(&I2cHandle, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT, &value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
+    printf ("I2C_ReadData error\n");
+
+  return value;
+  }
+//}}}
+
+//{{{
+void AUDIO_IO_Init() {
+
+  printf ("AUDIO_IO_Init\n");
+
+  // Enable Reset GPIO Clock
+  AUDIO_RESET_GPIO_CLK_ENABLE();
+
+  // Audio reset pin configuration
+  GPIO_InitTypeDef  GPIO_InitStruct;
+  GPIO_InitStruct.Pin = AUDIO_RESET_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStruct.Pull  = GPIO_NOPULL;
+  HAL_GPIO_Init(AUDIO_RESET_GPIO, &GPIO_InitStruct);
+
+  // DISCOVERY_I2Cx peripheral configuration */
+  I2cHandle.Init.ClockSpeed = BSP_I2C_SPEED;
+  I2cHandle.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  I2cHandle.Init.OwnAddress1 = 0x33;
+  I2cHandle.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  I2cHandle.Instance = DISCOVERY_I2Cx;
+
+  // Enable I2C GPIO clocks
+  DISCOVERY_I2Cx_SCL_SDA_GPIO_CLK_ENABLE();
+
+  // DISCOVERY_I2Cx SCL and SDA pins configuration
+  GPIO_InitStruct.Pin = DISCOVERY_I2Cx_SCL_PIN | DISCOVERY_I2Cx_SDA_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStruct.Pull  = GPIO_NOPULL;
+  GPIO_InitStruct.Alternate  = DISCOVERY_I2Cx_SCL_SDA_AF;
+  HAL_GPIO_Init(DISCOVERY_I2Cx_SCL_SDA_GPIO_PORT, &GPIO_InitStruct);
+
+  // Enable the DISCOVERY_I2Cx peripheral clock
+  DISCOVERY_I2Cx_CLK_ENABLE();
+
+  // Force the I2C peripheral clock reset
+  DISCOVERY_I2Cx_FORCE_RESET();
+
+  // Release the I2C peripheral clock reset
+  DISCOVERY_I2Cx_RELEASE_RESET();
+
+  // Enable and set I2Cx Interrupt to the highest priority
+  HAL_NVIC_SetPriority (DISCOVERY_I2Cx_EV_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ (DISCOVERY_I2Cx_EV_IRQn);
+
+  // Enable and set I2Cx Interrupt to the highest priority
+  HAL_NVIC_SetPriority (DISCOVERY_I2Cx_ER_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ (DISCOVERY_I2Cx_ER_IRQn);
+
+  HAL_I2C_Init (&I2cHandle);
+
+  // Power Down the codec
+  HAL_GPIO_WritePin (AUDIO_RESET_GPIO, AUDIO_RESET_PIN, GPIO_PIN_RESET);
+
+  // Wait for a delay to insure registers erasing
+  HAL_Delay (5);
+
+  // Power on the codec HAL_GPIO_WritePin(AUDIO_RESET_GPIO, AUDIO_RESET_PIN, GPIO_PIN_SET);
+
+  // Wait for a delay to insure registers erasing
+  HAL_Delay (5);
+  }
+//}}}
+void AUDIO_IO_DeInit() {}
+//{{{
+void AUDIO_IO_Write (uint8_t Addr, uint8_t Reg, uint8_t Value) {
+
+  printf ("AUDIO_IO_Write %x %X %x\n", Addr, Reg, Value);
+  I2C_WriteData (Addr, Reg, Value);
+  }
+//}}}
+//{{{
+uint8_t AUDIO_IO_Read (uint8_t Addr, uint8_t Reg) {
+
+  uint32_t value = I2C_ReadData (Addr, Reg);
+  printf ("AUDIO_IO_Read %x %X %x\n", Addr, Reg, value);
+  return value;
+  }
+//}}}
 
 //{{{
 static uint8_t CODEC_IO_Write (uint8_t Addr, uint8_t Reg, uint8_t Value) {

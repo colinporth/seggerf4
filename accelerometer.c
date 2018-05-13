@@ -1,7 +1,41 @@
 #include "accelerometer.h"
-#include "stm32f4_discovery.h"
+#include "stm32f4xx_hal.h"
+
 #include <stdint.h>
 
+//{{{  spi defines
+// pin defines
+#define ACCELERO_CS_PIN                 GPIO_PIN_3
+#define ACCELERO_CS_GPIO_PORT           GPIOE
+#define ACCELERO_CS_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOE_CLK_ENABLE()
+#define ACCELERO_CS_GPIO_CLK_DISABLE()  __HAL_RCC_GPIOE_CLK_DISABLE()
+
+#define ACCELERO_INT_GPIO_PORT          GPIOE
+#define ACCELERO_INT_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOE_CLK_ENABLE()
+#define ACCELERO_INT_GPIO_CLK_DISABLE() __HAL_RCC_GPIOE_CLK_DISABLE()
+
+#define ACCELERO_INT1_PIN               GPIO_PIN_0
+#define ACCELERO_INT1_EXTI_IRQn         EXTI0_IRQn
+
+#define ACCELERO_INT2_PIN               GPIO_PIN_1
+#define ACCELERO_INT2_EXTI_IRQn         EXTI1_IRQn
+
+#define DISCOVERY_SPIx                     SPI1
+#define DISCOVERY_SPIx_CLK_ENABLE()        __HAL_RCC_SPI1_CLK_ENABLE()
+#define DISCOVERY_SPIx_GPIO_PORT           GPIOA                      /* GPIOA */
+#define DISCOVERY_SPIx_AF                  GPIO_AF5_SPI1
+#define DISCOVERY_SPIx_GPIO_CLK_ENABLE()   __HAL_RCC_GPIOA_CLK_ENABLE()
+#define DISCOVERY_SPIx_GPIO_CLK_DISABLE()  __HAL_RCC_GPIOA_CLK_DISABLE()
+#define DISCOVERY_SPIx_SCK_PIN             GPIO_PIN_5                 /* PA.05 */
+#define DISCOVERY_SPIx_MISO_PIN            GPIO_PIN_6                 /* PA.06 */
+#define DISCOVERY_SPIx_MOSI_PIN            GPIO_PIN_7                 /* PA.07 */
+
+#define SPIx_TIMEOUT_MAX                   0x1000 /*<! The value of the maximal timeout for BUS waiting loops */
+
+#define DUMMY_BYTE                        ((uint8_t)0x00)
+#define READWRITE_CMD                     ((uint8_t)0x80)
+#define MULTIPLEBYTE_CMD                  ((uint8_t)0x40)
+//}}}
 //{{{  defines
 #define LIS302DL_WHO_AM_I_ADDR             0x0F
 #define I_AM_LIS302DL                      0x3B
@@ -511,6 +545,129 @@ typedef struct {
   uint8_t SingleClick_Axes;                   /* Single Click Axes Interrupts */
   uint8_t DoubleClick_Axes;                   /* Double Click Axes Interrupts */
   } LIS302DL_InterruptConfigTypeDef;
+//}}}
+static SPI_HandleTypeDef SpiHandle;
+
+//{{{
+void ACCELERO_IO_Init() {
+
+  // config CS GPIO clock
+  ACCELERO_CS_GPIO_CLK_ENABLE();
+
+  // config GPIO PIN for LIS Chip select, deselect it
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.Pin = ACCELERO_CS_PIN;
+  GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStructure.Pull  = GPIO_NOPULL;
+  GPIO_InitStructure.Speed = GPIO_SPEED_MEDIUM;
+  HAL_GPIO_Init(ACCELERO_CS_GPIO_PORT, &GPIO_InitStructure);
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET);
+
+  // config SPI
+  SpiHandle.Instance = DISCOVERY_SPIx;
+  SpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  SpiHandle.Init.Direction = SPI_DIRECTION_2LINES;
+  SpiHandle.Init.CLKPhase = SPI_PHASE_1EDGE;
+  SpiHandle.Init.CLKPolarity = SPI_POLARITY_LOW;
+  SpiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+  SpiHandle.Init.CRCPolynomial = 7;
+  SpiHandle.Init.DataSize = SPI_DATASIZE_8BIT;
+  SpiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  SpiHandle.Init.NSS = SPI_NSS_SOFT;
+  SpiHandle.Init.TIMode = SPI_TIMODE_DISABLED;
+  SpiHandle.Init.Mode = SPI_MODE_MASTER;
+
+  // enable SPI peripheral
+  DISCOVERY_SPIx_CLK_ENABLE();
+
+  // enable SCK, MOSI and MISO GPIO clocks
+  DISCOVERY_SPIx_GPIO_CLK_ENABLE();
+
+  // config SPI SCK, MOSI, MISO pins
+  GPIO_InitStructure.Pin = (DISCOVERY_SPIx_SCK_PIN | DISCOVERY_SPIx_MISO_PIN | DISCOVERY_SPIx_MOSI_PIN);
+  GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStructure.Pull  = GPIO_PULLDOWN;
+  GPIO_InitStructure.Speed = GPIO_SPEED_MEDIUM;
+  GPIO_InitStructure.Alternate = DISCOVERY_SPIx_AF;
+  HAL_GPIO_Init (DISCOVERY_SPIx_GPIO_PORT, &GPIO_InitStructure);
+
+  HAL_SPI_Init (&SpiHandle);
+  }
+//}}}
+//{{{
+void ACCELERO_IO_ITConfig() {
+
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  // Enable INT2 GPIO clock and configure GPIO PINs to detect Interrupts
+  ACCELERO_INT_GPIO_CLK_ENABLE();
+
+  // Configure GPIO PINs to detect Interrupts
+  GPIO_InitStructure.Pin = ACCELERO_INT2_PIN;
+  GPIO_InitStructure.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStructure.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init (ACCELERO_INT_GPIO_PORT, &GPIO_InitStructure);
+
+  // Enable and set Accelerometer INT2 to the lowest priority
+  HAL_NVIC_SetPriority ((IRQn_Type)ACCELERO_INT2_EXTI_IRQn, 0x0F, 0);
+  HAL_NVIC_EnableIRQ ((IRQn_Type)ACCELERO_INT2_EXTI_IRQn);
+  }
+//}}}
+//{{{
+void ACCELERO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead) {
+
+  // CS lo
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_RESET);
+
+  // send Address of indexed register
+  if (NumByteToRead > 0x01)
+    ReadAddr |= (uint8_t)(READWRITE_CMD | MULTIPLEBYTE_CMD);
+  else
+    ReadAddr |= (uint8_t)READWRITE_CMD;
+  uint32_t spixTimeout = SPIx_TIMEOUT_MAX;
+  if (HAL_SPI_TransmitReceive (&SpiHandle, &ReadAddr, &ReadAddr, 1, spixTimeout) != HAL_OK)
+    printf ("ACCELERO_IO_Read SPI error\n");
+
+  // rx data MSB First
+  while (NumByteToRead > 0x00) {
+    uint8_t dummyByte = 0;
+    if (HAL_SPI_TransmitReceive (&SpiHandle, &dummyByte, pBuffer, 1, spixTimeout) != HAL_OK)
+      printf ("ACCELERO_IO_Read SPI error\n");
+    NumByteToRead--;
+    pBuffer++;
+    }
+
+  // CS high
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET);
+  }
+//}}}
+//{{{
+void ACCELERO_IO_Write (uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite) {
+
+  // set chip select Low at the start of the transmission
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_RESET);
+
+  // send Address of indexed register, Configure the MS bit:
+  //  - When 0, the address will remain unchanged in multiple read/write commands
+  //  - When 1, the address will be auto incremented in multiple read/write commands
+  if (NumByteToWrite > 0x01)
+    WriteAddr |= (uint8_t)MULTIPLEBYTE_CMD;
+  uint32_t spixTimeout = SPIx_TIMEOUT_MAX;
+  if (HAL_SPI_TransmitReceive (&SpiHandle, &WriteAddr, &WriteAddr, 1, spixTimeout) != HAL_OK)
+    printf ("ACCELERO_IO_Read SPI error\n");
+
+  // send data MSB First
+  while (NumByteToWrite >= 0x01) {
+    if (HAL_SPI_TransmitReceive (&SpiHandle, pBuffer, pBuffer, 1, spixTimeout) != HAL_OK)
+      printf ("ACCELERO_IO_Write SPI error\n");
+    NumByteToWrite--;
+    pBuffer++;
+    }
+
+  // CS high
+  HAL_GPIO_WritePin (ACCELERO_CS_GPIO_PORT, ACCELERO_CS_PIN, GPIO_PIN_SET);
+  }
 //}}}
 
 //{{{

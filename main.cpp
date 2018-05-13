@@ -5,8 +5,8 @@
 #include "common/font.h"
 
 #include "stm32f4xx.h"
-#include "stm32f4_discovery.h"
 #include "stm32f4_discovery_audio.h"
+#include "ledsButton.h"
 #include "accelerometer.h"
 //}}}
 #define BIG

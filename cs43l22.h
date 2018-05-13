@@ -1,5 +1,29 @@
 #pragma once
-#include "audio.h"
+#include <stdint.h>
+
+#define CODEC_STANDARD                0x04
+#define I2S_STANDARD                  I2S_STANDARD_PHILIPS
+
+typedef struct {
+  uint32_t  (*Init)(uint16_t, uint16_t, uint8_t, uint32_t);
+  void      (*DeInit)(void);
+  uint32_t  (*ReadID)(uint16_t);
+  uint32_t  (*Play)(uint16_t, uint16_t*, uint16_t);
+  uint32_t  (*Pause)(uint16_t);
+  uint32_t  (*Resume)(uint16_t);
+  uint32_t  (*Stop)(uint16_t, uint32_t);
+  uint32_t  (*SetFrequency)(uint16_t, uint32_t);
+  uint32_t  (*SetVolume)(uint16_t, uint8_t);
+  uint32_t  (*SetMute)(uint16_t, uint32_t);
+  uint32_t  (*SetOutputMode)(uint16_t, uint8_t);
+  uint32_t  (*Reset)(uint16_t);
+  } AUDIO_DrvTypeDef;
+
+// audio defines
+#define AUDIO_RESET_GPIO_CLK_ENABLE()         __HAL_RCC_GPIOD_CLK_ENABLE()
+#define AUDIO_RESET_PIN                       GPIO_PIN_4
+#define AUDIO_RESET_GPIO                      GPIOD
+#define AUDIO_I2C_ADDRESS                     0x94
 
 /* Codec output DEVICE */
 #define OUTPUT_DEVICE_SPEAKER         1

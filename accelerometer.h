@@ -4,8 +4,7 @@
  extern "C" {
 #endif
 //}}}
-
-#include "stm32f4_discovery.h"
+#include <stdint.h>
 
 void BSP_ACCELERO_Init();
 uint8_t BSP_ACCELERO_ReadID();
