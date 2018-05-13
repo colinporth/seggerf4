@@ -4,6 +4,63 @@
 
 //{{{  defines
 #define LIS302DL_WHO_AM_I_ADDR             0x0F
+#define I_AM_LIS302DL                      0x3B
+
+#define LIS302DL_SENSITIVITY_2_3G          18  /* 18 mg/digit*/
+#define LIS302DL_SENSITIVITY_9_2G          72  /* 72 mg/digit*/
+
+#define LIS302DL_DATARATE_100              ((uint8_t)0x00)
+#define LIS302DL_DATARATE_400              ((uint8_t)0x80)
+
+#define LIS302DL_LOWPOWERMODE_POWERDOWN    ((uint8_t)0x00)
+#define LIS302DL_LOWPOWERMODE_ACTIVE       ((uint8_t)0x40)
+
+#define LIS302DL_FULLSCALE_2_3             ((uint8_t)0x00)
+#define LIS302DL_FULLSCALE_9_2             ((uint8_t)0x20)
+
+#define LIS302DL_SELFTEST_NORMAL           ((uint8_t)0x00)
+#define LIS302DL_SELFTEST_P                ((uint8_t)0x10)
+#define LIS302DL_SELFTEST_M                ((uint8_t)0x08)
+
+#define LIS302DL_X_ENABLE                  ((uint8_t)0x01)
+#define LIS302DL_Y_ENABLE                  ((uint8_t)0x02)
+#define LIS302DL_Z_ENABLE                  ((uint8_t)0x04)
+#define LIS302DL_XYZ_ENABLE                ((uint8_t)0x07)
+
+#define LIS302DL_SERIALINTERFACE_4WIRE     ((uint8_t)0x00)
+#define LIS302DL_SERIALINTERFACE_3WIRE     ((uint8_t)0x80)
+
+#define LIS302DL_BOOT_NORMALMODE           ((uint8_t)0x00)
+#define LIS302DL_BOOT_REBOOTMEMORY         ((uint8_t)0x40)
+
+#define LIS302DL_FILTEREDDATASELECTION_BYPASSED        ((uint8_t)0x00)
+#define LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER  ((uint8_t)0x20)
+
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_OFF       ((uint8_t)0x00)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_1         ((uint8_t)0x04)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_2         ((uint8_t)0x08)
+#define LIS302DL_HIGHPASSFILTERINTERRUPT_1_2       ((uint8_t)0x0C)
+
+#define LIS302DL_HIGHPASSFILTER_LEVEL_0            ((uint8_t)0x00)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_1            ((uint8_t)0x01)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_2            ((uint8_t)0x02)
+#define LIS302DL_HIGHPASSFILTER_LEVEL_3            ((uint8_t)0x03)
+
+#define LIS302DL_INTERRUPTREQUEST_NOTLATCHED       ((uint8_t)0x00)
+#define LIS302DL_INTERRUPTREQUEST_LATCHED          ((uint8_t)0x40)
+
+#define LIS302DL_CLICKINTERRUPT_XYZ_DISABLE        ((uint8_t)0x00)
+#define LIS302DL_CLICKINTERRUPT_X_ENABLE           ((uint8_t)0x01)
+#define LIS302DL_CLICKINTERRUPT_Y_ENABLE           ((uint8_t)0x04)
+#define LIS302DL_CLICKINTERRUPT_Z_ENABLE           ((uint8_t)0x10)
+#define LIS302DL_CLICKINTERRUPT_XYZ_ENABLE         ((uint8_t)0x15)
+
+#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_DISABLE  ((uint8_t)0x00)
+#define LIS302DL_DOUBLECLICKINTERRUPT_X_ENABLE     ((uint8_t)0x02)
+#define LIS302DL_DOUBLECLICKINTERRUPT_Y_ENABLE     ((uint8_t)0x08)
+#define LIS302DL_DOUBLECLICKINTERRUPT_Z_ENABLE     ((uint8_t)0x20)
+#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_ENABLE   ((uint8_t)0x2A)
+
 //{{{  CTRL_REG1
 /*******************************************************************************
 *  CTRL_REG1 Register: Control Register 1
@@ -446,106 +503,7 @@
 *******************************************************************************/
 //}}}
 #define LIS302DL_CLICK_WINDOW_REG_ADDR     0x3F
-
-#define I_AM_LIS302DL                      0x3B
-
-#define LIS302DL_SENSITIVITY_2_3G          18  /* 18 mg/digit*/
-#define LIS302DL_SENSITIVITY_9_2G          72  /* 72 mg/digit*/
-
-#define LIS302DL_DATARATE_100              ((uint8_t)0x00)
-#define LIS302DL_DATARATE_400              ((uint8_t)0x80)
-
-#define LIS302DL_LOWPOWERMODE_POWERDOWN    ((uint8_t)0x00)
-#define LIS302DL_LOWPOWERMODE_ACTIVE       ((uint8_t)0x40)
-
-#define LIS302DL_FULLSCALE_2_3             ((uint8_t)0x00)
-#define LIS302DL_FULLSCALE_9_2             ((uint8_t)0x20)
-
-#define LIS302DL_SELFTEST_NORMAL           ((uint8_t)0x00)
-#define LIS302DL_SELFTEST_P                ((uint8_t)0x10)
-#define LIS302DL_SELFTEST_M                ((uint8_t)0x08)
-
-#define LIS302DL_X_ENABLE                  ((uint8_t)0x01)
-#define LIS302DL_Y_ENABLE                  ((uint8_t)0x02)
-#define LIS302DL_Z_ENABLE                  ((uint8_t)0x04)
-#define LIS302DL_XYZ_ENABLE                ((uint8_t)0x07)
-
-#define LIS302DL_SERIALINTERFACE_4WIRE     ((uint8_t)0x00)
-#define LIS302DL_SERIALINTERFACE_3WIRE     ((uint8_t)0x80)
-
-#define LIS302DL_BOOT_NORMALMODE           ((uint8_t)0x00)
-#define LIS302DL_BOOT_REBOOTMEMORY         ((uint8_t)0x40)
-
-#define LIS302DL_FILTEREDDATASELECTION_BYPASSED        ((uint8_t)0x00)
-#define LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER  ((uint8_t)0x20)
-
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_OFF       ((uint8_t)0x00)
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_1         ((uint8_t)0x04)
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_2         ((uint8_t)0x08)
-#define LIS302DL_HIGHPASSFILTERINTERRUPT_1_2       ((uint8_t)0x0C)
-
-#define LIS302DL_HIGHPASSFILTER_LEVEL_0            ((uint8_t)0x00)
-#define LIS302DL_HIGHPASSFILTER_LEVEL_1            ((uint8_t)0x01)
-#define LIS302DL_HIGHPASSFILTER_LEVEL_2            ((uint8_t)0x02)
-#define LIS302DL_HIGHPASSFILTER_LEVEL_3            ((uint8_t)0x03)
-
-#define LIS302DL_INTERRUPTREQUEST_NOTLATCHED       ((uint8_t)0x00)
-#define LIS302DL_INTERRUPTREQUEST_LATCHED          ((uint8_t)0x40)
-
-#define LIS302DL_CLICKINTERRUPT_XYZ_DISABLE        ((uint8_t)0x00)
-#define LIS302DL_CLICKINTERRUPT_X_ENABLE           ((uint8_t)0x01)
-#define LIS302DL_CLICKINTERRUPT_Y_ENABLE           ((uint8_t)0x04)
-#define LIS302DL_CLICKINTERRUPT_Z_ENABLE           ((uint8_t)0x10)
-#define LIS302DL_CLICKINTERRUPT_XYZ_ENABLE         ((uint8_t)0x15)
-
-#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_DISABLE  ((uint8_t)0x00)
-#define LIS302DL_DOUBLECLICKINTERRUPT_X_ENABLE     ((uint8_t)0x02)
-#define LIS302DL_DOUBLECLICKINTERRUPT_Y_ENABLE     ((uint8_t)0x08)
-#define LIS302DL_DOUBLECLICKINTERRUPT_Z_ENABLE     ((uint8_t)0x20)
-#define LIS302DL_DOUBLECLICKINTERRUPT_XYZ_ENABLE   ((uint8_t)0x2A)
 //}}}
-//{{{  LIS302DL_InitTypeDef
-typedef struct {
-  uint8_t Power_Mode;                         /* Power-down/Active Mode */
-  uint8_t Output_DataRate;                    /* OUT data rate 100 Hz / 400 Hz */
-  uint8_t Axes_Enable;                        /* Axes enable */
-  uint8_t Full_Scale;                         /* Full scale */
-  uint8_t Self_Test;                          /* Self test */
-  } LIS302DL_InitTypeDef;
-//}}}
-//{{{  ACCELERO_InitTypeDef
-typedef struct {
-  uint8_t Power_Mode;                         /* Power-down/Normal Mode */
-  uint8_t AccOutput_DataRate;                 /* OUT data rate */
-  uint8_t Axes_Enable;                        /* Axes enable */
-  uint8_t High_Resolution;                    /* High Resolution enabling/disabling */
-  uint8_t BlockData_Update;                   /* Block Data Update */
-  uint8_t Endianness;                         /* Endian Data selection */
-  uint8_t AccFull_Scale;                      /* Full Scale selection */
-  uint8_t Communication_Mode;
-  } ACCELERO_InitTypeDef;
-//}}}
-
-//{{{  LIS302DL_FilterConfigTypeDef
-/* High Pass Filter struct */
-typedef struct {
-  uint8_t HighPassFilter_Data_Selection;      /* Internal filter bypassed or data from internal filter send to output register*/
-  uint8_t HighPassFilter_CutOff_Frequency;    /* High pass filter cut-off frequency */
-  uint8_t HighPassFilter_Interrupt;           /* High pass filter enabled for Freefall/WakeUp #1 or #2 */
-  } LIS302DL_FilterConfigTypeDef;
-//}}}
-//{{{  ACCELERO_FilterConfigTypeDef
-/* ACCELERO High Pass Filter struct */
-typedef struct {
-  uint8_t HighPassFilter_Mode_Selection;      /* Internal filter mode */
-  uint8_t HighPassFilter_CutOff_Frequency;    /* High pass filter cut-off frequency */
-  uint8_t HighPassFilter_AOI1;                /* HPF_enabling/disabling for AOI function on interrupt 1 */
-  uint8_t HighPassFilter_AOI2;                /* HPF_enabling/disabling for AOI function on interrupt 2 */
-  uint8_t HighPassFilter_Data_Sel;
-  uint8_t HighPassFilter_Stat;
-  } ACCELERO_FilterConfigTypeDef;
-//}}}
-
 //{{{  LIS302DL_InterruptConfigTypeDef
 /* Interrupt struct */
 typedef struct {
@@ -556,39 +514,7 @@ typedef struct {
 //}}}
 
 //{{{
-void Init (uint16_t InitStruct) {
-
-  uint8_t ctrl = 0x00;
-
-  // Configure the low level interface */
-  ACCELERO_IO_Init();
-
-  ctrl = (uint8_t)InitStruct;
-
-  // Write value to MEMS CTRL_REG1 register
-  ACCELERO_IO_Write (&ctrl, LIS302DL_CTRL_REG1_ADDR, 1);
-  }
-//}}}
-//{{{
-void FilterConfig (uint8_t FilterStruct) {
-
-  uint8_t ctrl = 0x00;
-
-  // Read CTRL_REG2 register
-  ACCELERO_IO_Read (&ctrl, LIS302DL_CTRL_REG2_ADDR, 1);
-
-  // Clear high pass filter cut-off level, interrupt and data selection bits
-  ctrl &= (uint8_t)~(LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER |
-                     LIS302DL_HIGHPASSFILTER_LEVEL_3 |
-                     LIS302DL_HIGHPASSFILTERINTERRUPT_1_2);
-  ctrl |= FilterStruct;
-
-  // Write value to MEMS CTRL_REG2 register
-  ACCELERO_IO_Write (&ctrl, LIS302DL_CTRL_REG2_ADDR, 1);
-  }
-//}}}
-//{{{
-void InterruptConfig (LIS302DL_InterruptConfigTypeDef *LIS302DL_IntConfigStruct) {
+static void InterruptConfig (LIS302DL_InterruptConfigTypeDef *LIS302DL_IntConfigStruct) {
 
   // Read CLICK_CFG register */
   uint8_t ctrl = 0x00;
@@ -604,7 +530,7 @@ void InterruptConfig (LIS302DL_InterruptConfigTypeDef *LIS302DL_IntConfigStruct)
   }
 //}}}
 //{{{
-void LowpowerCmd (uint8_t LowPowerMode) {
+static void LowpowerCmd (uint8_t LowPowerMode) {
 
   // Read CTRL_REG1 register
   uint8_t tmpreg;
@@ -619,7 +545,7 @@ void LowpowerCmd (uint8_t LowPowerMode) {
   }
 //}}}
 //{{{
-void DataRateCmd (uint8_t DataRateValue) {
+static void DataRateCmd (uint8_t DataRateValue) {
 
   // Read CTRL_REG1 register
   uint8_t tmpreg;
@@ -634,7 +560,7 @@ void DataRateCmd (uint8_t DataRateValue) {
   }
 //}}}
 //{{{
-void FullScaleCmd (uint8_t FS_value) {
+static void FullScaleCmd (uint8_t FS_value) {
 
   // Read CTRL_REG1 register
   uint8_t tmpreg;
@@ -650,33 +576,17 @@ void FullScaleCmd (uint8_t FS_value) {
 //}}}
 
 //{{{
-uint8_t BSP_ACCELERO_Init() {
+void BSP_ACCELERO_Init() {
 
   BSP_ACCELERO_ReadID();
 
-  // Set configuration of LIS302DL MEMS Accelerometer
-  LIS302DL_InitTypeDef lis302dl_initstruct;
-  lis302dl_initstruct.Power_Mode = LIS302DL_LOWPOWERMODE_ACTIVE;
-  lis302dl_initstruct.Output_DataRate = LIS302DL_DATARATE_100;
-  lis302dl_initstruct.Axes_Enable = LIS302DL_XYZ_ENABLE;
-  lis302dl_initstruct.Full_Scale = LIS302DL_FULLSCALE_2_3;
-  lis302dl_initstruct.Self_Test = LIS302DL_SELFTEST_NORMAL;
-  Init (lis302dl_initstruct.Output_DataRate |
-        lis302dl_initstruct.Power_Mode |
-        lis302dl_initstruct.Full_Scale |
-        lis302dl_initstruct.Self_Test |
-        lis302dl_initstruct.Axes_Enable);
+  uint8_t ctrl = LIS302DL_DATARATE_100  | LIS302DL_LOWPOWERMODE_ACTIVE | LIS302DL_SELFTEST_NORMAL |
+                 LIS302DL_FULLSCALE_2_3 | LIS302DL_XYZ_ENABLE;
+  ACCELERO_IO_Write (&ctrl, LIS302DL_CTRL_REG1_ADDR, 1);
 
-  // MEMS High Pass Filter configuration
-  LIS302DL_FilterConfigTypeDef lis302dl_filter;
-  lis302dl_filter.HighPassFilter_Data_Selection = LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER;
-  lis302dl_filter.HighPassFilter_CutOff_Frequency = LIS302DL_HIGHPASSFILTER_LEVEL_1;
-  lis302dl_filter.HighPassFilter_Interrupt = LIS302DL_HIGHPASSFILTERINTERRUPT_1_2;
-  FilterConfig (lis302dl_filter.HighPassFilter_Data_Selection |
-                lis302dl_filter.HighPassFilter_CutOff_Frequency |
-                lis302dl_filter.HighPassFilter_Interrupt);
-
-  return ACCELERO_OK;
+  ctrl = LIS302DL_FILTEREDDATASELECTION_OUTPUTREGISTER | LIS302DL_HIGHPASSFILTER_LEVEL_3 |
+         LIS302DL_HIGHPASSFILTERINTERRUPT_1_2;
+  ACCELERO_IO_Write (&ctrl, LIS302DL_CTRL_REG2_ADDR, 1);
   }
 //}}}
 //{{{
@@ -686,11 +596,9 @@ uint8_t BSP_ACCELERO_ReadID() {
   ACCELERO_IO_Init();
 
   // Read WHO_AM_I register
-  uint8_t tmp = 0;
-  ACCELERO_IO_Read (&tmp, LIS302DL_WHO_AM_I_ADDR, 1);
-
-  // Return the ID
-  return tmp;
+  uint8_t id = 0;
+  ACCELERO_IO_Read (&id, LIS302DL_WHO_AM_I_ADDR, 1);
+  return id;
   }
 //}}}
 //{{{
@@ -707,6 +615,17 @@ void BSP_ACCELERO_Reset() {
   ACCELERO_IO_Write (&tmpreg, LIS302DL_CTRL_REG2_ADDR, 1);
   }
 //}}}
+//{{{
+void BSP_ACCELERO_GetXYZ (int8_t* pDataXYZ) {
+
+  int8_t buffer[5];
+  ACCELERO_IO_Read ((uint8_t*)buffer, LIS302DL_OUT_X_ADDR, 5);
+  pDataXYZ[0] = buffer[0];
+  pDataXYZ[1] = buffer[2];
+  pDataXYZ[2] = buffer[4];
+  }
+//}}}
+
 //{{{
 void BSP_ACCELERO_Click_ITConfig() {
 
@@ -761,17 +680,5 @@ void BSP_ACCELERO_Click_ITClear() {
 
   uint8_t buffer[6];
   ACCELERO_IO_Read (buffer, LIS302DL_STATUS_REG_ADDR, 6);
-  }
-//}}}
-//{{{
-void BSP_ACCELERO_GetXYZ (int16_t* pDataXYZ) {
-
-  //ACCELERO_IO_Read (&crtl, LIS302DL_CTRL_REG1_ADDR, 1);
-
-  int8_t buffer[5];
-  ACCELERO_IO_Read ((uint8_t*)buffer, LIS302DL_OUT_X_ADDR, 5);
-  pDataXYZ[0] = buffer[0];
-  pDataXYZ[1] = buffer[2];
-  pDataXYZ[2] = buffer[4];
   }
 //}}}

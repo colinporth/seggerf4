@@ -153,11 +153,11 @@ b) RECORD A FILE:
 #define AUDIO_IN_IRQ_PREPRIO            0x0F   /* Select the preemption priority level(0 is the highest) */
 //}}}
 
-#define AUDIODATA_SIZE                  2   /* 16-bits audio data size */
-#define DMA_MAX(_X_)                (((_X_) <= DMA_MAX_SZE)? (_X_):DMA_MAX_SZE)
-#define HTONS(A)  ((((uint16_t)(A) & 0xff00) >> 8) | (((uint16_t)(A) & 0x00ff) << 8))
+#define AUDIODATA_SIZE  2   // 16-bits audio data size
+#define DMA_MAX(_X_)    (((_X_) <= DMA_MAX_SZE)? (_X_):DMA_MAX_SZE)
+#define HTONS(A)        ((((uint16_t)(A) & 0xff00) >> 8) | (((uint16_t)(A) & 0x00ff) << 8))
 
-/* These PLL parameters are valid when the f(VCO clock) = 1Mhz */
+// These PLL parameters are valid when the f(VCO clock) = 1Mhz
 const uint32_t I2SFreq[8] = {8000, 11025, 16000, 22050, 32000, 44100, 48000, 96000};
 const uint32_t I2SPLLN[8] = {256, 429, 213, 429, 426, 271, 258, 344};
 const uint32_t I2SPLLR[8] = {5, 4, 4, 4, 4, 6, 3, 1};
@@ -169,6 +169,9 @@ PDM_Filter_Handler_t PDM_FilterHandler[2];
 PDM_Filter_Config_t PDM_FilterConfig[2];
 
 __IO uint16_t AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
+
+void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
+void I2S3_IRQHandler() { HAL_DMA_IRQHandler (hAudioOutI2s.hdmatx); }
 
 //{{{
 __weak void BSP_AUDIO_OUT_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params) {
@@ -217,7 +220,7 @@ __weak void BSP_AUDIO_OUT_MspInit (I2S_HandleTypeDef *hi2s, void *Params) {
   I2S3_WS_CLK_ENABLE();
 
   // I2S3 pins configuration: WS, SCK and SD pins
-  GPIO_InitTypeDef  GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct;
   GPIO_InitStruct.Pin = I2S3_SCK_PIN | I2S3_SD_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -560,7 +563,7 @@ uint8_t BSP_AUDIO_OUT_Init (uint16_t OutputDevice, uint8_t Volume, uint32_t Audi
 
   if (ret == AUDIO_OK) {
     // Retieve audio codec identifier */
-    if(((cs43l22_drv.ReadID (AUDIO_I2C_ADDRESS)) & CS43L22_ID_MASK) == CS43L22_ID)
+    if (((cs43l22_drv.ReadID (AUDIO_I2C_ADDRESS)) & CS43L22_ID_MASK) == CS43L22_ID)
       // Initialize the audio driver structure */
       pAudioDrv = &cs43l22_drv;
     else

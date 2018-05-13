@@ -9,6 +9,7 @@
 #include "stm32f4_discovery_audio.h"
 #include "accelerometer.h"
 //}}}
+#define BIG
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
@@ -144,7 +145,11 @@ public:
     mSpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW; // SPI mode 0
     mSpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;  // SPI mode 0
     mSpiHandle.Init.NSS               = SPI_NSS_SOFT;
-    mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32; // 32 // 4 = 10.5mHz
+    #ifdef BIG
+      mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4; // 4 = 10.5mHz
+    #else
+      mSpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+    #endif
     mSpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     mSpiHandle.Init.TIMode            = SPI_TIMODE_DISABLE;
     HAL_SPI_Init (&mSpiHandle);
@@ -721,10 +726,13 @@ public:
   SPI_HandleTypeDef* getSpiHandle() { return &mSpiHandle; }
 
 private:
-  //const uint16_t kWidth = 400;
-  //const uint16_t kHeight = 240;
+#ifdef BIG
+  const uint16_t kWidth = 400;
+  const uint16_t kHeight = 240;
+#else
   const uint16_t kWidth = 96;
   const uint16_t kHeight = 96;
+#endif
 
   uint16_t getPitch() { return 2 + getWidth()/8; }
   uint8_t* getFramePtr (int16_t y) { return mFrameBuf + 2 + y*getPitch(); }
@@ -1191,14 +1199,14 @@ public:
     mAdc.init();
     mRtc.init();
 
-    mValues0 = (int16_t*)malloc (getWidth() * 2);
-    memset (mValues0, 0, getWidth() * 2);
-    mValues1 = (int16_t*)malloc (getWidth() * 2);
-    memset (mValues1, 0, getWidth() * 2);
-    mValues2 = (int16_t*)malloc (getWidth() * 2);
-    memset (mValues2, 0, getWidth() * 2);
+    mValues0 = (int8_t*)malloc (getWidth());
+    memset (mValues0, 0, getWidth());
+    mValues1 = (int8_t*)malloc (getWidth());
+    memset (mValues1, 0, getWidth());
+    mValues2 = (int8_t*)malloc (getWidth());
+    memset (mValues2, 0, getWidth());
 
-    mValues = (int16_t*)malloc (getWidth() * 2);
+    mValues = (int16_t*)malloc (getWidth());
     memset (mValues, 0, getWidth() * 2);
     if (mValues)
       printf ("cApp::init values alloc:%d\n", getWidth() * 2);
@@ -1256,11 +1264,17 @@ public:
                   dec (getTookTicks()),
                   cPoint(0,0));
 
-      int16_t values[3];
+      int8_t values[3];
       BSP_ACCELERO_GetXYZ (values);
       mValues0[getFrameNum() % getWidth()] = values[0];
       mValues1[getFrameNum() % getWidth()] = values[1];
       mValues2[getFrameNum() % getWidth()] = values[2];
+
+      mAvX = ((mAvX * 3) + (58 + values[0]) * getWidth() / 116) / 4;
+      mAvY = ((mAvY * 3) + (58 + values[1]) * getHeight() / 116) / 4;
+      fillRect (eOff, cRect (mAvX, 0, mAvX+2, getHeight()));
+      fillRect (eOff, cRect (0, mAvY, getWidth(), mAvY+2));
+
 
       drawString (eOff, eSmall, eLeft, dec (values[0]), cPoint(0,20));
       drawString (eOff, eSmall, eLeft, dec (values[1]), cPoint(0,40));
@@ -1277,10 +1291,10 @@ public:
       //drawString (eOff, eSmall, eLeft, "Built " + mRtc.getBuildTimeDateString(), cPoint(0,20));
       //drawString (eOff, eSmall, eLeft, dec (temp30) +  ":t30  " + dec (temp110) + ":t100  " + dec (vref30) + ":vref30 ", cPoint(0,40));
 
-      int r = getFrameNum() / 2;
-      if (r > getHeight()/2)
-        r = getHeight()/2;
-      //drawClock (getCentre(), r);
+      int r = getFrameNum()/2;
+      if (r > (getHeight()/2) -1)
+        r = (getHeight()/2) - 1;
+      drawClock (getCentre(), r);
       drawAcc();
       //drawString (eOff, eMedium, eLeft, mRtc.getClockTimeDateString(), cPoint(0, getHeight()-40));
       present();
@@ -1334,24 +1348,25 @@ private:
   //{{{
   void drawAcc() {
 
+    auto graphHeight = getHeight() / 3 / 2;
     int32_t valueIndex = getFrameNum() - getWidth();
     for (int i = 0; i < getWidth(); i++) {
       int16_t value = valueIndex > 0 ? mValues0[valueIndex % getWidth()] : 0;
-      int16_t x = 16 * value / 60;
-      int16_t x1 = x < 0 ? 16 + x : 16;
-      int16_t x2 = x < 0 ? 16 : 16 + x;
+      int16_t x = graphHeight * value / 60;
+      int16_t x1 = x < 0 ? graphHeight + x : graphHeight;
+      int16_t x2 = x < 0 ? graphHeight : graphHeight + x;
       fillRect (eOff, cRect (i, x1, i+1, x2));
 
       value = valueIndex > 0 ? mValues1[valueIndex % getWidth()] : 0;
-      x = 16 * value / 60;
-      x1 = x < 0 ? 48 + x : 48;
-      x2 = x < 0 ? 48 : 48 + x;
+      x = graphHeight * value / 60;
+      x1 = x < 0 ? 3*graphHeight + x : 3*graphHeight;
+      x2 = x < 0 ? 3*graphHeight : 3*graphHeight + x;
       fillRect (eOff, cRect (i, x1, i+1, x2));
 
       value = valueIndex > 0 ? mValues2[valueIndex % getWidth()] : 0;
-      x = 16 * value / 60;
-      x1 = x < 0 ? 80 + x : 80;
-      x2 = x < 0 ? 80 : 80 + x;
+      x = graphHeight * value / 60;
+      x1 = x < 0 ? 5*graphHeight + x : 5*graphHeight;
+      x2 = x < 0 ? 5*graphHeight : 5*graphHeight + x;
       fillRect (eOff, cRect (i, x1, i+1, x2));
 
       valueIndex++;
@@ -1382,10 +1397,12 @@ private:
   bool mPinReset = false;
   bool mPowerOnReset = false;
 
+  int32_t mAvX = 0;
+  int32_t mAvY = 0;
   int16_t* mValues = nullptr;
-  int16_t* mValues0 = nullptr;
-  int16_t* mValues1 = nullptr;
-  int16_t* mValues2 = nullptr;
+  int8_t* mValues0 = nullptr;
+  int8_t* mValues1 = nullptr;
+  int8_t* mValues2 = nullptr;
   int16_t mMinValue1 = 4096;
   int16_t mMaxValue1 = 0;
   int16_t mMinValue2 = 4096;
@@ -1474,7 +1491,13 @@ int main() {
   BSP_ACCELERO_Init();
   BSP_ACCELERO_ReadID();
 
-  BSP_AUDIO_OUT_Init (2, 100, 441000);
+  const float kPi = 3.1415926f;
+  uint16_t* audBuf = (uint16_t*)malloc (4096);
+  for (int i = 0; i < 2048; i++)
+    audBuf[i] = int16_t(0x4000 * sin (i * kPi / 1024));
+
+  BSP_AUDIO_OUT_Init (2, 100, 44100);
+  //BSP_AUDIO_OUT_Play (audBuf, 2048);
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
