@@ -11,6 +11,12 @@
 #define AUDIO_ERROR                     1
 #define AUDIO_TIMEOUT                   2
 
+// Codec output DEVICE
+#define OUTPUT_DEVICE_SPEAKER    1
+#define OUTPUT_DEVICE_HEADPHONE  2
+#define OUTPUT_DEVICE_BOTH       3
+#define OUTPUT_DEVICE_AUTO       4
+
 // AudioFreq * DataSize (2 bytes) * NumChannels (Stereo: 2)
 #define DEFAULT_AUDIO_IN_FREQ                 I2S_AUDIOFREQ_16K
 #define DEFAULT_AUDIO_IN_BIT_RESOLUTION       16

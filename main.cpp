@@ -5,7 +5,7 @@
 #include "common/font.h"
 
 #include "stm32f4xx.h"
-#include "stm32f4_discovery_audio.h"
+#include "audio.h"
 #include "ledsButton.h"
 #include "accelerometer.h"
 //}}}
@@ -1496,8 +1496,8 @@ int main() {
   for (int i = 0; i < 2048; i++)
     audBuf[i] = int16_t(0x4000 * sin (i * kPi / 1024));
 
-  BSP_AUDIO_OUT_Init (2, 100, 44100);
-  //BSP_AUDIO_OUT_Play (audBuf, 2048);
+  BSP_AUDIO_OUT_Init (OUTPUT_DEVICE_HEADPHONE, 100, 44100);
+  BSP_AUDIO_OUT_Play (audBuf, 2048);
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);

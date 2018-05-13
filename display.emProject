@@ -157,10 +157,16 @@
         <file file_name="common/utils.h" />
       </folder>
     </folder>
-    <file file_name="stm32f4_discovery_audio.c" />
-    <file file_name="cs43l22.c" />
     <file file_name="accelerometer.c" />
     <file file_name="ledsButton.c" />
+    <file file_name="audio.c" />
+    <folder Name="includes">
+      <file file_name="accelerometer.h" />
+      <file file_name="audio.h" />
+      <file file_name="ledsButton.h" />
+      <file file_name="pdm2pcm_glo.h" />
+      <file file_name="stm32f4xx_hal_conf.h" />
+    </folder>
   </project>
   <configuration
     Name="Debug"
