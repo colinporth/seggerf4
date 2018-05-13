@@ -12,7 +12,27 @@
 #define BIG
 const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
-uint16_t* audBuf;
+
+//{{{  struct WAVE_FormatTypeDef
+typedef struct {
+  uint32_t   ChunkID;       /* 0 */
+  uint32_t   FileSize;      /* 4 */
+  uint32_t   FileFormat;    /* 8 */
+  uint32_t   SubChunk1ID;   /* 12 */
+  uint32_t   SubChunk1Size; /* 16*/
+  uint16_t   AudioFormat;   /* 20 */
+  uint16_t   NbrChannels;   /* 22 */
+  uint32_t   SampleRate;    /* 24 */
+  uint32_t   ByteRate;      /* 28 */
+  uint16_t   BlockAlign;    /* 32 */
+  uint16_t   BitPerSample;  /* 34 */
+  uint32_t   SubChunk2ID;   /* 36 */
+  uint32_t   SubChunk2Size; /* 40 */
+  } WAVE_FormatTypeDef;
+//}}}
+WAVE_FormatTypeDef* waveFormat;
+uint16_t* waveData;
+
 
 //{{{
 class cLcd {
@@ -1333,6 +1353,10 @@ private:
     subSecondAngle > 0 ? BSP_LED_On (LED3) : BSP_LED_Off (LED3);
     subSecondAngle <0 ? BSP_LED_On (LED4) : BSP_LED_Off (LED4);
     BSP_PB_GetState (BUTTON_KEY) ? BSP_LED_On (LED5) : BSP_LED_Off (LED5);
+
+    if (secondAngle != lastSecondAngle)
+      BSP_AUDIO_OUT_Play (waveData, waveFormat->FileSize/2);
+    lastSecondAngle = secondAngle;
     }
   //}}}
   //{{{
@@ -1414,6 +1438,8 @@ private:
   float mAverageVdd = 0.f;
   float mAverageVin = 0.f;
   float mAverageVbat = 0.f;
+
+  float lastSecondAngle = 0.f;
   };
 //}}}
 cApp* cApp::mApp = nullptr;
@@ -1429,6 +1455,7 @@ extern "C" {
   }
 //}}}
 
+extern const uint8_t* crank;
 //{{{
 void systemClockInit() {
 // System Clock source            = PLL (HSE)
@@ -1480,8 +1507,8 @@ void systemClockInit() {
 //}}}
 
 void BSP_AUDIO_OUT_TransferComplete_CallBack() {
-  //printf ("BSP_AUDIO_OUT_TransferComplete_CallBack\n");
-  BSP_AUDIO_OUT_ChangeBuffer (audBuf, 4096);
+  //BSP_AUDIO_OUT_ChangeBuffer (waveData, waveFormat->FileSize/2);
+  //BSP_AUDIO_OUT_Stop (CODEC_PDWN_SW);
   }
 
 int main() {
@@ -1497,13 +1524,10 @@ int main() {
   BSP_ACCELERO_Init();
   BSP_ACCELERO_ReadID();
 
-  const float kPi = 3.1415926f;
-  audBuf = (uint16_t*)malloc (8192);
-  for (int i = 0; i < 4096; i++)
-    audBuf[i] = int16_t(0x0800 * sin ((((i % 256) / 256.f)-128.f) * kPi));
+  waveFormat = (WAVE_FormatTypeDef*)&crank;
+  waveData = (uint16_t*)(&crank + sizeof(WAVE_FormatTypeDef));
 
-  BSP_AUDIO_OUT_Init (OUTPUT_DEVICE_HEADPHONE, 100, 44100);
-  BSP_AUDIO_OUT_Play (audBuf, 4096);
+  BSP_AUDIO_OUT_Init (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);

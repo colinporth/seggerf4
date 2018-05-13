@@ -101,10 +101,6 @@
 #define AUDIO_PAUSE           0
 #define AUDIO_RESUME          1
 
-// Codec POWER DOWN modes
-#define CODEC_PDWN_HW         1
-#define CODEC_PDWN_SW         2
-
 // MUTE commands
 #define AUDIO_MUTE_ON         1
 #define AUDIO_MUTE_OFF        0
@@ -180,7 +176,7 @@
 
 #define DMA_MAX(_X_)    (((_X_) <= DMA_MAX_SZE)? (_X_):DMA_MAX_SZE)
 #define HTONS(A)        ((((uint16_t)(A) & 0xff00) >> 8) | (((uint16_t)(A) & 0x00ff) << 8))
-#define VOLUME_CONVERT(Volume) (((Volume) > 100) ? 255:((uint8_t)(((Volume) * 255) / 100)))
+#define VOLUME_CONVERT(Volume) (((Volume) > 100) ? 255 : ((uint8_t)(((Volume) * 255) / 100)))
 //}}}
 
 // These PLL parameters are valid when the f(VCO clock) = 1Mhz
@@ -292,7 +288,7 @@ static void i2cWrite (uint8_t Addr, uint8_t Reg, uint8_t Value) {
 //}}}
 
 //{{{
-static void i2sInit (I2S_HandleTypeDef *hi2s, void *Params) {
+static void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
 
   static DMA_HandleTypeDef hdma_i2sTx;
 
@@ -347,7 +343,7 @@ static void i2sInit (I2S_HandleTypeDef *hi2s, void *Params) {
   }
 //}}}
 //{{{
-static void i2sClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params) {
+static void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params) {
 
   uint8_t index = 0;
   uint8_t freqindex = 0xFF;
@@ -438,25 +434,24 @@ static void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t Chn
 
   printf ("PDMDecoder_Init\n");
 
-  uint32_t index = 0;
-
-  /* Enable CRC peripheral to unlock the PDM library */
+  // Enable CRC peripheral to unlock the PDM library
   __HAL_RCC_CRC_CLK_ENABLE();
 
+  uint32_t index = 0;
   for (index = 0; index < ChnlNbrIn; index++) {
-    /* Init PDM filters */
-    PDM_FilterHandler[index].bit_order  = PDM_FILTER_BIT_ORDER_LSB;
+    // Init PDM filters
+    PDM_FilterHandler[index].bit_order = PDM_FILTER_BIT_ORDER_LSB;
     PDM_FilterHandler[index].endianness = PDM_FILTER_ENDIANNESS_LE;
     PDM_FilterHandler[index].high_pass_tap = 2122358088;
     PDM_FilterHandler[index].out_ptr_channels = ChnlNbrOut;
-    PDM_FilterHandler[index].in_ptr_channels  = ChnlNbrIn;
-    PDM_Filter_Init((PDM_Filter_Handler_t *)(&PDM_FilterHandler[index]));
+    PDM_FilterHandler[index].in_ptr_channels = ChnlNbrIn;
+    PDM_Filter_Init ((PDM_Filter_Handler_t *)(&PDM_FilterHandler[index]));
 
-    /* PDM lib config phase */
-    PDM_FilterConfig[index].output_samples_number = AudioFreq/1000;
+    // PDM lib config phase
+    PDM_FilterConfig[index].output_samples_number = AudioFreq / 1000;
     PDM_FilterConfig[index].mic_gain = 24;
     PDM_FilterConfig[index].decimation_factor = PDM_FILTER_DEC_FACTOR_64;
-    PDM_Filter_setConfig((PDM_Filter_Handler_t *)&PDM_FilterHandler[index], &PDM_FilterConfig[index]);
+    PDM_Filter_setConfig ((PDM_Filter_Handler_t*)&PDM_FilterHandler[index], &PDM_FilterConfig[index]);
     }
   }
 //}}}
@@ -480,7 +475,7 @@ static void SetOutputMode (uint16_t deviceAddr, uint8_t Output) {
     default:
       OutputDev = 0x05;
       break;
-    }
+      }
 
   i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL2, OutputDev);
   }
@@ -641,31 +636,31 @@ static void Stop (uint16_t deviceAddr, uint32_t CodecPdwnMode) {
 //}}}
 
 //{{{
-void HAL_I2S_TxCpltCallback (I2S_HandleTypeDef *hi2s) {
+void HAL_I2S_TxCpltCallback (I2S_HandleTypeDef* hi2s) {
 
   if (hi2s->Instance == I2S3)
     BSP_AUDIO_OUT_TransferComplete_CallBack();
   }
 //}}}
 //{{{
-void HAL_I2S_TxHalfCpltCallback (I2S_HandleTypeDef *hi2s) {
+void HAL_I2S_TxHalfCpltCallback (I2S_HandleTypeDef* hi2s) {
 
   if (hi2s->Instance == I2S3)
     BSP_AUDIO_OUT_HalfTransfer_CallBack();
   }
 //}}}
 //{{{
-void HAL_I2S_RxCpltCallback (I2S_HandleTypeDef *hi2s) {
+void HAL_I2S_RxCpltCallback (I2S_HandleTypeDef* hi2s) {
   BSP_AUDIO_IN_TransferComplete_CallBack();
   }
 //}}}
 //{{{
-void HAL_I2S_RxHalfCpltCallback (I2S_HandleTypeDef *hi2s) {
+void HAL_I2S_RxHalfCpltCallback (I2S_HandleTypeDef* hi2s) {
   BSP_AUDIO_IN_HalfTransfer_CallBack();
   }
 //}}}
 //{{{
-void HAL_I2S_ErrorCallback (I2S_HandleTypeDef *hi2s) {
+void HAL_I2S_ErrorCallback (I2S_HandleTypeDef* hi2s) {
 
   if (hi2s->Instance == I2S3)
     BSP_AUDIO_OUT_Error_CallBack();
@@ -725,13 +720,13 @@ void BSP_AUDIO_OUT_ChangeBuffer (uint16_t* pData, uint16_t Size) {
 //{{{
 uint8_t BSP_AUDIO_OUT_Pause() {
 
-  /* Call the Audio Codec Pause/Resume function */
-  Pause(AUDIO_I2C_ADDRESS);
+  // Call the Audio Codec Pause/Resume function
+  Pause (AUDIO_I2C_ADDRESS);
 
-  /* Call the Media layer pause function */
-  HAL_I2S_DMAPause(&hAudioOutI2s);
+  // Call the Media layer pause function
+  HAL_I2S_DMAPause (&hAudioOutI2s);
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
   }
 //}}}
@@ -739,10 +734,10 @@ uint8_t BSP_AUDIO_OUT_Pause() {
 uint8_t BSP_AUDIO_OUT_Resume() {
 
   /* Call the Audio Codec Pause/Resume function */
-  Resume(AUDIO_I2C_ADDRESS);
+  Resume (AUDIO_I2C_ADDRESS);
 
   /* Call the Media layer resume function */
-  HAL_I2S_DMAResume(&hAudioOutI2s);
+  HAL_I2S_DMAResume (&hAudioOutI2s);
 
   /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
@@ -755,9 +750,9 @@ uint8_t BSP_AUDIO_OUT_Stop (uint32_t Option) {
   HAL_I2S_DMAStop (&hAudioOutI2s);
 
   /* Call Audio Codec Stop function */
-  Stop(AUDIO_I2C_ADDRESS, Option);
+  Stop (AUDIO_I2C_ADDRESS, Option);
 
-  if(Option == CODEC_PDWN_HW) {
+  if (Option == CODEC_PDWN_HW) {
     /* Wait at least 1ms */
     HAL_Delay(1);
 
@@ -942,7 +937,7 @@ uint8_t BSP_AUDIO_IN_Init (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr
   // Configure the I2S peripheral */
   hAudioInI2s.Instance = I2S2;
   if (HAL_I2S_GetState (&hAudioInI2s) == HAL_I2S_STATE_RESET)
-    /* Initialize the I2S Msp: this __weak function can be rewritten by the application */
+    // Initialize the I2S Msp: this __weak function can be rewritten by the application */
     BSP_AUDIO_IN_MspInit (&hAudioInI2s, NULL);
 
   i2s2Init (AudioFreq);
@@ -956,10 +951,10 @@ uint8_t BSP_AUDIO_IN_Record (uint16_t* pbuf, uint32_t size) {
 
   uint32_t ret = AUDIO_ERROR;
 
-  /* Start the process receive DMA */
-  HAL_I2S_Receive_DMA(&hAudioInI2s, pbuf, size);
+  // Start the process receive DMA
+  HAL_I2S_Receive_DMA (&hAudioInI2s, pbuf, size);
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done
   ret = AUDIO_OK;
 
   return ret;
@@ -970,10 +965,10 @@ uint8_t BSP_AUDIO_IN_Stop() {
 
   uint32_t ret = AUDIO_ERROR;
 
-  /* Call the Media layer pause function */
-  HAL_I2S_DMAStop(&hAudioInI2s);
+  // Call the Media layer pause function
+  HAL_I2S_DMAStop (&hAudioInI2s);
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done
   ret = AUDIO_OK;
 
   return ret;
@@ -982,20 +977,20 @@ uint8_t BSP_AUDIO_IN_Stop() {
 //{{{
 uint8_t BSP_AUDIO_IN_Pause() {
 
-  /* Call the Media layer pause function */
+  // Call the Media layer pause function */
   HAL_I2S_DMAPause(&hAudioInI2s);
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
   }
 //}}}
 //{{{
 uint8_t BSP_AUDIO_IN_Resume() {
 
-  /* Call the Media layer pause/resume function */
+  // Call the Media layer pause/resume function */
   HAL_I2S_DMAResume(&hAudioInI2s);
 
-  /* Return AUDIO_OK when all operations are correctly done */
+  // Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
   }
 //}}}
@@ -1010,24 +1005,23 @@ uint8_t BSP_AUDIO_IN_SetVolume (uint8_t Volume) {
   }
 //}}}
 //{{{
-uint8_t BSP_AUDIO_IN_PDMToPCM (uint16_t *PDMBuf, uint16_t *PCMBuf) {
+uint8_t BSP_AUDIO_IN_PDMToPCM (uint16_t* PDMBuf, uint16_t* PCMBuf) {
 
   uint16_t AppPDM[INTERNAL_BUFF_SIZE/2];
-  uint32_t index = 0;
 
-  /* PDM Demux */
-  for(index = 0; index<INTERNAL_BUFF_SIZE/2; index++)
+  // PDM Demux
+  uint32_t index = 0;
+  for (index = 0; index<INTERNAL_BUFF_SIZE/2; index++)
     AppPDM[index] = HTONS(PDMBuf[index]);
 
-  for(index = 0; index < DEFAULT_AUDIO_IN_CHANNEL_NBR; index++)
-    /* PDM to PCM filter */
+  for (index = 0; index < DEFAULT_AUDIO_IN_CHANNEL_NBR; index++)
+    // PDM to PCM filter
     PDM_Filter((uint8_t*)&AppPDM[index], (uint16_t*)&(PCMBuf[index]), &PDM_FilterHandler[index]);
 
-  /* Duplicate samples since a single microphone in mounted on STM32F4-Discovery */
-  for(index = 0; index < PCM_OUT_SIZE; index++)
+  // Duplicate samples since a single microphone in mounted on STM32F4-Discovery
+  for (index = 0; index < PCM_OUT_SIZE; index++)
     PCMBuf[(index<<1)+1] = PCMBuf[index<<1];
 
-  /* Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
   }
 //}}}

@@ -167,6 +167,7 @@
       <file file_name="pdm2pcm_glo.h" />
       <file file_name="stm32f4xx_hal_conf.h" />
     </folder>
+    <file file_name="crank.c" />
   </project>
   <configuration
     Name="Debug"

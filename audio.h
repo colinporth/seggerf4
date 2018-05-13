@@ -17,6 +17,10 @@
 #define OUTPUT_DEVICE_BOTH       3
 #define OUTPUT_DEVICE_AUTO       4
 
+// Codec POWER DOWN modes
+#define CODEC_PDWN_HW         1
+#define CODEC_PDWN_SW         2
+
 // PCM buffer output size
 #define PCM_OUT_SIZE                    DEFAULT_AUDIO_IN_FREQ/1000
 #define CHANNEL_DEMUX_MASK              0x55
