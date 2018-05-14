@@ -37,9 +37,8 @@
 extern uint16_t AudioInVolume;
 
 void audioInit (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
-void audioPlay (uint16_t* pBuffer, uint32_t Size);
-void audioChangeBuffer (uint16_t *pData, uint16_t Size);
-
+void audioPlay (uint16_t* buffer, uint32_t size);
+void audioChangeBuffer (uint16_t* data, uint32_t size);
 void audioPause();
 void audioResume();
 void audioStop (uint32_t Option);

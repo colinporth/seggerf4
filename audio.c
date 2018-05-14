@@ -5,89 +5,29 @@
 #include "pdm2pcm_glo.h"
 //}}}
 //{{{  i2c defines
-#define BSP_I2C_SPEED                            100000
+#define AUDIO_I2C_ADDRESS              0x94
+#define AUDIO_I2C_SPEED                400000
 
-#define DISCOVERY_I2Cx                            I2C1
-#define DISCOVERY_I2Cx_CLK_ENABLE()               __HAL_RCC_I2C1_CLK_ENABLE()
-#define DISCOVERY_I2Cx_SCL_SDA_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOB_CLK_ENABLE()
-#define DISCOVERY_I2Cx_SCL_SDA_AF                 GPIO_AF4_I2C1
-#define DISCOVERY_I2Cx_SCL_SDA_GPIO_PORT          GPIOB
-#define DISCOVERY_I2Cx_SCL_PIN                    GPIO_PIN_6
-#define DISCOVERY_I2Cx_SDA_PIN                    GPIO_PIN_9
+#define I2Cx                            I2C1
+#define I2Cx_CLK_ENABLE()               __HAL_RCC_I2C1_CLK_ENABLE()
+#define I2Cx_SCL_SDA_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOB_CLK_ENABLE()
+#define I2Cx_SCL_SDA_AF                 GPIO_AF4_I2C1
+#define I2Cx_SCL_SDA_GPIO_PORT          GPIOB
+#define I2Cx_SCL_PIN                    GPIO_PIN_6
+#define I2Cx_SDA_PIN                    GPIO_PIN_9
 
-#define DISCOVERY_I2Cx_FORCE_RESET()              __HAL_RCC_I2C1_FORCE_RESET()
-#define DISCOVERY_I2Cx_RELEASE_RESET()            __HAL_RCC_I2C1_RELEASE_RESET()
+#define I2Cx_FORCE_RESET()              __HAL_RCC_I2C1_FORCE_RESET()
+#define I2Cx_RELEASE_RESET()            __HAL_RCC_I2C1_RELEASE_RESET()
 
 /* I2C interrupt requests */
-#define DISCOVERY_I2Cx_EV_IRQn                    I2C1_EV_IRQn
-#define DISCOVERY_I2Cx_ER_IRQn                    I2C1_ER_IRQn
+#define I2Cx_EV_IRQn                    I2C1_EV_IRQn
+#define I2Cx_ER_IRQn                    I2C1_ER_IRQn
 
 #define I2Cx_TIMEOUT_MAX    0x1000 /*<! The value of the maximal timeout for BUS waiting loops */
-//}}}
-//{{{  i2s2 defines
-#define I2S2                            SPI2
-#define I2S2_CLK_ENABLE()               __HAL_RCC_SPI2_CLK_ENABLE()
-#define I2S2_CLK_DISABLE()              __HAL_RCC_SPI2_CLK_DISABLE()
-#define I2S2_SCK_PIN                    GPIO_PIN_10
-#define I2S2_SCK_GPIO_PORT              GPIOB
-#define I2S2_SCK_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
-#define I2S2_SCK_AF                     GPIO_AF5_SPI2
-
-#define I2S2_MOSI_PIN                   GPIO_PIN_3
-#define I2S2_MOSI_GPIO_PORT             GPIOC
-#define I2S2_MOSI_GPIO_CLK_ENABLE()     __HAL_RCC_GPIOC_CLK_ENABLE()
-#define I2S2_MOSI_AF                    GPIO_AF5_SPI2
-
-// I2S DMA Stream Rx definitions
-#define I2S2_DMAx_CLK_ENABLE()          __HAL_RCC_DMA1_CLK_ENABLE()
-#define I2S2_DMAx_CLK_DISABLE()         __HAL_RCC_DMA1_CLK_DISABLE()
-#define I2S2_DMAx_STREAM                DMA1_Stream3
-#define I2S2_DMAx_CHANNEL               DMA_CHANNEL_0
-#define I2S2_DMAx_IRQ                   DMA1_Stream3_IRQn
-#define I2S2_DMAx_PERIPH_DATA_SIZE      DMA_PDATAALIGN_HALFWORD
-#define I2S2_DMAx_MEM_DATA_SIZE         DMA_MDATAALIGN_HALFWORD
-
-#define I2S2_IRQHandler                 DMA1_Stream3_IRQHandler
-
-// Select the interrupt preemption priority and subpriority for the IT/DMA interrupt
-#define AUDIO_IN_IRQ_PREPRIO            0x0F   /* Select the preemption priority level(0 is the highest) */
-//}}}
-//{{{  i2s3 defines
-#define I2S3                            SPI3
-#define I2S3_CLK_ENABLE()               __HAL_RCC_SPI3_CLK_ENABLE()
-#define I2S3_CLK_DISABLE()              __HAL_RCC_SPI3_CLK_DISABLE()
-#define I2S3_SCK_SD_WS_AF               GPIO_AF6_SPI3
-#define I2S3_SCK_SD_CLK_ENABLE()        __HAL_RCC_GPIOC_CLK_ENABLE()
-#define I2S3_MCK_CLK_ENABLE()           __HAL_RCC_GPIOC_CLK_ENABLE()
-#define I2S3_WS_CLK_ENABLE()            __HAL_RCC_GPIOA_CLK_ENABLE()
-#define I2S3_WS_PIN                     GPIO_PIN_4
-#define I2S3_SCK_PIN                    GPIO_PIN_10
-#define I2S3_SD_PIN                     GPIO_PIN_12
-#define I2S3_MCK_PIN                    GPIO_PIN_7
-#define I2S3_SCK_SD_GPIO_PORT           GPIOC
-#define I2S3_WS_GPIO_PORT               GPIOA
-#define I2S3_MCK_GPIO_PORT              GPIOC
-
-// I2S DMA Stream definitions
-#define I2S3_DMAx_CLK_ENABLE()          __HAL_RCC_DMA1_CLK_ENABLE()
-#define I2S3_DMAx_CLK_DISABLE()         __HAL_RCC_DMA1_CLK_DISABLE()
-#define I2S3_DMAx_STREAM                DMA1_Stream7
-#define I2S3_DMAx_CHANNEL               DMA_CHANNEL_0
-#define I2S3_DMAx_IRQ                   DMA1_Stream7_IRQn
-#define I2S3_DMAx_PERIPH_DATA_SIZE      DMA_PDATAALIGN_HALFWORD
-#define I2S3_DMAx_MEM_DATA_SIZE         DMA_MDATAALIGN_HALFWORD
-#define DMA_MAX_SZE                     0xFFFF
-
-#define I2S3_IRQHandler                 DMA1_Stream7_IRQHandler
-
-// Select the interrupt preemption priority and subpriority for the DMA interrupt */
-#define AUDIO_OUT_IRQ_PREPRIO           0x0E   /* Select the preemption priority level(0 is the highest) */
 //}}}
 //{{{  cs43122 defines
 #define CODEC_STANDARD  0x04
 #define I2S_STANDARD    I2S_STANDARD_PHILIPS
-
-#define AUDIO_I2C_ADDRESS     0x94
 
 // gpio
 #define AUDIO_RESET_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOD_CLK_ENABLE()
@@ -172,12 +112,67 @@
 #define   CS43L22_REG_CHARGE_PUMP_FREQ    0x34
 //}}}
 //}}}
-//{{{  defines
-#define AUDIODATA_SIZE  2   // 16-bits audio data size
+//{{{  i2s2 defines
+#define I2S2                            SPI2
+#define I2S2_CLK_ENABLE()               __HAL_RCC_SPI2_CLK_ENABLE()
+#define I2S2_CLK_DISABLE()              __HAL_RCC_SPI2_CLK_DISABLE()
+#define I2S2_SCK_PIN                    GPIO_PIN_10
+#define I2S2_SCK_GPIO_PORT              GPIOB
+#define I2S2_SCK_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOB_CLK_ENABLE()
+#define I2S2_SCK_AF                     GPIO_AF5_SPI2
 
-#define DMA_MAX(_X_)    (((_X_) <= DMA_MAX_SZE)? (_X_):DMA_MAX_SZE)
-#define HTONS(A)        ((((uint16_t)(A) & 0xff00) >> 8) | (((uint16_t)(A) & 0x00ff) << 8))
-#define VOLUME_CONVERT(Volume) (((Volume) > 100) ? 255 : ((uint8_t)(((Volume) * 255) / 100)))
+#define I2S2_MOSI_PIN                   GPIO_PIN_3
+#define I2S2_MOSI_GPIO_PORT             GPIOC
+#define I2S2_MOSI_GPIO_CLK_ENABLE()     __HAL_RCC_GPIOC_CLK_ENABLE()
+#define I2S2_MOSI_AF                    GPIO_AF5_SPI2
+
+// I2S DMA Stream Rx definitions
+#define I2S2_DMAx_CLK_ENABLE()          __HAL_RCC_DMA1_CLK_ENABLE()
+#define I2S2_DMAx_CLK_DISABLE()         __HAL_RCC_DMA1_CLK_DISABLE()
+#define I2S2_DMAx_STREAM                DMA1_Stream3
+#define I2S2_DMAx_CHANNEL               DMA_CHANNEL_0
+#define I2S2_DMAx_IRQ                   DMA1_Stream3_IRQn
+#define I2S2_DMAx_PERIPH_DATA_SIZE      DMA_PDATAALIGN_HALFWORD
+#define I2S2_DMAx_MEM_DATA_SIZE         DMA_MDATAALIGN_HALFWORD
+
+#define I2S2_IRQHandler                 DMA1_Stream3_IRQHandler
+
+// Select the interrupt preemption priority and subpriority for the IT/DMA interrupt
+#define AUDIO_IN_IRQ_PREPRIO            0x0F   /* Select the preemption priority level(0 is the highest) */
+//}}}
+//{{{  i2s3 defines
+#define I2S3                            SPI3
+#define I2S3_CLK_ENABLE()               __HAL_RCC_SPI3_CLK_ENABLE()
+#define I2S3_CLK_DISABLE()              __HAL_RCC_SPI3_CLK_DISABLE()
+#define I2S3_SCK_SD_WS_AF               GPIO_AF6_SPI3
+#define I2S3_SCK_SD_CLK_ENABLE()        __HAL_RCC_GPIOC_CLK_ENABLE()
+#define I2S3_MCK_CLK_ENABLE()           __HAL_RCC_GPIOC_CLK_ENABLE()
+#define I2S3_WS_CLK_ENABLE()            __HAL_RCC_GPIOA_CLK_ENABLE()
+#define I2S3_WS_PIN                     GPIO_PIN_4
+#define I2S3_SCK_PIN                    GPIO_PIN_10
+#define I2S3_SD_PIN                     GPIO_PIN_12
+#define I2S3_MCK_PIN                    GPIO_PIN_7
+#define I2S3_SCK_SD_GPIO_PORT           GPIOC
+#define I2S3_WS_GPIO_PORT               GPIOA
+#define I2S3_MCK_GPIO_PORT              GPIOC
+
+// I2S DMA Stream definitions
+#define I2S3_DMAx_CLK_ENABLE()          __HAL_RCC_DMA1_CLK_ENABLE()
+#define I2S3_DMAx_CLK_DISABLE()         __HAL_RCC_DMA1_CLK_DISABLE()
+#define I2S3_DMAx_STREAM                DMA1_Stream7
+#define I2S3_DMAx_CHANNEL               DMA_CHANNEL_0
+#define I2S3_DMAx_IRQ                   DMA1_Stream7_IRQn
+#define I2S3_DMAx_PERIPH_DATA_SIZE      DMA_PDATAALIGN_HALFWORD
+#define I2S3_DMAx_MEM_DATA_SIZE         DMA_MDATAALIGN_HALFWORD
+
+#define I2S3_IRQHandler                 DMA1_Stream7_IRQHandler
+
+// Select the interrupt preemption priority and subpriority for the DMA interrupt */
+#define AUDIO_OUT_IRQ_PREPRIO           0x0E   /* Select the preemption priority level(0 is the highest) */
+//}}}
+//{{{  defines
+#define HTONS(A)                ((((uint16_t)(A) & 0xff00) >> 8) | (((uint16_t)(A) & 0x00ff) << 8))
+#define VOLUME_CONVERT(Volume)  (((Volume) > 100) ? 255 : ((uint8_t)(((Volume) * 255) / 100)))
 //}}}
 //{{{  clock const
 // These PLL parameters are valid when the f(VCO clock) = 1Mhz
@@ -216,40 +211,40 @@ static void i2cInit() {
   GPIO_InitStruct.Pull  = GPIO_NOPULL;
   HAL_GPIO_Init(AUDIO_RESET_GPIO, &GPIO_InitStruct);
 
-  // DISCOVERY_I2Cx peripheral configuration */
-  I2cHandle.Init.ClockSpeed = BSP_I2C_SPEED;
+  // I2Cx peripheral configuration */
+  I2cHandle.Init.ClockSpeed = AUDIO_I2C_SPEED;
   I2cHandle.Init.DutyCycle = I2C_DUTYCYCLE_2;
   I2cHandle.Init.OwnAddress1 = 0x33;
   I2cHandle.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  I2cHandle.Instance = DISCOVERY_I2Cx;
+  I2cHandle.Instance = I2Cx;
 
   // Enable I2C GPIO clocks
-  DISCOVERY_I2Cx_SCL_SDA_GPIO_CLK_ENABLE();
+  I2Cx_SCL_SDA_GPIO_CLK_ENABLE();
 
-  // DISCOVERY_I2Cx SCL and SDA pins configuration
-  GPIO_InitStruct.Pin = DISCOVERY_I2Cx_SCL_PIN | DISCOVERY_I2Cx_SDA_PIN;
+  // I2Cx SCL and SDA pins configuration
+  GPIO_InitStruct.Pin = I2Cx_SCL_PIN | I2Cx_SDA_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
   GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
   GPIO_InitStruct.Pull  = GPIO_NOPULL;
-  GPIO_InitStruct.Alternate  = DISCOVERY_I2Cx_SCL_SDA_AF;
-  HAL_GPIO_Init(DISCOVERY_I2Cx_SCL_SDA_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Alternate  = I2Cx_SCL_SDA_AF;
+  HAL_GPIO_Init (I2Cx_SCL_SDA_GPIO_PORT, &GPIO_InitStruct);
 
-  // Enable the DISCOVERY_I2Cx peripheral clock
-  DISCOVERY_I2Cx_CLK_ENABLE();
+  // Enable the I2Cx peripheral clock
+  I2Cx_CLK_ENABLE();
 
   // Force the I2C peripheral clock reset
-  DISCOVERY_I2Cx_FORCE_RESET();
+  I2Cx_FORCE_RESET();
 
   // Release the I2C peripheral clock reset
-  DISCOVERY_I2Cx_RELEASE_RESET();
+  I2Cx_RELEASE_RESET();
 
   // Enable and set I2Cx Interrupt to the highest priority
-  HAL_NVIC_SetPriority (DISCOVERY_I2Cx_EV_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ (DISCOVERY_I2Cx_EV_IRQn);
+  HAL_NVIC_SetPriority (I2Cx_EV_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ (I2Cx_EV_IRQn);
 
   // Enable and set I2Cx Interrupt to the highest priority
-  HAL_NVIC_SetPriority (DISCOVERY_I2Cx_ER_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ (DISCOVERY_I2Cx_ER_IRQn);
+  HAL_NVIC_SetPriority (I2Cx_ER_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ (I2Cx_ER_IRQn);
 
   HAL_I2C_Init (&I2cHandle);
 
@@ -678,16 +673,16 @@ void audioInit (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
   }
 //}}}
 //{{{
-void audioPlay (uint16_t* pBuffer, uint32_t Size) {
+void audioPlay (uint16_t* buffer, uint32_t size) {
 
-  cs43l22play (AUDIO_I2C_ADDRESS, pBuffer, Size);
-  HAL_I2S_Transmit_DMA (&hAudioOutI2s, pBuffer, DMA_MAX (Size / AUDIODATA_SIZE));
+  cs43l22play (AUDIO_I2C_ADDRESS, buffer, size);
+  HAL_I2S_Transmit_DMA (&hAudioOutI2s, buffer, size);
   }
 //}}}
 //{{{
-void audioChangeBuffer (uint16_t* pData, uint16_t Size) {
+void audioChangeBuffer (uint16_t* data, uint32_t size) {
 
-  HAL_I2S_Transmit_DMA (&hAudioOutI2s, pData, Size);
+  HAL_I2S_Transmit_DMA (&hAudioOutI2s, data, size);
   }
 //}}}
 //{{{
@@ -860,34 +855,33 @@ uint8_t audioInPDMToPCM (uint16_t* PDMBuf, uint16_t* PCMBuf) {
 //}}}
 
 //{{{
-__weak void audioInClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params)
+__weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params)
 {
   RCC_PeriphCLKInitTypeDef rccclkinit;
 
-  /*Enable PLLI2S clock*/
+  // Enable PLLI2S clock
   HAL_RCCEx_GetPeriphCLKConfig(&rccclkinit);
-  /* PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz */
-  if ((AudioFreq & 0x7) == 0)
-  {
-    /* Audio frequency multiple of 8 (8/16/32/48/96/192)*/
-    /* PLLI2S_VCO Output = PLLI2S_VCO Input * PLLI2SN = 192 Mhz */
-    /* I2SCLK = PLLI2S_VCO Output/PLLI2SR = 192/6 = 32 Mhz */
+
+  // PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz
+  if ((AudioFreq & 0x7) == 0) {
+    // Audio frequency multiple of 8 (8/16/32/48/96/192)
+    // PLLI2S_VCO Output = PLLI2S_VCO Input * PLLI2SN = 192 Mhz
+    // I2SCLK = PLLI2S_VCO Output/PLLI2SR = 192/6 = 32 Mhz
     rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
     rccclkinit.PLLI2S.PLLI2SN = 192;
     rccclkinit.PLLI2S.PLLI2SR = 6;
-    HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
-  }
-  else
-  {
-    /* Other Frequency (11.025/22.500/44.100) */
-    /* PLLI2S_VCO Output = PLLI2S_VCO Input * PLLI2SN = 290 Mhz */
-    /* I2SCLK = PLLI2S_VCO Output/PLLI2SR = 290/2 = 145 Mhz */
+    HAL_RCCEx_PeriphCLKConfig (&rccclkinit);
+    }
+  else {
+    // Other Frequency (11.025/22.500/44.100)
+    // PLLI2S_VCO Output = PLLI2S_VCO Input * PLLI2SN = 290 Mhz
+    // I2SCLK = PLLI2S_VCO Output/PLLI2SR = 290/2 = 145 Mhz
     rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
     rccclkinit.PLLI2S.PLLI2SN = 290;
     rccclkinit.PLLI2S.PLLI2SR = 2;
-    HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
+    HAL_RCCEx_PeriphCLKConfig (&rccclkinit);
+    }
   }
-}
 //}}}
 //{{{
 __weak void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params) {
@@ -919,7 +913,7 @@ __weak void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params) {
   I2S2_DMAx_CLK_ENABLE();
 
   if(hi2s->Instance == I2S2) {
-    /* Configure the hdma_i2sRx handle parameters */
+    // Configure the hdma_i2sRx handle parameters */
     hdma_i2sRx.Init.Channel             = I2S2_DMAx_CHANNEL;
     hdma_i2sRx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
     hdma_i2sRx.Init.PeriphInc           = DMA_PINC_DISABLE;

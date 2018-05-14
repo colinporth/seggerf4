@@ -1356,7 +1356,7 @@ private:
     BSP_PB_GetState (BUTTON_KEY) ? BSP_LED_On (LED5) : BSP_LED_Off (LED5);
 
     if (secondAngle != lastSecondAngle)
-      audioPlay (waveData, waveFormat->SubChunk2Size/2);
+      audioPlay (waveData, waveFormat->SubChunk2Size/4);
     lastSecondAngle = secondAngle;
     }
   //}}}
