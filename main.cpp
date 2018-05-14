@@ -14,7 +14,7 @@ const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 }
 const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };
 
 //{{{  struct WAVE_FormatTypeDef
-typedef struct {
+struct WAVE_FormatTypeDef {
   uint32_t   ChunkID;       // 0
   uint32_t   FileSize;      // 4
   uint32_t   FileFormat;    // 8
@@ -30,7 +30,7 @@ typedef struct {
 
   uint32_t   SubChunk2ID;   // 0x24
   uint32_t   SubChunk2Size; // 0x28
-  } WAVE_FormatTypeDef;     // 0x2C len
+  };                        // 0x2C len
 //}}}
 WAVE_FormatTypeDef* waveFormat;
 uint16_t* waveData;
@@ -1356,7 +1356,7 @@ private:
     BSP_PB_GetState (BUTTON_KEY) ? BSP_LED_On (LED5) : BSP_LED_Off (LED5);
 
     if (secondAngle != lastSecondAngle)
-      BSP_AUDIO_OUT_Play (waveData, waveFormat->SubChunk2Size/2);
+      audioPlay (waveData, waveFormat->SubChunk2Size/2);
     lastSecondAngle = secondAngle;
     }
   //}}}
@@ -1507,10 +1507,10 @@ void systemClockInit() {
   }
 //}}}
 
-void BSP_AUDIO_OUT_TransferComplete_CallBack() {
-  //BSP_AUDIO_OUT_ChangeBuffer (waveData, waveFormat->FileSize/2);
-  //BSP_AUDIO_OUT_Stop (CODEC_PDWN_SW);
-  printf ("BSP_AUDIO_OUT_TransferComplete_CallBack\n");
+void audioTransferComplete_CallBack() {
+  //audioChangeBuffer (waveData, waveFormat->FileSize/2);
+  //audioStop (CODEC_PDWN_SW);
+  printf ("audioTransferComplete_CallBack\n");
   }
 
 int main() {
@@ -1529,7 +1529,7 @@ int main() {
   waveFormat = (WAVE_FormatTypeDef*)&crank;
   waveData = (uint16_t*)(&crank + sizeof(WAVE_FormatTypeDef));
 
-  BSP_AUDIO_OUT_Init (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
+  audioInit (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
   printf ("wave %d s:%d size:%d ch:%d dataSize:%d\n",
           sizeof(WAVE_FormatTypeDef),
           waveFormat->SampleRate, waveFormat->FileSize, waveFormat->NbrChannels, waveFormat->SubChunk2Size);

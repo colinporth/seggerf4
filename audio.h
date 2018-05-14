@@ -36,24 +36,24 @@
 
 extern uint16_t AudioInVolume;
 
-void BSP_AUDIO_OUT_Init (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
-void BSP_AUDIO_OUT_Play (uint16_t* pBuffer, uint32_t Size);
-void BSP_AUDIO_OUT_ChangeBuffer (uint16_t *pData, uint16_t Size);
+void audioInit (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
+void audioPlay (uint16_t* pBuffer, uint32_t Size);
+void audioChangeBuffer (uint16_t *pData, uint16_t Size);
 
-void BSP_AUDIO_OUT_Pause();
-void BSP_AUDIO_OUT_Resume();
-void BSP_AUDIO_OUT_Stop (uint32_t Option);
-void BSP_AUDIO_OUT_SetVolume (uint8_t Volume);
-void BSP_AUDIO_OUT_SetFrequency (uint32_t AudioFreq);
-void BSP_AUDIO_OUT_SetMute (uint32_t Cmd);
-void BSP_AUDIO_OUT_SetOutputMode (uint8_t Output);
+void audioPause();
+void audioResume();
+void audioStop (uint32_t Option);
+void audioSetVolume (uint8_t Volume);
+void audioSetFrequency (uint32_t AudioFreq);
+void audioSetMute (uint32_t Cmd);
+void audioSetOutputMode (uint8_t Output);
 
-void BSP_AUDIO_OUT_TransferComplete_CallBack();
-void BSP_AUDIO_OUT_HalfTransfer_CallBack();
-void BSP_AUDIO_OUT_Error_CallBack();
-void  BSP_AUDIO_OUT_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params);
-void  BSP_AUDIO_OUT_MspInit (I2S_HandleTypeDef *hi2s, void *Params);
-void  BSP_AUDIO_OUT_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
+void audioTransferComplete_CallBack();
+void audioHalfTransfer_CallBack();
+void audioError_CallBack();
+void audioClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params);
+void audioMspInit (I2S_HandleTypeDef *hi2s, void *Params);
+void audioMspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
 
 uint8_t BSP_AUDIO_IN_Init (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr);
 uint8_t BSP_AUDIO_IN_Record (uint16_t *pData, uint32_t Size);

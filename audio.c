@@ -1,8 +1,9 @@
 // audio.c
+//{{{  includes
 #include "audio.h"
 #include "stm32f4xx_hal.h"
 #include "pdm2pcm_glo.h"
-
+//}}}
 //{{{  i2c defines
 #define BSP_I2C_SPEED                            100000
 
@@ -185,21 +186,20 @@ const uint32_t I2SPLLN[8] = { 256, 429, 213, 429, 426, 271, 258, 344 };
 const uint32_t I2SPLLR[8] = { 5, 4, 4, 4, 4, 6, 3, 1 };
 //}}}
 
-uint32_t I2cxTimeout = I2Cx_TIMEOUT_MAX;
-static I2C_HandleTypeDef I2cHandle;
-
 I2S_HandleTypeDef hAudioOutI2s;
-volatile uint8_t gOutputDevice = 0;
-static uint8_t gOutputStop = 1;
-
 I2S_HandleTypeDef hAudioInI2s;
-PDM_Filter_Handler_t PDM_FilterHandler[2];
-PDM_Filter_Config_t PDM_FilterConfig[2];
 uint16_t AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
-
 void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
 void I2S3_IRQHandler() { HAL_DMA_IRQHandler (hAudioOutI2s.hdmatx); }
 
+static I2C_HandleTypeDef I2cHandle;
+static uint8_t gOutputDevice = 0;
+static uint8_t gOutputStop = 1;
+
+static PDM_Filter_Handler_t PDM_FilterHandler[2];
+static PDM_Filter_Config_t PDM_FilterConfig[2];
+
+// i2c control
 //{{{
 static void i2cInit() {
 
@@ -267,27 +267,28 @@ static void i2cInit() {
   }
 //}}}
 //{{{
-static uint8_t i2cRead (uint8_t Addr, uint8_t Reg) {
+static uint8_t i2cRead (uint8_t addr, uint16_t reg) {
 
   uint8_t value = 0;
-  if (HAL_I2C_Mem_Read(&I2cHandle, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT, &value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
-    printf ("i2cRead error %x %x %x\n", Addr, Reg, value);
+  if (HAL_I2C_Mem_Read (&I2cHandle, addr, reg, I2C_MEMADD_SIZE_8BIT, &value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
+    printf ("i2cRead error %x %x %x\n", addr, reg, value);
   //else
-  //  printf ("i2cRead %x %x %x\n", Addr, Reg, value);
+  //  printf ("i2cRead %x %x %x\n", addr, reg, value);
 
   return value;
   }
 //}}}
 //{{{
-static void i2cWrite (uint8_t Addr, uint8_t Reg, uint8_t Value) {
+static void i2cWrite (uint8_t addr, uint16_t reg, uint8_t value) {
 
-  if (HAL_I2C_Mem_Write(&I2cHandle, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT, &Value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
-    printf ("i2cWrite error %x %x %x\n", Addr, Reg, Value);
+  if (HAL_I2C_Mem_Write(&I2cHandle, addr, reg, I2C_MEMADD_SIZE_8BIT, &value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
+    printf ("i2cWrite error %x %x %x\n", addr, reg, value);
   //else
-  //  printf ("i2cWrite %x %x %x\n", Addr, Reg, Value);
+  //  printf ("i2cWrite %x %x %x\n", addr, reg, value);
   }
 //}}}
 
+// i2s config
 //{{{
 static void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
 
@@ -398,7 +399,7 @@ static void i2s2Init (uint32_t AudioFreq) {
   hAudioInI2s.Init.Standard     = I2S_STANDARD_LSB;
 
   // Initialize the I2S peripheral with the structure above
-  if (HAL_I2S_Init(&hAudioInI2s) != HAL_OK)
+  if (HAL_I2S_Init (&hAudioInI2s) != HAL_OK)
     printf ("i2s2Init error\n");
   }
 //}}}
@@ -453,8 +454,10 @@ static void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t Chn
     }
   }
 //}}}
+
+// cs43l22 control
 //{{{
-static void SetVolume (uint16_t deviceAddr, uint8_t volume) {
+static void cs43l22setVolume (uint16_t deviceAddr, uint8_t volume) {
 
   uint8_t convertedVolume = VOLUME_CONVERT (volume);
   if (convertedVolume > 0xE6) {
@@ -470,7 +473,7 @@ static void SetVolume (uint16_t deviceAddr, uint8_t volume) {
   }
 //}}}
 //{{{
-static void SetOutputMode (uint16_t deviceAddr, uint8_t Output) {
+static void cs43l22setOutputMode (uint16_t deviceAddr, uint8_t Output) {
 
   switch (Output) {
     case OUTPUT_DEVICE_SPEAKER:
@@ -494,7 +497,7 @@ static void SetOutputMode (uint16_t deviceAddr, uint8_t Output) {
   }
 //}}}
 //{{{
-static void SetMute (uint16_t deviceAddr, uint32_t cmd) {
+static void cs43l22setMute (uint16_t deviceAddr, uint32_t cmd) {
 
   // Set the Mute mode
   if (cmd == AUDIO_MUTE_ON) {
@@ -510,16 +513,15 @@ static void SetMute (uint16_t deviceAddr, uint32_t cmd) {
     }
   }
 //}}}
-
 //{{{
-static void Init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
+static void cs43l22init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
 
-  printf ("Init\n");
+  printf ("cs43l22init\n");
 
   // keep Codec powered OFF
   i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL1, 0x01);
 
-  SetOutputMode (deviceAddr, gOutputDeviceice);
+  cs43l22setOutputMode (deviceAddr, gOutputDeviceice);
 
   // Clock configuration - autoDetection
   i2cWrite (deviceAddr, CS43L22_REG_CLOCKING_CTL, 0x81);
@@ -528,7 +530,7 @@ static void Init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume
   i2cWrite (deviceAddr, CS43L22_REG_INTERFACE_CTL1, CODEC_STANDARD);
 
   // set master volume
-  SetVolume (deviceAddr, Volume);
+  cs43l22setVolume (deviceAddr, Volume);
 
   // if Speaker is enabled, set Mono mode and volume attenuation level
   if (gOutputDeviceice != OUTPUT_DEVICE_HEADPHONE) {
@@ -558,7 +560,7 @@ static void Init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume
   }
 //}}}
 //{{{
-static uint8_t ReadId (uint16_t deviceAddr) {
+static uint8_t cs43l22readId (uint16_t deviceAddr) {
 
   i2cInit();
 
@@ -568,14 +570,14 @@ static uint8_t ReadId (uint16_t deviceAddr) {
   }
 //}}}
 //{{{
-static void Play (uint16_t deviceAddr, uint16_t* pBuffer, uint16_t Size) {
+static void cs43l22play (uint16_t deviceAddr, uint16_t* pBuffer, uint16_t Size) {
 
   if (gOutputStop == 1) {
     // enable digital soft ramp
     i2cWrite (deviceAddr, CS43L22_REG_MISC_CTL, 0x06);
 
     // enable outputDevice
-    SetMute (deviceAddr, AUDIO_MUTE_OFF);
+    cs43l22setMute (deviceAddr, AUDIO_MUTE_OFF);
 
     // power on codec
     i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL1, 0x9E);
@@ -585,20 +587,20 @@ static void Play (uint16_t deviceAddr, uint16_t* pBuffer, uint16_t Size) {
   }
 //}}}
 //{{{
-static void Pause (uint16_t deviceAddr) {
+static void cs43l22pause (uint16_t deviceAddr) {
 
   // pause audio file playing, Mute the output first
-  SetMute (deviceAddr, AUDIO_MUTE_ON);
+  cs43l22setMute (deviceAddr, AUDIO_MUTE_ON);
 
   // put odec in Power save mode
   i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL1, 0x01);
   }
 //}}}
 //{{{
-static void Resume (uint16_t deviceAddr) {
+static void cs43l22resume (uint16_t deviceAddr) {
 
   // resumes playing, Unmute the output first
-  SetMute (deviceAddr, AUDIO_MUTE_OFF);
+  cs43l22setMute (deviceAddr, AUDIO_MUTE_OFF);
 
   volatile uint32_t index = 0x00;
   for (index = 0x00; index < 0xFF; index++);
@@ -609,10 +611,10 @@ static void Resume (uint16_t deviceAddr) {
   }
 //}}}
 //{{{
-static void Stop (uint16_t deviceAddr, uint32_t CodecPdwnMode) {
+static void cs43l22stop (uint16_t deviceAddr, uint32_t CodecPdwnMode) {
 
   // mute output first
-  SetMute (deviceAddr, AUDIO_MUTE_ON);
+  cs43l22setMute (deviceAddr, AUDIO_MUTE_ON);
 
   // disable the digital soft ramp
   i2cWrite (deviceAddr, CS43L22_REG_MISC_CTL, 0x04);
@@ -624,18 +626,19 @@ static void Stop (uint16_t deviceAddr, uint32_t CodecPdwnMode) {
   }
 //}}}
 
+// i2s dma callbacks
 //{{{
 void HAL_I2S_TxCpltCallback (I2S_HandleTypeDef* hi2s) {
 
   if (hi2s->Instance == I2S3)
-    BSP_AUDIO_OUT_TransferComplete_CallBack();
+    audioTransferComplete_CallBack();
   }
 //}}}
 //{{{
 void HAL_I2S_TxHalfCpltCallback (I2S_HandleTypeDef* hi2s) {
 
   if (hi2s->Instance == I2S3)
-    BSP_AUDIO_OUT_HalfTransfer_CallBack();
+    audioHalfTransfer_CallBack();
   }
 //}}}
 //{{{
@@ -652,21 +655,21 @@ void HAL_I2S_RxHalfCpltCallback (I2S_HandleTypeDef* hi2s) {
 void HAL_I2S_ErrorCallback (I2S_HandleTypeDef* hi2s) {
 
   if (hi2s->Instance == I2S3)
-    BSP_AUDIO_OUT_Error_CallBack();
+    audioError_CallBack();
   if (hi2s->Instance == I2S2)
     BSP_AUDIO_IN_Error_Callback();
   }
 //}}}
 
-// audio out
-__weak void BSP_AUDIO_OUT_TransferComplete_CallBack() {}
-__weak void BSP_AUDIO_OUT_HalfTransfer_CallBack() {}
-__weak void BSP_AUDIO_OUT_Error_CallBack() {}
+// audio out interface
+__weak void audioTransferComplete_CallBack() {}
+__weak void audioHalfTransfer_CallBack() {}
+__weak void audioError_CallBack() {}
 
 //{{{
-void BSP_AUDIO_OUT_Init (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
+void audioInit (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
 
-  printf ("audioId:%x\n", ReadId(AUDIO_I2C_ADDRESS));
+  printf ("audioId:%x\n", cs43l22readId (AUDIO_I2C_ADDRESS));
 
   // PLL clock depends on audioFreq, 44.1khz vs 48khz
   i2sClockConfig (&hAudioOutI2s, AudioFreq, NULL);
@@ -675,75 +678,75 @@ void BSP_AUDIO_OUT_Init (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t Aud
   hAudioOutI2s.Instance = I2S3;
   i2sInit (&hAudioOutI2s, NULL);
   i2s3Init (AudioFreq);
-  Init (AUDIO_I2C_ADDRESS, gOutputDeviceice, Volume, AudioFreq);
+  cs43l22init (AUDIO_I2C_ADDRESS, gOutputDeviceice, Volume, AudioFreq);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_Play (uint16_t* pBuffer, uint32_t Size) {
+void audioPlay (uint16_t* pBuffer, uint32_t Size) {
 
-  Play (AUDIO_I2C_ADDRESS, pBuffer, Size);
+  cs43l22play (AUDIO_I2C_ADDRESS, pBuffer, Size);
   HAL_I2S_Transmit_DMA (&hAudioOutI2s, pBuffer, DMA_MAX (Size / AUDIODATA_SIZE));
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_ChangeBuffer (uint16_t* pData, uint16_t Size) {
+void audioChangeBuffer (uint16_t* pData, uint16_t Size) {
 
   HAL_I2S_Transmit_DMA (&hAudioOutI2s, pData, Size);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_Pause() {
+void audioPause() {
 
-  Pause (AUDIO_I2C_ADDRESS);
+  cs43l22pause (AUDIO_I2C_ADDRESS);
   HAL_I2S_DMAPause (&hAudioOutI2s);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_Resume() {
+void audioResume() {
 
-  Resume (AUDIO_I2C_ADDRESS);
+  cs43l22resume (AUDIO_I2C_ADDRESS);
   HAL_I2S_DMAResume (&hAudioOutI2s);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_Stop (uint32_t Option) {
+void audioStop (uint32_t Option) {
 
-  /* Call DMA Stop to disable DMA stream before stopping codec */
+  // Call DMA Stop to disable DMA stream before stopping codec
   HAL_I2S_DMAStop (&hAudioOutI2s);
 
-  /* Call Audio Codec Stop function */
-  Stop (AUDIO_I2C_ADDRESS, Option);
+  // Call Audio Codec Stop function
+  cs43l22stop (AUDIO_I2C_ADDRESS, Option);
 
   if (Option == CODEC_PDWN_HW) {
-    /* Wait at least 1ms */
+    // Wait at least 1ms
     HAL_Delay(1);
 
-    /* Reset the pin */
+    // Reset the pin
     HAL_GPIO_WritePin(AUDIO_RESET_GPIO, AUDIO_RESET_PIN, GPIO_PIN_RESET);
     }
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_SetVolume (uint8_t Volume) {
+void audioSetVolume (uint8_t Volume) {
 /* Call the codec volume control function with converted volume value */
 
-  SetVolume (AUDIO_I2C_ADDRESS, Volume);
+  cs43l22setVolume (AUDIO_I2C_ADDRESS, Volume);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_SetMute (uint32_t Cmd) {
+void audioSetMute (uint32_t Cmd) {
 
-  SetMute(AUDIO_I2C_ADDRESS, Cmd);
+  cs43l22setMute (AUDIO_I2C_ADDRESS, Cmd);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_SetOutputMode (uint8_t Output) {
+void audioSetOutputMode (uint8_t Output) {
 
-  SetOutputMode (AUDIO_I2C_ADDRESS, Output);
+  cs43l22setOutputMode (AUDIO_I2C_ADDRESS, Output);
   }
 //}}}
 //{{{
-void BSP_AUDIO_OUT_SetFrequency (uint32_t AudioFreq) {
+void audioSetFrequency (uint32_t AudioFreq) {
 
   // PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups)
   i2sClockConfig (&hAudioOutI2s, AudioFreq, NULL);
