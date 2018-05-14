@@ -15,24 +15,25 @@ const uint8_t kLastMask[8] =  { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF }
 
 //{{{  struct WAVE_FormatTypeDef
 typedef struct {
-  uint32_t   ChunkID;       /* 0 */
-  uint32_t   FileSize;      /* 4 */
-  uint32_t   FileFormat;    /* 8 */
-  uint32_t   SubChunk1ID;   /* 12 */
-  uint32_t   SubChunk1Size; /* 16*/
-  uint16_t   AudioFormat;   /* 20 */
-  uint16_t   NbrChannels;   /* 22 */
-  uint32_t   SampleRate;    /* 24 */
-  uint32_t   ByteRate;      /* 28 */
-  uint16_t   BlockAlign;    /* 32 */
-  uint16_t   BitPerSample;  /* 34 */
-  uint32_t   SubChunk2ID;   /* 36 */
-  uint32_t   SubChunk2Size; /* 40 */
-  } WAVE_FormatTypeDef;
+  uint32_t   ChunkID;       // 0
+  uint32_t   FileSize;      // 4
+  uint32_t   FileFormat;    // 8
+  uint32_t   SubChunk1ID;   // 0x0c
+  uint32_t   SubChunk1Size; // 0x10
+
+  uint16_t   AudioFormat;   // 0x14
+  uint16_t   NbrChannels;   // 0x16
+  uint32_t   SampleRate;    // 0x18
+  uint32_t   ByteRate;      // 0x1C
+  uint16_t   BlockAlign;    // 0x20
+  uint16_t   BitPerSample;  // 0x22
+
+  uint32_t   SubChunk2ID;   // 0x24
+  uint32_t   SubChunk2Size; // 0x28
+  } WAVE_FormatTypeDef;     // 0x2C len
 //}}}
 WAVE_FormatTypeDef* waveFormat;
 uint16_t* waveData;
-
 
 //{{{
 class cLcd {
@@ -1270,7 +1271,7 @@ public:
         else
           mAverageVbat = ((mAverageVbat * 9.f) + vbat) / 10.f;
 
-        BSP_LED_Toggle (LED6);
+        //BSP_LED_Toggle (LED6);
         }
 
       // temp slope 2.5mV / degC
@@ -1350,12 +1351,12 @@ private:
     float subSecondRadius = radius * 1.f;
     drawLine (eOff, centre, centre + cPoint (int16_t(subSecondRadius * sin (subSecondAngle)), int16_t(subSecondRadius * cos (subSecondAngle))));
 
-    subSecondAngle > 0 ? BSP_LED_On (LED3) : BSP_LED_Off (LED3);
-    subSecondAngle <0 ? BSP_LED_On (LED4) : BSP_LED_Off (LED4);
+    //subSecondAngle > 0 ? BSP_LED_On (LED3) : BSP_LED_Off (LED3);
+    //subSecondAngle <0 ? BSP_LED_On (LED4) : BSP_LED_Off (LED4);
     BSP_PB_GetState (BUTTON_KEY) ? BSP_LED_On (LED5) : BSP_LED_Off (LED5);
 
     if (secondAngle != lastSecondAngle)
-      BSP_AUDIO_OUT_Play (waveData, waveFormat->FileSize/2);
+      BSP_AUDIO_OUT_Play (waveData, waveFormat->SubChunk2Size/2);
     lastSecondAngle = secondAngle;
     }
   //}}}
@@ -1509,6 +1510,7 @@ void systemClockInit() {
 void BSP_AUDIO_OUT_TransferComplete_CallBack() {
   //BSP_AUDIO_OUT_ChangeBuffer (waveData, waveFormat->FileSize/2);
   //BSP_AUDIO_OUT_Stop (CODEC_PDWN_SW);
+  printf ("BSP_AUDIO_OUT_TransferComplete_CallBack\n");
   }
 
 int main() {
@@ -1516,10 +1518,10 @@ int main() {
   HAL_Init();
   systemClockInit();
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
-  BSP_LED_Init (LED3);
-  BSP_LED_Init (LED4);
+  //BSP_LED_Init (LED3);
+  //BSP_LED_Init (LED4);
   BSP_LED_Init (LED5);
-  BSP_LED_Init (LED6);
+  //BSP_LED_Init (LED6);
 
   BSP_ACCELERO_Init();
   BSP_ACCELERO_ReadID();
@@ -1528,6 +1530,9 @@ int main() {
   waveData = (uint16_t*)(&crank + sizeof(WAVE_FormatTypeDef));
 
   BSP_AUDIO_OUT_Init (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
+  printf ("wave %d s:%d size:%d ch:%d dataSize:%d\n",
+          sizeof(WAVE_FormatTypeDef),
+          waveFormat->SampleRate, waveFormat->FileSize, waveFormat->NbrChannels, waveFormat->SubChunk2Size);
 
   // get reset flags
   bool pinReset = __HAL_RCC_GET_FLAG (RCC_FLAG_PINRST);
