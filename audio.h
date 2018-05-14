@@ -55,19 +55,20 @@ void audioClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params
 void audioMspInit (I2S_HandleTypeDef *hi2s, void *Params);
 void audioMspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
 
-uint8_t BSP_AUDIO_IN_Init (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr);
-uint8_t BSP_AUDIO_IN_Record (uint16_t *pData, uint32_t Size);
-uint8_t BSP_AUDIO_IN_Stop();
-uint8_t BSP_AUDIO_IN_Pause();
-uint8_t BSP_AUDIO_IN_Resume();
-uint8_t BSP_AUDIO_IN_SetVolume (uint8_t Volume);
-uint8_t BSP_AUDIO_IN_PDMToPCM (uint16_t *PDMBuf, uint16_t *PCMBuf);
-void BSP_AUDIO_IN_TransferComplete_CallBack();
-void BSP_AUDIO_IN_HalfTransfer_CallBack();
-void BSP_AUDIO_IN_Error_Callback();
-void BSP_AUDIO_IN_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params);
-void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params);
-void BSP_AUDIO_IN_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
+uint8_t audioInInit (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr);
+uint8_t audioInRecord (uint16_t *pData, uint32_t Size);
+uint8_t audioInStop();
+uint8_t audioInPause();
+uint8_t audioInResume();
+uint8_t audioInSetVolume (uint8_t Volume);
+uint8_t audioInPDMToPCM (uint16_t *PDMBuf, uint16_t *PCMBuf);
+
+void audioInClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params);
+void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params);
+void audioInMspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
+void audioInTransferComplete_CallBack();
+void audioInHalfTransfer_CallBack();
+void audioInError_Callback();
 //{{{
 #ifdef __cplusplus
 }

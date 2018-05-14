@@ -643,12 +643,12 @@ void HAL_I2S_TxHalfCpltCallback (I2S_HandleTypeDef* hi2s) {
 //}}}
 //{{{
 void HAL_I2S_RxCpltCallback (I2S_HandleTypeDef* hi2s) {
-  BSP_AUDIO_IN_TransferComplete_CallBack();
+  audioInTransferComplete_CallBack();
   }
 //}}}
 //{{{
 void HAL_I2S_RxHalfCpltCallback (I2S_HandleTypeDef* hi2s) {
-  BSP_AUDIO_IN_HalfTransfer_CallBack();
+  audioInHalfTransfer_CallBack();
   }
 //}}}
 //{{{
@@ -657,15 +657,11 @@ void HAL_I2S_ErrorCallback (I2S_HandleTypeDef* hi2s) {
   if (hi2s->Instance == I2S3)
     audioError_CallBack();
   if (hi2s->Instance == I2S2)
-    BSP_AUDIO_IN_Error_Callback();
+    audioInError_Callback();
   }
 //}}}
 
 // audio out interface
-__weak void audioTransferComplete_CallBack() {}
-__weak void audioHalfTransfer_CallBack() {}
-__weak void audioError_CallBack() {}
-
 //{{{
 void audioInit (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
 
@@ -756,9 +752,115 @@ void audioSetFrequency (uint32_t AudioFreq) {
   }
 //}}}
 
-// audio in
+__weak void audioTransferComplete_CallBack() {}
+__weak void audioHalfTransfer_CallBack() {}
+__weak void audioError_CallBack() {}
+
+// audio in interface
 //{{{
-__weak void BSP_AUDIO_IN_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params)
+uint8_t audioInInit (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr) {
+
+  // Configure PLL clock */
+  audioInClockConfig (&hAudioInI2s, AudioFreq, NULL);
+
+  // Configure the PDM library */
+  // On STM32F4-Discovery a single microphone is mounted, samples are duplicated to make stereo audio streams */
+  pdmDecoderInit (AudioFreq, ChnlNbr, 2);
+
+  // Configure the I2S peripheral */
+  hAudioInI2s.Instance = I2S2;
+  if (HAL_I2S_GetState (&hAudioInI2s) == HAL_I2S_STATE_RESET)
+    // Initialize the I2S Msp: this __weak function can be rewritten by the application */
+    audioInMspInit (&hAudioInI2s, NULL);
+
+  i2s2Init (AudioFreq);
+
+  // Return AUDIO_OK when all operations are correctly done */
+  return AUDIO_OK;
+  }
+//}}}
+//{{{
+uint8_t audioInRecord (uint16_t* pbuf, uint32_t size) {
+
+  uint32_t ret = AUDIO_ERROR;
+
+  // Start the process receive DMA
+  HAL_I2S_Receive_DMA (&hAudioInI2s, pbuf, size);
+
+  // Return AUDIO_OK when all operations are correctly done
+  ret = AUDIO_OK;
+
+  return ret;
+  }
+//}}}
+//{{{
+uint8_t audioInStop() {
+
+  uint32_t ret = AUDIO_ERROR;
+
+  // Call the Media layer pause function
+  HAL_I2S_DMAStop (&hAudioInI2s);
+
+  // Return AUDIO_OK when all operations are correctly done
+  ret = AUDIO_OK;
+
+  return ret;
+  }
+//}}}
+//{{{
+uint8_t audioInPause() {
+
+  // Call the Media layer pause function */
+  HAL_I2S_DMAPause(&hAudioInI2s);
+
+  // Return AUDIO_OK when all operations are correctly done */
+  return AUDIO_OK;
+  }
+//}}}
+//{{{
+uint8_t audioInResume() {
+
+  // Call the Media layer pause/resume function */
+  HAL_I2S_DMAResume(&hAudioInI2s);
+
+  // Return AUDIO_OK when all operations are correctly done */
+  return AUDIO_OK;
+  }
+//}}}
+//{{{
+uint8_t audioInSetVolume (uint8_t Volume) {
+
+  // Set the Global variable AudioInVolume */
+  AudioInVolume = Volume;
+
+  // Return AUDIO_OK when all operations are correctly done */
+  return AUDIO_OK;
+  }
+//}}}
+//{{{
+uint8_t audioInPDMToPCM (uint16_t* PDMBuf, uint16_t* PCMBuf) {
+
+  uint16_t AppPDM[INTERNAL_BUFF_SIZE/2];
+
+  // PDM Demux
+  uint32_t index = 0;
+  for (index = 0; index<INTERNAL_BUFF_SIZE/2; index++)
+    AppPDM[index] = HTONS(PDMBuf[index]);
+
+  for (index = 0; index < DEFAULT_AUDIO_IN_CHANNEL_NBR; index++)
+    // PDM to PCM filter
+    PDM_Filter((uint8_t*)&AppPDM[index], (uint16_t*)&(PCMBuf[index]), &PDM_FilterHandler[index]);
+
+  // Duplicate samples since a single microphone in mounted on STM32F4-Discovery
+  for (index = 0; index < PCM_OUT_SIZE; index++)
+    PCMBuf[(index<<1)+1] = PCMBuf[index<<1];
+
+  return AUDIO_OK;
+  }
+//}}}
+
+//{{{
+__weak void audioInClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params)
 {
   RCC_PeriphCLKInitTypeDef rccclkinit;
 
@@ -788,7 +890,7 @@ __weak void BSP_AUDIO_IN_ClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFre
 }
 //}}}
 //{{{
-__weak void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params) {
+__weak void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params) {
 
   static DMA_HandleTypeDef hdma_i2sRx;
   GPIO_InitTypeDef  GPIO_InitStruct;
@@ -849,7 +951,7 @@ __weak void BSP_AUDIO_IN_MspInit (I2S_HandleTypeDef *hi2s, void *Params) {
   }
 //}}}
 //{{{
-__weak void BSP_AUDIO_IN_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
+__weak void audioInMspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
 {
   GPIO_InitTypeDef  gpio_init_structure;
 
@@ -878,108 +980,6 @@ __weak void BSP_AUDIO_IN_MspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
      by surcgarging this __weak function */
 }
 //}}}
-__weak void BSP_AUDIO_IN_TransferComplete_CallBack() {}
-__weak void BSP_AUDIO_IN_HalfTransfer_CallBack() {}
-__weak void BSP_AUDIO_IN_Error_Callback() {}
-
-//{{{
-uint8_t BSP_AUDIO_IN_Init (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr) {
-
-  // Configure PLL clock */
-  BSP_AUDIO_IN_ClockConfig (&hAudioInI2s, AudioFreq, NULL);
-
-  // Configure the PDM library */
-  // On STM32F4-Discovery a single microphone is mounted, samples are duplicated to make stereo audio streams */
-  pdmDecoderInit (AudioFreq, ChnlNbr, 2);
-
-  // Configure the I2S peripheral */
-  hAudioInI2s.Instance = I2S2;
-  if (HAL_I2S_GetState (&hAudioInI2s) == HAL_I2S_STATE_RESET)
-    // Initialize the I2S Msp: this __weak function can be rewritten by the application */
-    BSP_AUDIO_IN_MspInit (&hAudioInI2s, NULL);
-
-  i2s2Init (AudioFreq);
-
-  // Return AUDIO_OK when all operations are correctly done */
-  return AUDIO_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_AUDIO_IN_Record (uint16_t* pbuf, uint32_t size) {
-
-  uint32_t ret = AUDIO_ERROR;
-
-  // Start the process receive DMA
-  HAL_I2S_Receive_DMA (&hAudioInI2s, pbuf, size);
-
-  // Return AUDIO_OK when all operations are correctly done
-  ret = AUDIO_OK;
-
-  return ret;
-  }
-//}}}
-//{{{
-uint8_t BSP_AUDIO_IN_Stop() {
-
-  uint32_t ret = AUDIO_ERROR;
-
-  // Call the Media layer pause function
-  HAL_I2S_DMAStop (&hAudioInI2s);
-
-  // Return AUDIO_OK when all operations are correctly done
-  ret = AUDIO_OK;
-
-  return ret;
-  }
-//}}}
-//{{{
-uint8_t BSP_AUDIO_IN_Pause() {
-
-  // Call the Media layer pause function */
-  HAL_I2S_DMAPause(&hAudioInI2s);
-
-  // Return AUDIO_OK when all operations are correctly done */
-  return AUDIO_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_AUDIO_IN_Resume() {
-
-  // Call the Media layer pause/resume function */
-  HAL_I2S_DMAResume(&hAudioInI2s);
-
-  // Return AUDIO_OK when all operations are correctly done */
-  return AUDIO_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_AUDIO_IN_SetVolume (uint8_t Volume) {
-
-  // Set the Global variable AudioInVolume */
-  AudioInVolume = Volume;
-
-  // Return AUDIO_OK when all operations are correctly done */
-  return AUDIO_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_AUDIO_IN_PDMToPCM (uint16_t* PDMBuf, uint16_t* PCMBuf) {
-
-  uint16_t AppPDM[INTERNAL_BUFF_SIZE/2];
-
-  // PDM Demux
-  uint32_t index = 0;
-  for (index = 0; index<INTERNAL_BUFF_SIZE/2; index++)
-    AppPDM[index] = HTONS(PDMBuf[index]);
-
-  for (index = 0; index < DEFAULT_AUDIO_IN_CHANNEL_NBR; index++)
-    // PDM to PCM filter
-    PDM_Filter((uint8_t*)&AppPDM[index], (uint16_t*)&(PCMBuf[index]), &PDM_FilterHandler[index]);
-
-  // Duplicate samples since a single microphone in mounted on STM32F4-Discovery
-  for (index = 0; index < PCM_OUT_SIZE; index++)
-    PCMBuf[(index<<1)+1] = PCMBuf[index<<1];
-
-  return AUDIO_OK;
-  }
-//}}}
+__weak void audioInTransferComplete_CallBack() {}
+__weak void audioInHalfTransfer_CallBack() {}
+__weak void audioInError_Callback() {}
