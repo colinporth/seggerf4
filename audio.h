@@ -1,9 +1,4 @@
 #pragma once
-//{{{
-#ifdef __cplusplus
- extern "C" {
-#endif
-//}}}
 #include "stm32f4xx_hal.h"
 
 // Audio status definition
@@ -43,9 +38,7 @@ void audioPause();
 void audioResume();
 void audioStop (uint32_t Option);
 void audioSetVolume (uint8_t Volume);
-void audioSetFrequency (uint32_t AudioFreq);
 void audioSetMute (uint32_t Cmd);
-void audioSetOutputMode (uint8_t Output);
 
 void audioTransferComplete_CallBack();
 void audioHalfTransfer_CallBack();
@@ -68,8 +61,3 @@ void audioInMspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
 void audioInTransferComplete_CallBack();
 void audioInHalfTransfer_CallBack();
 void audioInError_Callback();
-//{{{
-#ifdef __cplusplus
-}
-#endif
-//}}}

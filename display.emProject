@@ -159,7 +159,6 @@
     </folder>
     <file file_name="accelerometer.c" />
     <file file_name="ledsButton.c" />
-    <file file_name="audio.c" />
     <folder Name="includes">
       <file file_name="accelerometer.h" />
       <file file_name="audio.h" />
@@ -168,6 +167,7 @@
       <file file_name="stm32f4xx_hal_conf.h" />
     </folder>
     <file file_name="crank.c" />
+    <file file_name="audio.cpp" />
   </project>
   <configuration
     Name="Debug"

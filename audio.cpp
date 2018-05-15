@@ -183,21 +183,25 @@ const uint32_t I2SPLLR[8] = { 5, 4, 4, 4, 4, 6, 3, 1 };
 
 I2S_HandleTypeDef hAudioOutI2s;
 I2S_HandleTypeDef hAudioInI2s;
+DMA_HandleTypeDef hdma_i2sTx;
+DMA_HandleTypeDef hdma_i2sRx;
+
+extern "C" {
+  void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
+  void I2S3_IRQHandler() { HAL_DMA_IRQHandler (hAudioOutI2s.hdmatx); }
+  }
+
+I2C_HandleTypeDef I2cHandle;
+uint8_t gOutputDevice = 0;
+uint8_t gOutputStop = 1;
+
+PDM_Filter_Handler_t PDM_FilterHandler[2];
+PDM_Filter_Config_t PDM_FilterConfig[2];
 uint16_t AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
-
-void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
-void I2S3_IRQHandler() { HAL_DMA_IRQHandler (hAudioOutI2s.hdmatx); }
-
-static I2C_HandleTypeDef I2cHandle;
-static uint8_t gOutputDevice = 0;
-static uint8_t gOutputStop = 1;
-
-static PDM_Filter_Handler_t PDM_FilterHandler[2];
-static PDM_Filter_Config_t PDM_FilterConfig[2];
 
 // i2c control
 //{{{
-static void i2cInit() {
+void i2cInit() {
 
   printf ("i2cInit\n");
 
@@ -263,7 +267,7 @@ static void i2cInit() {
   }
 //}}}
 //{{{
-static uint8_t i2cRead (uint8_t addr, uint16_t reg) {
+uint8_t i2cRead (uint8_t addr, uint16_t reg) {
 
   uint8_t value = 0;
   if (HAL_I2C_Mem_Read (&I2cHandle, addr, reg, I2C_MEMADD_SIZE_8BIT, &value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
@@ -275,7 +279,7 @@ static uint8_t i2cRead (uint8_t addr, uint16_t reg) {
   }
 //}}}
 //{{{
-static void i2cWrite (uint8_t addr, uint16_t reg, uint8_t value) {
+void i2cWrite (uint8_t addr, uint16_t reg, uint8_t value) {
 
   if (HAL_I2C_Mem_Write(&I2cHandle, addr, reg, I2C_MEMADD_SIZE_8BIT, &value, 1, I2Cx_TIMEOUT_MAX) != HAL_OK)
     printf ("i2cWrite error %x %x %x\n", addr, reg, value);
@@ -286,9 +290,7 @@ static void i2cWrite (uint8_t addr, uint16_t reg, uint8_t value) {
 
 // i2s config
 //{{{
-static void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
-
-  static DMA_HandleTypeDef hdma_i2sTx;
+void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
 
   // Enable I2S3 clock
   I2S3_CLK_ENABLE();
@@ -341,7 +343,7 @@ static void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
   }
 //}}}
 //{{{
-static void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params) {
+void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params) {
 
   uint8_t index = 0;
   uint8_t freqindex = 0xFF;
@@ -375,7 +377,7 @@ static void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* P
   }
 //}}}
 //{{{
-static void i2s2Init (uint32_t AudioFreq) {
+void i2s2Init (uint32_t AudioFreq) {
 
   printf ("i2s2Init\n");
 
@@ -400,7 +402,7 @@ static void i2s2Init (uint32_t AudioFreq) {
   }
 //}}}
 //{{{
-static void i2s3Init (uint32_t AudioFreq) {
+void i2s3Init (uint32_t AudioFreq) {
 
   printf ("i2s3Init\n");
 
@@ -425,7 +427,7 @@ static void i2s3Init (uint32_t AudioFreq) {
   }
 //}}}
 //{{{
-static void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut) {
+void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut) {
 
   printf ("pdmDecoderInit\n");
 
@@ -453,7 +455,7 @@ static void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t Chn
 
 // cs43l22 control
 //{{{
-static void cs43l22setVolume (uint16_t deviceAddr, uint8_t volume) {
+void cs43l22setVolume (uint16_t deviceAddr, uint8_t volume) {
 
   uint8_t convertedVolume = VOLUME_CONVERT (volume);
   if (convertedVolume > 0xE6) {
@@ -467,7 +469,7 @@ static void cs43l22setVolume (uint16_t deviceAddr, uint8_t volume) {
   }
 //}}}
 //{{{
-static void cs43l22setOutputMode (uint16_t deviceAddr, uint8_t Output) {
+void cs43l22setOutputMode (uint16_t deviceAddr, uint8_t Output) {
 
   switch (Output) {
     case OUTPUT_DEVICE_SPEAKER:
@@ -491,7 +493,7 @@ static void cs43l22setOutputMode (uint16_t deviceAddr, uint8_t Output) {
   }
 //}}}
 //{{{
-static void cs43l22setMute (uint16_t deviceAddr, uint32_t cmd) {
+void cs43l22setMute (uint16_t deviceAddr, uint32_t cmd) {
 
   // Set the Mute mode
   if (cmd == AUDIO_MUTE_ON) {
@@ -507,7 +509,7 @@ static void cs43l22setMute (uint16_t deviceAddr, uint32_t cmd) {
   }
 //}}}
 //{{{
-static void cs43l22init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
+void cs43l22init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
 
   printf ("cs43l22init\n");
 
@@ -553,7 +555,7 @@ static void cs43l22init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t
   }
 //}}}
 //{{{
-static uint8_t cs43l22readId (uint16_t deviceAddr) {
+uint8_t cs43l22readId (uint16_t deviceAddr) {
 
   i2cInit();
 
@@ -563,7 +565,7 @@ static uint8_t cs43l22readId (uint16_t deviceAddr) {
   }
 //}}}
 //{{{
-static void cs43l22play (uint16_t deviceAddr, uint16_t* pBuffer, uint16_t Size) {
+void cs43l22play (uint16_t deviceAddr, uint16_t* pBuffer, uint16_t Size) {
 
   if (gOutputStop == 1) {
     // enable digital soft ramp
@@ -580,7 +582,7 @@ static void cs43l22play (uint16_t deviceAddr, uint16_t* pBuffer, uint16_t Size) 
   }
 //}}}
 //{{{
-static void cs43l22pause (uint16_t deviceAddr) {
+void cs43l22pause (uint16_t deviceAddr) {
 
   // pause audio file playing, Mute the output first
   cs43l22setMute (deviceAddr, AUDIO_MUTE_ON);
@@ -590,7 +592,7 @@ static void cs43l22pause (uint16_t deviceAddr) {
   }
 //}}}
 //{{{
-static void cs43l22resume (uint16_t deviceAddr) {
+void cs43l22resume (uint16_t deviceAddr) {
 
   // resumes playing, Unmute the output first
   cs43l22setMute (deviceAddr, AUDIO_MUTE_OFF);
@@ -605,7 +607,7 @@ static void cs43l22resume (uint16_t deviceAddr) {
   }
 //}}}
 //{{{
-static void cs43l22stop (uint16_t deviceAddr, uint32_t CodecPdwnMode) {
+void cs43l22stop (uint16_t deviceAddr, uint32_t CodecPdwnMode) {
 
   // mute output first
   cs43l22setMute (deviceAddr, AUDIO_MUTE_ON);
@@ -727,22 +729,6 @@ void audioSetVolume (uint8_t Volume) {
 void audioSetMute (uint32_t Cmd) {
 
   cs43l22setMute (AUDIO_I2C_ADDRESS, Cmd);
-  }
-//}}}
-//{{{
-void audioSetOutputMode (uint8_t Output) {
-
-  cs43l22setOutputMode (AUDIO_I2C_ADDRESS, Output);
-  }
-//}}}
-//{{{
-void audioSetFrequency (uint32_t AudioFreq) {
-
-  // PLL clock is set depending by the AudioFreq (44.1khz vs 48khz groups)
-  i2sClockConfig (&hAudioOutI2s, AudioFreq, NULL);
-
-  // Update the I2S audio frequency configuration */
-  i2s3Init (AudioFreq);
   }
 //}}}
 
@@ -885,7 +871,6 @@ __weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, voi
 //{{{
 __weak void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params) {
 
-  static DMA_HandleTypeDef hdma_i2sRx;
   GPIO_InitTypeDef  GPIO_InitStruct;
 
   // Enable the I2S2 peripheral clock */
