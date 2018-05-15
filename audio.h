@@ -9,7 +9,6 @@
 #define OUTPUT_DEVICE_SPEAKER    1
 #define OUTPUT_DEVICE_HEADPHONE  2
 #define OUTPUT_DEVICE_BOTH       3
-#define OUTPUT_DEVICE_AUTO       4
 
 // Codec POWER DOWN modes
 #define CODEC_PDWN_HW         1

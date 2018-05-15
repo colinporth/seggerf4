@@ -1518,9 +1518,9 @@ int main() {
   HAL_Init();
   systemClockInit();
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
+  BSP_LED_Init (LED5);
   //BSP_LED_Init (LED3);
   //BSP_LED_Init (LED4);
-  BSP_LED_Init (LED5);
   //BSP_LED_Init (LED6);
 
   BSP_ACCELERO_Init();
@@ -1529,7 +1529,7 @@ int main() {
   waveFormat = (WAVE_FormatTypeDef*)&crank;
   waveData = (uint16_t*)(&crank + sizeof(WAVE_FormatTypeDef));
 
-  audioOutInit (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
+  audioOutInit (OUTPUT_DEVICE_BOTH, 90, waveFormat->SampleRate);
   printf ("wave %d s:%d size:%d ch:%d dataSize:%d\n",
           sizeof(WAVE_FormatTypeDef),
           waveFormat->SampleRate, waveFormat->FileSize, waveFormat->NbrChannels, waveFormat->SubChunk2Size);
