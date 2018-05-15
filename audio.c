@@ -184,6 +184,7 @@ const uint32_t I2SPLLR[8] = { 5, 4, 4, 4, 4, 6, 3, 1 };
 I2S_HandleTypeDef hAudioOutI2s;
 I2S_HandleTypeDef hAudioInI2s;
 uint16_t AudioInVolume = DEFAULT_AUDIO_IN_VOLUME;
+
 void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
 void I2S3_IRQHandler() { HAL_DMA_IRQHandler (hAudioOutI2s.hdmatx); }
 
@@ -456,12 +457,10 @@ static void cs43l22setVolume (uint16_t deviceAddr, uint8_t volume) {
 
   uint8_t convertedVolume = VOLUME_CONVERT (volume);
   if (convertedVolume > 0xE6) {
-    // Set the Master volume
     i2cWrite (deviceAddr, CS43L22_REG_MASTER_A_VOL, convertedVolume - 0xE7);
     i2cWrite (deviceAddr, CS43L22_REG_MASTER_B_VOL, convertedVolume - 0xE7);
     }
   else {
-    // Set the Master volume
     i2cWrite (deviceAddr, CS43L22_REG_MASTER_A_VOL, convertedVolume + 0x19);
     i2cWrite (deviceAddr, CS43L22_REG_MASTER_B_VOL, convertedVolume + 0x19);
     }
@@ -501,7 +500,6 @@ static void cs43l22setMute (uint16_t deviceAddr, uint32_t cmd) {
     i2cWrite (deviceAddr, CS43L22_REG_HEADPHONE_B_VOL, 0x01);
     }
   else {
-    // AUDIO_MUTE_OFF Disable the Mute
     i2cWrite (deviceAddr, CS43L22_REG_HEADPHONE_A_VOL, 0x00);
     i2cWrite (deviceAddr, CS43L22_REG_HEADPHONE_B_VOL, 0x00);
     i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL2, gOutputDevice);
@@ -587,7 +585,7 @@ static void cs43l22pause (uint16_t deviceAddr) {
   // pause audio file playing, Mute the output first
   cs43l22setMute (deviceAddr, AUDIO_MUTE_ON);
 
-  // put odec in Power save mode
+  // put codec in Power save mode
   i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL1, 0x01);
   }
 //}}}
@@ -599,6 +597,7 @@ static void cs43l22resume (uint16_t deviceAddr) {
 
   volatile uint32_t index = 0x00;
   for (index = 0x00; index < 0xFF; index++);
+
   i2cWrite (deviceAddr, CS43L22_REG_POWER_CTL2, gOutputDevice);
 
   // exit power save mode
