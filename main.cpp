@@ -1529,7 +1529,7 @@ int main() {
   waveFormat = (WAVE_FormatTypeDef*)&crank;
   waveData = (uint16_t*)(&crank + sizeof(WAVE_FormatTypeDef));
 
-  audioInit (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
+  audioOutInit (OUTPUT_DEVICE_HEADPHONE, 75, waveFormat->SampleRate);
   printf ("wave %d s:%d size:%d ch:%d dataSize:%d\n",
           sizeof(WAVE_FormatTypeDef),
           waveFormat->SampleRate, waveFormat->FileSize, waveFormat->NbrChannels, waveFormat->SubChunk2Size);
