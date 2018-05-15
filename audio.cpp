@@ -183,8 +183,8 @@ const uint32_t I2SPLLR[8] = { 5, 4, 4, 4, 4, 6, 3, 1 };
 
 I2S_HandleTypeDef hAudioOutI2s;
 I2S_HandleTypeDef hAudioInI2s;
-DMA_HandleTypeDef hdma_i2sTx;
-DMA_HandleTypeDef hdma_i2sRx;
+DMA_HandleTypeDef gI2sTxDma;
+DMA_HandleTypeDef gI2sRxDma;
 
 extern "C" {
   void I2S2_IRQHandler() { HAL_DMA_IRQHandler(hAudioInI2s.hdmarx); }
@@ -290,7 +290,41 @@ void i2cWrite (uint8_t addr, uint16_t reg, uint8_t value) {
 
 // i2s config
 //{{{
-void i2sInit (I2S_HandleTypeDef* hi2s, void* Params, uint32_t sampleRate) {
+void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate) {
+
+  uint8_t index = 0;
+  uint8_t freqindex = 0xFF;
+  for (index = 0; index < 8; index++)
+    if (I2SFreq[index] == sampleRate)
+      freqindex = index;
+
+  // Enable PLLI2S clock
+  RCC_PeriphCLKInitTypeDef rccclkinit;
+  HAL_RCCEx_GetPeriphCLKConfig(&rccclkinit);
+
+  // PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz
+  if ((freqindex & 0x7) == 0) {
+    // I2S clock config
+    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
+    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
+    rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
+    rccclkinit.PLLI2S.PLLI2SN = I2SPLLN[freqindex];
+    rccclkinit.PLLI2S.PLLI2SR = I2SPLLR[freqindex];
+    HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
+    }
+  else {
+    // I2S clock config
+    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
+    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
+    rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
+    rccclkinit.PLLI2S.PLLI2SN = 258;
+    rccclkinit.PLLI2S.PLLI2SR = 3;
+    HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
+    }
+  }
+//}}}
+//{{{
+void i2sOutInit (I2S_HandleTypeDef* hi2s, uint32_t sampleRate) {
 
   // i2s peripheral configuration
   hAudioOutI2s.Instance = I2S3;
@@ -328,22 +362,22 @@ void i2sInit (I2S_HandleTypeDef* hi2s, void* Params, uint32_t sampleRate) {
 
   // Enable the i2s3 DMA clock
   I2S3_DMAx_CLK_ENABLE();
-  hdma_i2sTx.Instance                 = I2S3_DMAx_STREAM;
-  hdma_i2sTx.Init.Channel             = I2S3_DMAx_CHANNEL;
-  hdma_i2sTx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
-  hdma_i2sTx.Init.PeriphInc           = DMA_PINC_DISABLE;
-  hdma_i2sTx.Init.MemInc              = DMA_MINC_ENABLE;
-  hdma_i2sTx.Init.PeriphDataAlignment = I2S3_DMAx_PERIPH_DATA_SIZE;
-  hdma_i2sTx.Init.MemDataAlignment    = I2S3_DMAx_MEM_DATA_SIZE;
-  hdma_i2sTx.Init.Mode                = DMA_NORMAL;
-  hdma_i2sTx.Init.Priority            = DMA_PRIORITY_HIGH;
-  hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
-  hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-  hdma_i2sTx.Init.MemBurst            = DMA_MBURST_SINGLE;
-  hdma_i2sTx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
-  __HAL_LINKDMA (hi2s, hdmatx, hdma_i2sTx);
-  HAL_DMA_DeInit (&hdma_i2sTx);
-  HAL_DMA_Init (&hdma_i2sTx);
+  gI2sTxDma.Instance                 = I2S3_DMAx_STREAM;
+  gI2sTxDma.Init.Channel             = I2S3_DMAx_CHANNEL;
+  gI2sTxDma.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+  gI2sTxDma.Init.PeriphInc           = DMA_PINC_DISABLE;
+  gI2sTxDma.Init.MemInc              = DMA_MINC_ENABLE;
+  gI2sTxDma.Init.PeriphDataAlignment = I2S3_DMAx_PERIPH_DATA_SIZE;
+  gI2sTxDma.Init.MemDataAlignment    = I2S3_DMAx_MEM_DATA_SIZE;
+  gI2sTxDma.Init.Mode                = DMA_NORMAL;
+  gI2sTxDma.Init.Priority            = DMA_PRIORITY_HIGH;
+  gI2sTxDma.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  gI2sTxDma.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  gI2sTxDma.Init.MemBurst            = DMA_MBURST_SINGLE;
+  gI2sTxDma.Init.PeriphBurst         = DMA_PBURST_SINGLE;
+  __HAL_LINKDMA (hi2s, hdmatx, gI2sTxDma);
+  HAL_DMA_DeInit (&gI2sTxDma);
+  HAL_DMA_Init (&gI2sTxDma);
 
   // i2s3 DMA IRQ Channel configuration
   HAL_NVIC_SetPriority (I2S3_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
@@ -355,40 +389,6 @@ void i2sInit (I2S_HandleTypeDef* hi2s, void* Params, uint32_t sampleRate) {
     printf ("i2s3Init error\n");
   }
   //}}}
-//{{{
-void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate, void* Params) {
-
-  uint8_t index = 0;
-  uint8_t freqindex = 0xFF;
-  for (index = 0; index < 8; index++)
-    if (I2SFreq[index] == sampleRate)
-      freqindex = index;
-
-  // Enable PLLI2S clock */
-  RCC_PeriphCLKInitTypeDef rccclkinit;
-  HAL_RCCEx_GetPeriphCLKConfig(&rccclkinit);
-
-  // PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz
-  if ((freqindex & 0x7) == 0) {
-    // I2S clock config
-    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
-    rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-    rccclkinit.PLLI2S.PLLI2SN = I2SPLLN[freqindex];
-    rccclkinit.PLLI2S.PLLI2SR = I2SPLLR[freqindex];
-    HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
-    }
-  else {
-    // I2S clock config
-    // PLLI2S_VCO = f(VCO clock) = f(PLLI2S clock input) × (PLLI2SN/PLLM)
-    // I2SCLK = f(PLLI2S clock output) = f(VCO clock) / PLLI2SR
-    rccclkinit.PeriphClockSelection = RCC_PERIPHCLK_I2S;
-    rccclkinit.PLLI2S.PLLI2SN = 258;
-    rccclkinit.PLLI2S.PLLI2SR = 3;
-    HAL_RCCEx_PeriphCLKConfig(&rccclkinit);
-    }
-  }
-//}}}
 //{{{
 void i2s2Init (uint32_t sampleRate) {
 
@@ -645,18 +645,20 @@ void HAL_I2S_ErrorCallback (I2S_HandleTypeDef* hi2s) {
   }
 //}}}
 
-// audio out interface
+// audio interface
 //{{{
-void audioInit (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t sampleRate) {
+void audioInit (uint16_t outputDevice, uint8_t volume, uint32_t sampleRate) {
 
-  printf ("audioId:%x\n", cs43l22readId (AUDIO_I2C_ADDRESS));
+  printf ("audioInit - id:%x\n", cs43l22readId (AUDIO_I2C_ADDRESS));
 
   // PLL clock depends on sampleRate, 44.1khz vs 48khz
-  i2sClockConfig (&hAudioOutI2s, sampleRate, NULL);
-  i2sInit (&hAudioOutI2s, NULL, sampleRate);
-  cs43l22init (AUDIO_I2C_ADDRESS, gOutputDeviceice, Volume, sampleRate);
+  i2sClockConfig (&hAudioOutI2s, sampleRate);
+  i2sOutInit (&hAudioOutI2s, sampleRate);
+  cs43l22init (AUDIO_I2C_ADDRESS, outputDevice, volume, sampleRate);
   }
 //}}}
+
+// audio out interface
 //{{{
 void audioPlay (uint16_t* buffer, uint32_t size) {
 
@@ -725,7 +727,7 @@ __weak void audioError_CallBack() {}
 uint8_t audioInInit (uint32_t sampleRate, uint32_t BitRes, uint32_t ChnlNbr) {
 
   // Configure PLL clock */
-  audioInClockConfig (&hAudioInI2s, sampleRate, NULL);
+  audioInClockConfig (&hAudioInI2s, sampleRate);
 
   // Configure the PDM library */
   // On STM32F4-Discovery a single microphone is mounted, samples are duplicated to make stereo audio streams */
@@ -735,7 +737,7 @@ uint8_t audioInInit (uint32_t sampleRate, uint32_t BitRes, uint32_t ChnlNbr) {
   hAudioInI2s.Instance = I2S2;
   if (HAL_I2S_GetState (&hAudioInI2s) == HAL_I2S_STATE_RESET)
     // Initialize the I2S Msp: this __weak function can be rewritten by the application */
-    audioInMspInit (&hAudioInI2s, NULL);
+    audioInMspInit (&hAudioInI2s);
 
   i2s2Init (sampleRate);
 
@@ -824,7 +826,7 @@ uint8_t audioInPDMToPCM (uint16_t* PDMBuf, uint16_t* PCMBuf) {
 //}}}
 
 //{{{
-__weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate, void* Params)
+__weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate)
 {
   RCC_PeriphCLKInitTypeDef rccclkinit;
 
@@ -853,14 +855,14 @@ __weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate, vo
   }
 //}}}
 //{{{
-__weak void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params) {
+__weak void audioInMspInit (I2S_HandleTypeDef *hi2s) {
 
   GPIO_InitTypeDef  GPIO_InitStruct;
 
-  // Enable the I2S2 peripheral clock */
+  // Enable the I2S2 peripheral clock
   I2S2_CLK_ENABLE();
 
-  // Enable I2S GPIO clocks */
+  // Enable I2S GPIO clocks
   I2S2_SCK_GPIO_CLK_ENABLE();
   I2S2_MOSI_GPIO_CLK_ENABLE();
 
@@ -877,43 +879,41 @@ __weak void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params) {
   GPIO_InitStruct.Alternate = I2S2_MOSI_AF;
   HAL_GPIO_Init(I2S2_MOSI_GPIO_PORT, &GPIO_InitStruct);
 
-  // Enable the DMA clock */
+  // Enable the DMA clock
   I2S2_DMAx_CLK_ENABLE();
 
-  if(hi2s->Instance == I2S2) {
-    // Configure the hdma_i2sRx handle parameters */
-    hdma_i2sRx.Init.Channel             = I2S2_DMAx_CHANNEL;
-    hdma_i2sRx.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-    hdma_i2sRx.Init.PeriphInc           = DMA_PINC_DISABLE;
-    hdma_i2sRx.Init.MemInc              = DMA_MINC_ENABLE;
-    hdma_i2sRx.Init.PeriphDataAlignment = I2S2_DMAx_PERIPH_DATA_SIZE;
-    hdma_i2sRx.Init.MemDataAlignment    = I2S2_DMAx_MEM_DATA_SIZE;
-    hdma_i2sRx.Init.Mode                = DMA_CIRCULAR;
-    hdma_i2sRx.Init.Priority            = DMA_PRIORITY_HIGH;
-    hdma_i2sRx.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
-    hdma_i2sRx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-    hdma_i2sRx.Init.MemBurst            = DMA_MBURST_SINGLE;
-    hdma_i2sRx.Init.PeriphBurst         = DMA_MBURST_SINGLE;
+  // Configure the gI2sRxDma handle parameters
+  gI2sRxDma.Init.Channel             = I2S2_DMAx_CHANNEL;
+  gI2sRxDma.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+  gI2sRxDma.Init.PeriphInc           = DMA_PINC_DISABLE;
+  gI2sRxDma.Init.MemInc              = DMA_MINC_ENABLE;
+  gI2sRxDma.Init.PeriphDataAlignment = I2S2_DMAx_PERIPH_DATA_SIZE;
+  gI2sRxDma.Init.MemDataAlignment    = I2S2_DMAx_MEM_DATA_SIZE;
+  gI2sRxDma.Init.Mode                = DMA_CIRCULAR;
+  gI2sRxDma.Init.Priority            = DMA_PRIORITY_HIGH;
+  gI2sRxDma.Init.FIFOMode            = DMA_FIFOMODE_DISABLE;
+  gI2sRxDma.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  gI2sRxDma.Init.MemBurst            = DMA_MBURST_SINGLE;
+  gI2sRxDma.Init.PeriphBurst         = DMA_MBURST_SINGLE;
 
-    hdma_i2sRx.Instance = I2S2_DMAx_STREAM;
+  gI2sRxDma.Instance = I2S2_DMAx_STREAM;
 
-    // Associate the DMA handle */
-    __HAL_LINKDMA(hi2s, hdmarx, hdma_i2sRx);
+  // Associate the DMA handle */
+  __HAL_LINKDMA (hi2s, hdmarx, gI2sRxDma);
 
-    // Deinitialize the Stream for new transfer */
-    HAL_DMA_DeInit(&hdma_i2sRx);
+  // Deinitialize the Stream for new transfer
+  HAL_DMA_DeInit (&gI2sRxDma);
 
-    // Configure the DMA Stream */
-    HAL_DMA_Init(&hdma_i2sRx);
-    }
+  // Configure the DMA Stream
+  HAL_DMA_Init (&gI2sRxDma);
 
-  // I2S DMA IRQ Channel configuration */
-  HAL_NVIC_SetPriority(I2S2_DMAx_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
-  HAL_NVIC_EnableIRQ(I2S2_DMAx_IRQ);
+  // I2S DMA IRQ Channel configuration
+  HAL_NVIC_SetPriority (I2S2_DMAx_IRQ, AUDIO_IN_IRQ_PREPRIO, 0);
+  HAL_NVIC_EnableIRQ (I2S2_DMAx_IRQ);
   }
 //}}}
 //{{{
-__weak void audioInMspDeInit (I2S_HandleTypeDef *hi2s, void *Params)
+__weak void audioInMspDeInit (I2S_HandleTypeDef* hi2s)
 {
   GPIO_InitTypeDef  gpio_init_structure;
 
