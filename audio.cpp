@@ -290,16 +290,26 @@ void i2cWrite (uint8_t addr, uint16_t reg, uint8_t value) {
 
 // i2s config
 //{{{
-void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
+void i2sInit (I2S_HandleTypeDef* hi2s, void* Params, uint32_t sampleRate) {
 
-  // Enable I2S3 clock
+  // i2s peripheral configuration
+  hAudioOutI2s.Instance = I2S3;
+  hAudioOutI2s.Init.AudioFreq   = sampleRate;
+  hAudioOutI2s.Init.ClockSource = I2S_CLOCK_PLL;
+  hAudioOutI2s.Init.CPOL        = I2S_CPOL_LOW;
+  hAudioOutI2s.Init.DataFormat  = I2S_DATAFORMAT_16B;
+  hAudioOutI2s.Init.MCLKOutput  = I2S_MCLKOUTPUT_ENABLE;
+  hAudioOutI2s.Init.Mode        = I2S_MODE_MASTER_TX;
+  hAudioOutI2s.Init.Standard    = I2S_STANDARD;
+
+  // enable i2s3 clock
   I2S3_CLK_ENABLE();
 
-  // Enable I2S GPIO clocks
+  // enable i2s3 GPIO clocks
   I2S3_SCK_SD_CLK_ENABLE();
   I2S3_WS_CLK_ENABLE();
 
-  // I2S3 pins configuration: WS, SCK and SD pins
+  // i2s3 pin config WS, SCK and SD pins
   GPIO_InitTypeDef GPIO_InitStruct;
   GPIO_InitStruct.Pin = I2S3_SCK_PIN | I2S3_SD_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -311,44 +321,47 @@ void i2sInit (I2S_HandleTypeDef* hi2s, void* Params) {
   GPIO_InitStruct.Pin = I2S3_WS_PIN ;
   HAL_GPIO_Init (I2S3_WS_GPIO_PORT, &GPIO_InitStruct);
 
-  // I2S3 pins configuration: MCK pin
+  // i2s3 config MCK pin
   I2S3_MCK_CLK_ENABLE();
   GPIO_InitStruct.Pin = I2S3_MCK_PIN;
   HAL_GPIO_Init (I2S3_MCK_GPIO_PORT, &GPIO_InitStruct);
 
-  // Enable the I2S DMA clock
+  // Enable the i2s3 DMA clock
   I2S3_DMAx_CLK_ENABLE();
-  if (hi2s->Instance == I2S3) {
-    hdma_i2sTx.Instance                 = I2S3_DMAx_STREAM;
-    hdma_i2sTx.Init.Channel             = I2S3_DMAx_CHANNEL;
-    hdma_i2sTx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
-    hdma_i2sTx.Init.PeriphInc           = DMA_PINC_DISABLE;
-    hdma_i2sTx.Init.MemInc              = DMA_MINC_ENABLE;
-    hdma_i2sTx.Init.PeriphDataAlignment = I2S3_DMAx_PERIPH_DATA_SIZE;
-    hdma_i2sTx.Init.MemDataAlignment    = I2S3_DMAx_MEM_DATA_SIZE;
-    hdma_i2sTx.Init.Mode                = DMA_NORMAL;
-    hdma_i2sTx.Init.Priority            = DMA_PRIORITY_HIGH;
-    hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
-    hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
-    hdma_i2sTx.Init.MemBurst            = DMA_MBURST_SINGLE;
-    hdma_i2sTx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
-    __HAL_LINKDMA (hi2s, hdmatx, hdma_i2sTx);
-    HAL_DMA_DeInit (&hdma_i2sTx);
-    HAL_DMA_Init (&hdma_i2sTx);
-    }
+  hdma_i2sTx.Instance                 = I2S3_DMAx_STREAM;
+  hdma_i2sTx.Init.Channel             = I2S3_DMAx_CHANNEL;
+  hdma_i2sTx.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+  hdma_i2sTx.Init.PeriphInc           = DMA_PINC_DISABLE;
+  hdma_i2sTx.Init.MemInc              = DMA_MINC_ENABLE;
+  hdma_i2sTx.Init.PeriphDataAlignment = I2S3_DMAx_PERIPH_DATA_SIZE;
+  hdma_i2sTx.Init.MemDataAlignment    = I2S3_DMAx_MEM_DATA_SIZE;
+  hdma_i2sTx.Init.Mode                = DMA_NORMAL;
+  hdma_i2sTx.Init.Priority            = DMA_PRIORITY_HIGH;
+  hdma_i2sTx.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  hdma_i2sTx.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  hdma_i2sTx.Init.MemBurst            = DMA_MBURST_SINGLE;
+  hdma_i2sTx.Init.PeriphBurst         = DMA_PBURST_SINGLE;
+  __HAL_LINKDMA (hi2s, hdmatx, hdma_i2sTx);
+  HAL_DMA_DeInit (&hdma_i2sTx);
+  HAL_DMA_Init (&hdma_i2sTx);
 
-  // I2S DMA IRQ Channel configuration
+  // i2s3 DMA IRQ Channel configuration
   HAL_NVIC_SetPriority (I2S3_DMAx_IRQ, AUDIO_OUT_IRQ_PREPRIO, 0);
   HAL_NVIC_EnableIRQ (I2S3_DMAx_IRQ);
+
+  // init i2s3
+  __HAL_I2S_DISABLE (&hAudioOutI2s);
+  if (HAL_I2S_Init (&hAudioOutI2s) != HAL_OK)
+    printf ("i2s3Init error\n");
   }
-//}}}
+  //}}}
 //{{{
-void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params) {
+void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate, void* Params) {
 
   uint8_t index = 0;
   uint8_t freqindex = 0xFF;
   for (index = 0; index < 8; index++)
-    if (I2SFreq[index] == AudioFreq)
+    if (I2SFreq[index] == sampleRate)
       freqindex = index;
 
   // Enable PLLI2S clock */
@@ -377,7 +390,7 @@ void i2sClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params) 
   }
 //}}}
 //{{{
-void i2s2Init (uint32_t AudioFreq) {
+void i2s2Init (uint32_t sampleRate) {
 
   printf ("i2s2Init\n");
 
@@ -388,7 +401,7 @@ void i2s2Init (uint32_t AudioFreq) {
   __HAL_I2S_DISABLE (&hAudioInI2s);
 
   // I2S2 peripheral configuration
-  hAudioInI2s.Init.AudioFreq    = 2 * AudioFreq;
+  hAudioInI2s.Init.AudioFreq    = 2 * sampleRate;
   hAudioInI2s.Init.ClockSource  = I2S_CLOCK_PLL;
   hAudioInI2s.Init.CPOL         = I2S_CPOL_HIGH;
   hAudioInI2s.Init.DataFormat   = I2S_DATAFORMAT_16B;
@@ -402,32 +415,7 @@ void i2s2Init (uint32_t AudioFreq) {
   }
 //}}}
 //{{{
-void i2s3Init (uint32_t AudioFreq) {
-
-  printf ("i2s3Init\n");
-
-  // Initialize the hAudioOutI2s Instance parameter
-  hAudioOutI2s.Instance = I2S3;
-
-  // Disable I2S block
-  __HAL_I2S_DISABLE (&hAudioOutI2s);
-
-  // I2S3 peripheral configuration
-  hAudioOutI2s.Init.AudioFreq   = AudioFreq;
-  hAudioOutI2s.Init.ClockSource = I2S_CLOCK_PLL;
-  hAudioOutI2s.Init.CPOL        = I2S_CPOL_LOW;
-  hAudioOutI2s.Init.DataFormat  = I2S_DATAFORMAT_16B;
-  hAudioOutI2s.Init.MCLKOutput  = I2S_MCLKOUTPUT_ENABLE;
-  hAudioOutI2s.Init.Mode        = I2S_MODE_MASTER_TX;
-  hAudioOutI2s.Init.Standard    = I2S_STANDARD;
-
-  // Initialize the I2S peripheral with the structure above
-  if (HAL_I2S_Init (&hAudioOutI2s) != HAL_OK)
-    printf ("i2s3Init error\n");
-  }
-//}}}
-//{{{
-void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut) {
+void pdmDecoderInit (uint32_t sampleRate, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut) {
 
   printf ("pdmDecoderInit\n");
 
@@ -445,7 +433,7 @@ void pdmDecoderInit (uint32_t AudioFreq, uint32_t ChnlNbrIn, uint32_t ChnlNbrOut
     PDM_Filter_Init ((PDM_Filter_Handler_t *)(&PDM_FilterHandler[index]));
 
     // PDM lib config phase
-    PDM_FilterConfig[index].output_samples_number = AudioFreq / 1000;
+    PDM_FilterConfig[index].output_samples_number = sampleRate / 1000;
     PDM_FilterConfig[index].mic_gain = 24;
     PDM_FilterConfig[index].decimation_factor = PDM_FILTER_DEC_FACTOR_64;
     PDM_Filter_setConfig ((PDM_Filter_Handler_t*)&PDM_FilterHandler[index], &PDM_FilterConfig[index]);
@@ -509,7 +497,7 @@ void cs43l22setMute (uint16_t deviceAddr, uint32_t cmd) {
   }
 //}}}
 //{{{
-void cs43l22init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
+void cs43l22init (uint16_t deviceAddr, uint16_t gOutputDeviceice, uint8_t Volume, uint32_t sampleRate) {
 
   printf ("cs43l22init\n");
 
@@ -659,18 +647,14 @@ void HAL_I2S_ErrorCallback (I2S_HandleTypeDef* hi2s) {
 
 // audio out interface
 //{{{
-void audioInit (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t AudioFreq) {
+void audioInit (uint16_t gOutputDeviceice, uint8_t Volume, uint32_t sampleRate) {
 
   printf ("audioId:%x\n", cs43l22readId (AUDIO_I2C_ADDRESS));
 
-  // PLL clock depends on audioFreq, 44.1khz vs 48khz
-  i2sClockConfig (&hAudioOutI2s, AudioFreq, NULL);
-
-  // I2S data transfer preparation:
-  hAudioOutI2s.Instance = I2S3;
-  i2sInit (&hAudioOutI2s, NULL);
-  i2s3Init (AudioFreq);
-  cs43l22init (AUDIO_I2C_ADDRESS, gOutputDeviceice, Volume, AudioFreq);
+  // PLL clock depends on sampleRate, 44.1khz vs 48khz
+  i2sClockConfig (&hAudioOutI2s, sampleRate, NULL);
+  i2sInit (&hAudioOutI2s, NULL, sampleRate);
+  cs43l22init (AUDIO_I2C_ADDRESS, gOutputDeviceice, Volume, sampleRate);
   }
 //}}}
 //{{{
@@ -738,14 +722,14 @@ __weak void audioError_CallBack() {}
 
 // audio in interface
 //{{{
-uint8_t audioInInit (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr) {
+uint8_t audioInInit (uint32_t sampleRate, uint32_t BitRes, uint32_t ChnlNbr) {
 
   // Configure PLL clock */
-  audioInClockConfig (&hAudioInI2s, AudioFreq, NULL);
+  audioInClockConfig (&hAudioInI2s, sampleRate, NULL);
 
   // Configure the PDM library */
   // On STM32F4-Discovery a single microphone is mounted, samples are duplicated to make stereo audio streams */
-  pdmDecoderInit (AudioFreq, ChnlNbr, 2);
+  pdmDecoderInit (sampleRate, ChnlNbr, 2);
 
   // Configure the I2S peripheral */
   hAudioInI2s.Instance = I2S2;
@@ -753,7 +737,7 @@ uint8_t audioInInit (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr) {
     // Initialize the I2S Msp: this __weak function can be rewritten by the application */
     audioInMspInit (&hAudioInI2s, NULL);
 
-  i2s2Init (AudioFreq);
+  i2s2Init (sampleRate);
 
   // Return AUDIO_OK when all operations are correctly done */
   return AUDIO_OK;
@@ -840,7 +824,7 @@ uint8_t audioInPDMToPCM (uint16_t* PDMBuf, uint16_t* PCMBuf) {
 //}}}
 
 //{{{
-__weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, void* Params)
+__weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t sampleRate, void* Params)
 {
   RCC_PeriphCLKInitTypeDef rccclkinit;
 
@@ -848,7 +832,7 @@ __weak void audioInClockConfig (I2S_HandleTypeDef* hi2s, uint32_t AudioFreq, voi
   HAL_RCCEx_GetPeriphCLKConfig(&rccclkinit);
 
   // PLLI2S_VCO Input = HSE_VALUE/PLL_M = 1 Mhz
-  if ((AudioFreq & 0x7) == 0) {
+  if ((sampleRate & 0x7) == 0) {
     // Audio frequency multiple of 8 (8/16/32/48/96/192)
     // PLLI2S_VCO Output = PLLI2S_VCO Input * PLLI2SN = 192 Mhz
     // I2SCLK = PLLI2S_VCO Output/PLLI2SR = 192/6 = 32 Mhz

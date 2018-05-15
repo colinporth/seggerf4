@@ -20,7 +20,7 @@
 #define PCM_OUT_SIZE                    DEFAULT_AUDIO_IN_FREQ/1000
 #define CHANNEL_DEMUX_MASK              0x55
 
-// AudioFreq * DataSize (2 bytes) * NumChannels (Stereo: 2)
+// sampleRate * DataSize (2 bytes) * NumChannels (Stereo: 2)
 #define DEFAULT_AUDIO_IN_FREQ           I2S_AUDIOFREQ_16K
 #define DEFAULT_AUDIO_IN_BIT_RESOLUTION 16
 #define DEFAULT_AUDIO_IN_CHANNEL_NBR    1 // Mono = 1, Stereo = 2
@@ -31,7 +31,7 @@
 
 extern uint16_t AudioInVolume;
 
-void audioInit (uint16_t OutputDevice, uint8_t Volume, uint32_t AudioFreq);
+void audioInit (uint16_t OutputDevice, uint8_t Volume, uint32_t sampleRate);
 void audioPlay (uint16_t* buffer, uint32_t size);
 void audioChangeBuffer (uint16_t* data, uint32_t size);
 void audioPause();
@@ -43,11 +43,11 @@ void audioSetMute (uint32_t Cmd);
 void audioTransferComplete_CallBack();
 void audioHalfTransfer_CallBack();
 void audioError_CallBack();
-void audioClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params);
+void audioClockConfig (I2S_HandleTypeDef *hi2s, uint32_t sampleRate, void *Params);
 void audioMspInit (I2S_HandleTypeDef *hi2s, void *Params);
 void audioMspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
 
-uint8_t audioInInit (uint32_t AudioFreq, uint32_t BitRes, uint32_t ChnlNbr);
+uint8_t audioInInit (uint32_t sampleRate, uint32_t BitRes, uint32_t ChnlNbr);
 uint8_t audioInRecord (uint16_t *pData, uint32_t Size);
 uint8_t audioInStop();
 uint8_t audioInPause();
@@ -55,7 +55,7 @@ uint8_t audioInResume();
 uint8_t audioInSetVolume (uint8_t Volume);
 uint8_t audioInPDMToPCM (uint16_t *PDMBuf, uint16_t *PCMBuf);
 
-void audioInClockConfig (I2S_HandleTypeDef *hi2s, uint32_t AudioFreq, void *Params);
+void audioInClockConfig (I2S_HandleTypeDef *hi2s, uint32_t sampleRate, void *Params);
 void audioInMspInit (I2S_HandleTypeDef *hi2s, void *Params);
 void audioInMspDeInit (I2S_HandleTypeDef *hi2s, void *Params);
 void audioInTransferComplete_CallBack();
