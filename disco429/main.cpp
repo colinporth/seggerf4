@@ -1,7 +1,6 @@
 // main.cpp
 //{{{  includes
 #include "cLcd.h"
-#include "ps2.h"
 
 #include "stm32f429i_discovery.h"
 
@@ -173,41 +172,6 @@ typedef struct {
 //}}}
 
 cLcd* lcd = nullptr;
-
-UART_HandleTypeDef DebugUartHandle;
-//{{{
-void initDebugUart() {
-
-  __HAL_RCC_USART1_FORCE_RESET();
-  __HAL_RCC_USART1_RELEASE_RESET();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_USART1_CLK_ENABLE();
-
-  // PA9 - USART1 tx pin configuration
-  GPIO_InitTypeDef  GPIO_InitStruct;
-  GPIO_InitStruct.Pin       = GPIO_PIN_9;
-  GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull      = GPIO_PULLUP;
-  GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-  HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
-
-  // PA10 - USART1 rx pin configuration
-  //GPIO_InitStruct.Pin = GPIO_PIN_10;
-  //HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
-
-  // 8 Bits, One Stop bit, Parity = None, RTS,CTS flow control
-  DebugUartHandle.Instance   = USART1;
-  DebugUartHandle.Init.BaudRate   = 230400;
-  DebugUartHandle.Init.WordLength = UART_WORDLENGTH_8B;
-  DebugUartHandle.Init.StopBits   = UART_STOPBITS_1;
-  DebugUartHandle.Init.Parity     = UART_PARITY_NONE;
-  DebugUartHandle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
-  DebugUartHandle.Init.Mode       = UART_MODE_TX;
-  //DebugUartHandle.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  HAL_UART_Init (&DebugUartHandle);
-  }
-//}}}
 
 //{{{  system
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
@@ -1218,30 +1182,22 @@ int main() {
   lcd->render();
   //}}}
 
-  if (BSP_PB_GetState (BUTTON_KEY) == GPIO_PIN_SET) {
-    //{{{  ps2
-    initPs2gpio();
-    initPs2touchpad();
-    }
-    //}}}
-  else {
-    //{{{  sd
-    if (SD_present()) {
-      int ret = SD_Init();
-      lcd->debug ("SDinit " + dec(ret));
+  //{{{  sd
+  if (SD_present()) {
+    int ret = SD_Init();
+    lcd->debug ("SDinit " + dec(ret));
 
-      cFatFs* fatFs = cFatFs::create();
-      if (fatFs->mount() != FR_OK)
-        lcd->debug ("fatFs mount problem");
-      else
-        lcd->debug ("SD label:" + fatFs->getLabel() + " vsn:" + hex (fatFs->getVolumeSerialNumber()) +
-                   " freeSectors:" + dec (fatFs->getFreeSectors()));
-      listDirectory ("", "", "");
-      }
+    cFatFs* fatFs = cFatFs::create();
+    if (fatFs->mount() != FR_OK)
+      lcd->debug ("fatFs mount problem");
     else
-      lcd->debug ("no SD card");
+      lcd->debug ("SD label:" + fatFs->getLabel() + " vsn:" + hex (fatFs->getVolumeSerialNumber()) +
+                 " freeSectors:" + dec (fatFs->getFreeSectors()));
+    listDirectory ("", "", "");
     }
-    //}}}
+  else
+    lcd->debug ("no SD card");
+  //}}}
 
   for (auto fileStr : mFileNames) {
     auto t0 = HAL_GetTick();

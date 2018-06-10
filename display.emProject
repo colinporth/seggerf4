@@ -14,6 +14,7 @@
   <project Name="dico0429">
     <configuration
       Name="Common"
+      STLport="Yes with IOStream support"
       arm_architecture="v7EM"
       arm_core_type="Cortex-M4"
       arm_endian="Little"
@@ -25,7 +26,12 @@
       arm_simulator_memory_simulation_parameter="RX 08000000,00200000,FFFFFFFF;RWX 20000000,00030000,CDCDCDCD"
       arm_target_device_name="STM32F429ZI"
       arm_target_interface_type="SWD"
+      c_user_include_directories=".;../CMSIS;../drivers/Inc;../freetype/Inc"
+      cpp_enable_rtti="Yes"
       debug_target_connection="J-Link"
+      debug_type_file="$(StudioDir)/bin/STLport.xml"
+      gcc_c_language_standard="c11"
+      gcc_cplusplus_language_standard="c++14"
       linker_output_format="hex"
       linker_section_placement_file="$(ProjectDir)/flash_placement.xml"
       linker_section_placements_segments="FLASH RX 0x08000000 0x00200000;SRAM RWX 0x20000000 0x00030000"
@@ -37,13 +43,10 @@
         Name="Common"
         filter="c;cpp;cxx;cc;h;s;asm;inc"
         macros="STLport=No" />
-      <file file_name="heap_5.c" />
+      <file file_name="main.cpp" />
       <file file_name="stm32f4xx_it.c" />
       <file file_name="stm32f429i_discovery.c" />
-      <file file_name="syscalls.c" />
       <file file_name="cLcd.cpp" />
-      <file file_name="fatFs.cpp" />
-      <file file_name="main.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />
@@ -57,14 +60,15 @@
       <file file_name="../system/HardFaultHandler.S" />
       <file file_name="../system/SEGGER_HardFaultHandler.c" />
       <file file_name="../system/system_stm32f4xx.c" />
+      <folder Name="inc">
+        <file file_name="../system/system_stm32f4xx.h" />
+      </folder>
       <file file_name="../system/thumb_crt0.s" />
-      <file file_name="Cortex_M_Startup.s" />
     </folder>
     <folder Name="inc">
       <file file_name="FreeSansBold.h" />
       <file file_name="heap.h" />
       <file file_name="iPic.h" />
-      <file file_name="ps2.h" />
       <file file_name="stm32f4xx.h" />
       <file file_name="stm32f4xx_hal_conf.h" />
       <file file_name="stm32f429i_discovery.h" />
@@ -235,6 +239,97 @@
       <file file_name="../drivers/Src/stm32f4xx_ll_fsmc.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_gpio.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_i2c.c" />
+      <file file_name="../drivers/Src/stm32f4xx_hal_dma2d.c" />
+      <file file_name="../drivers/Src/stm32f4xx_hal_ltdc.c" />
+      <file file_name="../drivers/Src/stm32f4xx_hal_ltdc_ex.c" />
+    </folder>
+    <folder Name="freetype">
+      <folder Name="inc">
+        <file file_name="../freetype/Inc/ftoutln.h" />
+        <file file_name="../freetype/Inc/ftrender.h" />
+        <file file_name="../freetype/Inc/ftsizes.h" />
+        <file file_name="../freetype/Inc/ftsnames.h" />
+        <file file_name="../freetype/Inc/ftstroke.h" />
+        <file file_name="../freetype/Inc/ftsynth.h" />
+        <file file_name="../freetype/Inc/ftsystem.h" />
+        <file file_name="../freetype/Inc/fttrigon.h" />
+        <file file_name="../freetype/Inc/ftttdrv.h" />
+        <file file_name="../freetype/Inc/fttypes.h" />
+        <file file_name="../freetype/Inc/ftwinfnt.h" />
+        <file file_name="../freetype/Inc/t1tables.h" />
+        <file file_name="../freetype/Inc/ttnameid.h" />
+        <file file_name="../freetype/Inc/tttables.h" />
+        <file file_name="../freetype/Inc/tttags.h" />
+        <file file_name="../freetype/Inc/ttunpat.h" />
+        <file file_name="../freetype/Inc/freetype.h" />
+        <file file_name="../freetype/Inc/ft2build.h" />
+        <file file_name="../freetype/Inc/ftadvanc.h" />
+        <file file_name="../freetype/Inc/ftautoh.h" />
+        <file file_name="../freetype/Inc/ftbbox.h" />
+        <file file_name="../freetype/Inc/ftbdf.h" />
+        <file file_name="../freetype/Inc/ftbitmap.h" />
+        <file file_name="../freetype/Inc/ftbzip2.h" />
+        <file file_name="../freetype/Inc/ftcffdrv.h" />
+        <file file_name="../freetype/Inc/ftchapters.h" />
+        <file file_name="../freetype/Inc/ftcid.h" />
+        <file file_name="../freetype/Inc/fterrdef.h" />
+        <file file_name="../freetype/Inc/fterrors.h" />
+        <file file_name="../freetype/Inc/ftglyph.h" />
+        <file file_name="../freetype/Inc/ftgxval.h" />
+        <file file_name="../freetype/Inc/ftgzip.h" />
+        <file file_name="../freetype/Inc/ftimage.h" />
+        <file file_name="../freetype/Inc/ftincrem.h" />
+        <file file_name="../freetype/Inc/ftlcdfil.h" />
+        <file file_name="../freetype/Inc/ftlist.h" />
+        <file file_name="../freetype/Inc/ftlzw.h" />
+        <file file_name="../freetype/Inc/ftmac.h" />
+        <file file_name="../freetype/Inc/ftmm.h" />
+        <file file_name="../freetype/Inc/ftmodapi.h" />
+        <file file_name="../freetype/Inc/ftmoderr.h" />
+        <file file_name="../freetype/Inc/ftotval.h" />
+        <file file_name="../freetype/Inc/config/ftconfig.h" />
+        <file file_name="../freetype/Inc/config/ftheader.h" />
+        <file file_name="../freetype/Inc/config/ftmodule.h" />
+        <file file_name="../freetype/Inc/config/ftoption.h" />
+        <file file_name="../freetype/Inc/config/ftstdlib.h" />
+        <file file_name="../freetype/Inc/internal/autohint.h" />
+        <file file_name="../freetype/Inc/internal/ftcalc.h" />
+        <file file_name="../freetype/Inc/internal/ftdebug.h" />
+        <file file_name="../freetype/Inc/internal/ftdriver.h" />
+        <file file_name="../freetype/Inc/internal/ftgloadr.h" />
+        <file file_name="../freetype/Inc/internal/ftmemory.h" />
+        <file file_name="../freetype/Inc/internal/ftobjs.h" />
+        <file file_name="../freetype/Inc/internal/ftpic.h" />
+        <file file_name="../freetype/Inc/internal/ftrfork.h" />
+        <file file_name="../freetype/Inc/internal/ftserv.h" />
+        <file file_name="../freetype/Inc/internal/ftstream.h" />
+        <file file_name="../freetype/Inc/internal/fttrace.h" />
+        <file file_name="../freetype/Inc/internal/ftvalid.h" />
+        <file file_name="../freetype/Inc/internal/internal.h" />
+        <file file_name="../freetype/Inc/internal/psaux.h" />
+        <file file_name="../freetype/Inc/internal/pshints.h" />
+        <file file_name="../freetype/Inc/internal/sfnt.h" />
+        <file file_name="../freetype/Inc/internal/t1types.h" />
+        <file file_name="../freetype/Inc/internal/tttypes.h" />
+        <file file_name="../freetype/Inc/internal/services/svbdf.h" />
+        <file file_name="../freetype/Inc/internal/services/svcid.h" />
+        <file file_name="../freetype/Inc/internal/services/svgldict.h" />
+        <file file_name="../freetype/Inc/internal/services/svgxval.h" />
+        <file file_name="../freetype/Inc/internal/services/svkern.h" />
+        <file file_name="../freetype/Inc/internal/services/svmm.h" />
+        <file file_name="../freetype/Inc/internal/services/svotval.h" />
+        <file file_name="../freetype/Inc/internal/services/svpfr.h" />
+        <file file_name="../freetype/Inc/internal/services/svpostnm.h" />
+        <file file_name="../freetype/Inc/internal/services/svprop.h" />
+        <file file_name="../freetype/Inc/internal/services/svpscmap.h" />
+        <file file_name="../freetype/Inc/internal/services/svpsinfo.h" />
+        <file file_name="../freetype/Inc/internal/services/svsfnt.h" />
+        <file file_name="../freetype/Inc/internal/services/svttcmap.h" />
+        <file file_name="../freetype/Inc/internal/services/svtteng.h" />
+        <file file_name="../freetype/Inc/internal/services/svttglyf.h" />
+        <file file_name="../freetype/Inc/internal/services/svwinfnt.h" />
+        <file file_name="../freetype/Inc/internal/services/svxf86nm.h" />
+      </folder>
     </folder>
   </project>
 </solution>

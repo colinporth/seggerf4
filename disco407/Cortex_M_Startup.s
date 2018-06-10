@@ -10,7 +10,6 @@
 1: b 1b /* endless loop */
 .endm
 
-//
 .macro ISR_RESERVED
   .section .vectors, "ax"
   .word 0
@@ -23,7 +22,6 @@
   .code 16
   .global _vectors
 
-//
 .macro DEFAULT_ISR_HANDLER name=
   .thumb_func
   .weak \name
@@ -31,7 +29,6 @@
 1: b 1b /* endless loop */
 .endm
 
-//
 _vectors:
   .word __stack_end__
   .word reset_handler
