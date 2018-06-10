@@ -432,8 +432,8 @@ void cs43l22init (uint16_t deviceAddr, uint16_t outputDevice, uint8_t Volume, ui
   // if Speaker enabled, set monoMode and volume attenuation level
   if (outputDevice != OUTPUT_DEVICE_HEADPHONE) {
     // set speaker monoMode
-    //i2cWrite (deviceAddr, CS43L22_REG_PLAYBACK_CTL2, 0x06);
-    i2cWrite (deviceAddr, CS43L22_REG_PLAYBACK_CTL2, 0x00);
+    i2cWrite (deviceAddr, CS43L22_REG_PLAYBACK_CTL2, 0x06);
+    //i2cWrite (deviceAddr, CS43L22_REG_PLAYBACK_CTL2, 0x00);
 
     // set speaker attenuation level
     i2cWrite (deviceAddr, CS43L22_REG_SPEAKER_A_VOL, 0x00);
