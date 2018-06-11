@@ -11,7 +11,7 @@
     gcc_debugging_level="None"
     gcc_omit_frame_pointer="Yes"
     gcc_optimization_level="Level 1" />
-  <project Name="dico0429">
+  <project Name="disco429">
     <configuration
       Name="Common"
       STLport="Yes"

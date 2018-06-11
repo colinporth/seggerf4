@@ -1,4 +1,4 @@
- // cLcd.cpp
+// cLcd.cpp
 #include "cLcd.h"
 #include "FreeSansBold.h"
 

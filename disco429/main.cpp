@@ -664,6 +664,7 @@ void sdramBank1Init() {
 // PC2, PC3 - bank 1 - 0xC0000000 : 0xC10000000 - len 0x1000000
 
   SDRAM_HandleTypeDef hsdram;
+  //{{{  sdram init
   hsdram.Instance = FMC_SDRAM_DEVICE;
   hsdram.Init.SDBank             = FMC_SDRAM_BANK1;
   hsdram.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_9; // 8,9,10,11
@@ -690,6 +691,7 @@ void sdramBank1Init() {
     printf ("HAL_SDRAM_Init error\n");
     while (1) {}
     }
+  //}}}
 
   // Configure clock configuration enable command
   FMC_SDRAM_CommandTypeDef Command;
@@ -720,18 +722,19 @@ void sdramBank1Init() {
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
   Command.AutoRefreshNumber = 1;
   Command.ModeRegisterDefinition =
-    SDRAM_MODEREG_BURST_LENGTH_2 | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_WRITEBURST_MODE_SINGLE;
+    SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_BURST_LENGTH_4;
   HAL_SDRAM_SendCommand (&hsdram, &Command, 0x1000);
 
   // Set refresh rate counter //* (15.62 us x Freq) - 20 - SDRAM refresh counter (90MHz SD clock)
   HAL_SDRAM_ProgramRefreshRate (&hsdram, 0x1386);
-  //HAL_SDRAM_ProgramRefreshRate (&hsdram, 0x0569);
   }
 //}}}
 //{{{
 void sdramBank2Init() {
 // PB6, PB5 - Bank2 - 0xD0000000 : 0xD0800000 len 0x800000
+
   SDRAM_HandleTypeDef hsdram;
+  //{{{  sdram init
   hsdram.Instance = FMC_SDRAM_DEVICE;
   hsdram.Init.SDBank             = FMC_SDRAM_BANK2;
   hsdram.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_8;  // 8,9,10,11
@@ -758,6 +761,7 @@ void sdramBank2Init() {
     printf ("HAL_SDRAM_Init error\n");
     while (1) {}
     }
+  //}}}
 
   // Configure clock configuration enable command
   FMC_SDRAM_CommandTypeDef Command;
@@ -803,6 +807,7 @@ int main() {
   HAL_Init();
   SystemClockConfig180();
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
+
   sdramGpioInit();
   sdramBank1Init();
   sdramBank2Init();
