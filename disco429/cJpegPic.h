@@ -1,6 +1,8 @@
 // cJpeg.h - based on tiny jpeg decoder, jhead
 #pragma once
 #include "iPic.h"
+#include <time.h>
+
 //{{{  static const
 static const int kBodyBufferSize = 0x200;
 static const int kPoolBufferSize = 0xB00;
@@ -686,7 +688,7 @@ private:
         case TAG_ORIENTATION:
           mExifInfo.mExifOrientation = offset; break;
         case TAG_APERTURE:
-          mExifInfo.mExifAperture = (float)exp(getExifSignedRational (valuePtr, intelEndian, numerator, denominator)*log(2)*0.5); break;
+          mExifInfo.mExifAperture = (float)exp(getExifSignedRational (valuePtr, intelEndian, numerator, denominator)*log(2.f)*0.5); break;
         case TAG_FOCALLENGTH:
           mExifInfo.mExifFocalLength = getExifSignedRational (valuePtr, intelEndian, numerator, denominator); break;
         case TAG_EXPOSURETIME:

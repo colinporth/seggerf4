@@ -128,7 +128,7 @@ ISR_HANDLER  OTG_HS_EP1_IN_IRQHandler          /* USB OTG HS End Point 1 In    *
 ISR_HANDLER  OTG_HS_WKUP_IRQHandler            /* USB OTG HS Wakeup through EXTI */
 ISR_HANDLER  OTG_HS_IRQHandler                 /* USB OTG HS                   */
 ISR_HANDLER  DCMI_IRQHandler                   /* DCMI                         */
-ISR_RESERVED 0                                 /* Reserved                     */
+ISR_RESERVED                                   /* Reserved                     */
 ISR_HANDLER  HASH_RNG_IRQHandler               /* Hash and Rng                 */
 ISR_HANDLER  FPU_IRQHandler                    /* FPU                          */
 ISR_HANDLER  UART7_IRQHandler                  /* UART7                        */
@@ -146,7 +146,7 @@ _vectors_end:
   .section .init, "ax"
   .thumb_func
 
-eset_handler:
+reset_handler:
 
 #ifndef __NO_SYSTEM_INIT
   ldr r0, =__SRAM_segment_end__
