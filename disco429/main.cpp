@@ -803,13 +803,11 @@ int main() {
   HAL_Init();
   SystemClockConfig180();
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
-  //configureDtrace4();
   sdramGpioInit();
   sdramBank1Init();
   sdramBank2Init();
 
   HeapRegion_t xHeapRegions[] = {
-    //{(uint8_t*)0x10000000, 0x10000 },
     {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*4), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*4) },
     { nullptr, 0 } };
 
@@ -826,19 +824,12 @@ int main() {
   lcd->render();
   //}}}
 
+  int count = 0;
   while (true) {
     lcd->startRender();
     lcd->clear (COL_BLACK);
-    //std::string str = "x:" + dec(touchX) + " y:" + dec(touchY) + " z:" + dec(touchZ);
-    //lcd->text (COL_YELLOW, getFontHeight(), str, 100, 200, lcd->getWidth(), getBoxHeight());
-    //auto x = lcd->getWidth() - ((touchY-1300)/4);
-    //auto y = lcd->getHeight() - ((touchX-1300)/4);
-    //lcd->ellipse (COL_YELLOW, x, y, touchZ, touchZ);
     lcd->endRender (true);
-    //uint16_t value = PS2get();
-    //char ch = (char)value;
-    //std::string charStr (1, ch);
-    //std::string releaseStr = (value & 0x100) ? " release " : " ";
-    //lcd->info ("key:" + charStr + releaseStr + hex (value));
+
+    lcd->info ("hello " + dec (count++));
     }
   }
