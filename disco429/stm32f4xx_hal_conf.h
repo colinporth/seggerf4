@@ -58,11 +58,7 @@
 #include "stm32f4xx_hal_pcd.h"
 #include "stm32f4xx_hal_hcd.h"
 
-#ifdef  USE_FULL_ASSERT
-  void assert_failed(uint8_t* file, uint32_t line);
-#else
-  #define assert_param(expr) ((void)0)
-#endif /* USE_FULL_ASSERT */
+#define assert_param(expr) ((void)0)
 
 //{{{
 #ifdef __cplusplus
