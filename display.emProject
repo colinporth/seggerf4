@@ -45,7 +45,6 @@
         filter="c;cpp;cxx;cc;h;s;asm;inc"
         macros="STLport=No" />
       <file file_name="main.cpp" />
-      <file file_name="stm32f4xx_it.c" />
       <file file_name="stm32f429i_discovery.c" />
       <file file_name="cLcd.cpp" />
       <file file_name="fatFs.cpp" />
@@ -67,6 +66,7 @@
       </folder>
       <file file_name="../system/thumb_crt0.s" />
       <file file_name="Cortex_M_Startup.s" />
+      <file file_name="../system/stm32f4xx_it.c" />
     </folder>
     <folder Name="inc">
       <file file_name="FreeSansBold.h" />

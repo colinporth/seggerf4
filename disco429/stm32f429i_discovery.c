@@ -23,15 +23,15 @@ I2C_HandleTypeDef I2cHandle;
 static SPI_HandleTypeDef SpiHandle;
 static uint8_t Is_LCD_IO_Initialized = 0;
 
-/*{{{*/
+//{{{
 uint32_t BSP_GetVersion()
 {
   return __STM32F429I_DISCO_BSP_VERSION;
 }
 
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 void BSP_LED_Init(Led_TypeDef Led)
 {
   GPIO_InitTypeDef  GPIO_InitStruct;
@@ -49,27 +49,27 @@ void BSP_LED_Init(Led_TypeDef Led)
 
   HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void BSP_LED_On(Led_TypeDef Led)
 {
   HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_SET);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void BSP_LED_Off(Led_TypeDef Led)
 {
   HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void BSP_LED_Toggle(Led_TypeDef Led)
 {
   HAL_GPIO_TogglePin(GPIO_PORT[Led], GPIO_PIN[Led]);
 }
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
@@ -100,15 +100,15 @@ void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
     HAL_NVIC_EnableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 uint32_t BSP_PB_GetState(Button_TypeDef Button)
 {
   return HAL_GPIO_ReadPin(BUTTON_PORT[Button], BUTTON_PIN[Button]);
 }
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 static void I2Cx_MspInit (I2C_HandleTypeDef *hi2c)
 {
   GPIO_InitTypeDef  GPIO_InitStruct;
@@ -152,8 +152,8 @@ static void I2Cx_MspInit (I2C_HandleTypeDef *hi2c)
     HAL_NVIC_EnableIRQ(DISCOVERY_I2Cx_ER_IRQn);
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void I2Cx_Init()
 {
   if(HAL_I2C_GetState(&I2cHandle) == HAL_I2C_STATE_RESET)
@@ -173,8 +173,8 @@ static void I2Cx_Init()
     HAL_I2C_Init(&I2cHandle);
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void I2Cx_Error()
 {
   /* De-initialize the SPI communication BUS */
@@ -183,8 +183,8 @@ static void I2Cx_Error()
   /* Re-Initialize the SPI communication BUS */
   I2Cx_Init();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void I2Cx_ITConfig()
 {
   GPIO_InitTypeDef  GPIO_InitStruct;
@@ -202,8 +202,8 @@ static void I2Cx_ITConfig()
   HAL_NVIC_SetPriority((IRQn_Type)(STMPE811_INT_EXTI), 0x00, 0x00);
   HAL_NVIC_EnableIRQ((IRQn_Type)(STMPE811_INT_EXTI));
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void I2Cx_WriteData (uint8_t Addr, uint8_t Reg, uint8_t Value)
   {
   HAL_StatusTypeDef status = HAL_OK;
@@ -217,8 +217,8 @@ static void I2Cx_WriteData (uint8_t Addr, uint8_t Reg, uint8_t Value)
     I2Cx_Error();
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void I2Cx_WriteBuffer (uint8_t Addr, uint8_t Reg,  uint8_t *pBuffer, uint16_t Length)
   {
   HAL_StatusTypeDef status = HAL_OK;
@@ -232,8 +232,8 @@ static void I2Cx_WriteBuffer (uint8_t Addr, uint8_t Reg,  uint8_t *pBuffer, uint
     I2Cx_Error();
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static uint8_t I2Cx_ReadData (uint8_t Addr, uint8_t Reg)
 {
   HAL_StatusTypeDef status = HAL_OK;
@@ -251,8 +251,8 @@ static uint8_t I2Cx_ReadData (uint8_t Addr, uint8_t Reg)
   return value;
 }
 
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static uint8_t I2Cx_ReadBuffer (uint8_t Addr, uint8_t Reg, uint8_t *pBuffer, uint16_t Length)
 {
   HAL_StatusTypeDef status = HAL_OK;
@@ -272,9 +272,9 @@ static uint8_t I2Cx_ReadBuffer (uint8_t Addr, uint8_t Reg, uint8_t *pBuffer, uin
     return 1;
   }
 }
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 static void SPIx_MspInit (SPI_HandleTypeDef *hspi)
 {
   GPIO_InitTypeDef   GPIO_InitStructure;
@@ -293,8 +293,8 @@ static void SPIx_MspInit (SPI_HandleTypeDef *hspi)
   GPIO_InitStructure.Alternate = DISCOVERY_SPIx_AF;
   HAL_GPIO_Init(DISCOVERY_SPIx_GPIO_PORT, &GPIO_InitStructure);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void SPIx_Init()
 {
   if(HAL_SPI_GetState(&SpiHandle) == HAL_SPI_STATE_RESET)
@@ -327,8 +327,8 @@ static void SPIx_Init()
     HAL_SPI_Init(&SpiHandle);
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void SPIx_Error()
 {
   /* De-initialize the SPI communication BUS */
@@ -337,8 +337,8 @@ static void SPIx_Error()
   /* Re- Initialize the SPI communication BUS */
   SPIx_Init();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static uint32_t SPIx_Read (uint8_t ReadSize)
 {
   HAL_StatusTypeDef status = HAL_OK;
@@ -355,8 +355,8 @@ static uint32_t SPIx_Read (uint8_t ReadSize)
 
   return readvalue;
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static void SPIx_Write (uint16_t Value)
 {
   HAL_StatusTypeDef status = HAL_OK;
@@ -370,8 +370,8 @@ static void SPIx_Write (uint16_t Value)
     SPIx_Error();
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 static uint8_t SPIx_WriteRead (uint8_t Byte)
 {
   uint8_t receivedbyte = 0;
@@ -385,9 +385,9 @@ static uint8_t SPIx_WriteRead (uint8_t Byte)
 
   return receivedbyte;
 }
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 void LCD_IO_Init()
 {
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -428,8 +428,8 @@ void LCD_IO_Init()
     SPIx_Init();
   }
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void LCD_IO_WriteData (uint16_t RegValue)
 {
   /* Set WRX to send data */
@@ -442,8 +442,8 @@ void LCD_IO_WriteData (uint16_t RegValue)
   /* Deselect: Chip Select high */
   LCD_CS_HIGH();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void LCD_IO_WriteReg (uint8_t Reg)
 {
   /* Reset WRX to send command */
@@ -456,8 +456,8 @@ void LCD_IO_WriteReg (uint8_t Reg)
   /* Deselect: Chip Select high */
   LCD_CS_HIGH();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 uint32_t LCD_IO_ReadData (uint16_t RegValue, uint8_t ReadSize)
 {
   uint32_t readvalue = 0;
@@ -480,58 +480,58 @@ uint32_t LCD_IO_ReadData (uint16_t RegValue, uint8_t ReadSize)
 
   return readvalue;
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void LCD_Delay (uint32_t Delay)
 {
   HAL_Delay(Delay);
 }
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 void IOE_Init()
 {
   I2Cx_Init();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void IOE_ITConfig()
 {
   I2Cx_ITConfig();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void IOE_Write (uint8_t Addr, uint8_t Reg, uint8_t Value)
 {
   I2Cx_WriteData(Addr, Reg, Value);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 uint8_t IOE_Read (uint8_t Addr, uint8_t Reg)
 {
   return I2Cx_ReadData(Addr, Reg);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void IOE_WriteMultiple (uint8_t Addr, uint8_t Reg, uint8_t *pBuffer, uint16_t Length)
 {
   I2Cx_WriteBuffer(Addr, Reg, pBuffer, Length);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 uint16_t IOE_ReadMultiple (uint8_t Addr, uint8_t Reg, uint8_t *pBuffer, uint16_t Length)
 {
  return I2Cx_ReadBuffer(Addr, Reg, pBuffer, Length);
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void IOE_Delay (uint32_t Delay)
 {
   HAL_Delay(Delay);
 }
-/*}}}*/
+//}}}
 
-/*{{{*/
+//{{{
 void GYRO_IO_Init()
 {
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -558,8 +558,8 @@ void GYRO_IO_Init()
 
   SPIx_Init();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void GYRO_IO_Write (uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite)
 {
   /* Configure the MS bit:
@@ -587,8 +587,8 @@ void GYRO_IO_Write (uint8_t* pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite
   /* Set chip select High at the end of the transmission */
   GYRO_CS_HIGH();
 }
-/*}}}*/
-/*{{{*/
+//}}}
+//{{{
 void GYRO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead)
 {
   if(NumByteToRead > 0x01)
@@ -617,4 +617,4 @@ void GYRO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead)
   /* Set chip select High at the end of the transmission */
   GYRO_CS_HIGH();
 }
-/*}}}*/
+//}}}

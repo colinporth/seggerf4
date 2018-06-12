@@ -19,6 +19,7 @@
 //{{{  sdram defines
 #define SDRAM_BANK1_ADDR  ((uint32_t)0xC0000000)
 #define SDRAM_BANK1_LEN   ((uint32_t)0x01000000)
+
 #define SDRAM_BANK2_ADDR  ((uint32_t)0xD0000000)
 #define SDRAM_BANK2_LEN   ((uint32_t)0x00800000)
 
@@ -518,7 +519,7 @@ void SystemClockConfig180() {
   // The voltage scaling allows optimizing the power consumption when the device is
   // clocked below the maximum system frequency, to update the voltage scaling value
   // regarding system frequency refer to product datasheet.
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
 
   // Enable HSE Oscillator and activate PLL with HSE as source
   RCC_OscInitTypeDef RCC_OscInitStruct;
@@ -555,7 +556,8 @@ void SystemClockConfig180() {
 
   // Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
+                                RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -568,7 +570,7 @@ void memoryTest() {
 
   uint32_t readAddress = SDRAM_BANK1_ADDR;
   uint32_t phase = 0;
-  while (1) {
+  while (true) {
     uint32_t len = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK1_LEN : SDRAM_BANK2_LEN;
     uint32_t reportMask = 0xFFFFF;
 
@@ -818,12 +820,12 @@ int main() {
 
   heapInit (xHeapRegions);
   //{{{  init frameBuffer
-  memset ((void*)SDRAM_BANK2_ADDR, 0, (LCD_WIDTH*LCD_HEIGHT*4));
+  //memset ((void*)SDRAM_BANK2_ADDR, 0, (LCD_WIDTH*LCD_HEIGHT*4));
 
   lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
   const std::string kHello = "built " + std::string(__TIME__) + " on " + std::string(__DATE__) +
                               " heap:" + dec (0x800000 - (LCD_WIDTH*LCD_HEIGHT*4));
-  lcd->init ("stm32F429disco test - " + kHello);
+  lcd->init ("stm32F429disco " + kHello);
 
   lcd->displayOn();
   lcd->render();
@@ -831,9 +833,10 @@ int main() {
 
   int count = 0;
   while (true) {
-    lcd->startRender();
+    lcd->start();
     lcd->clear (COL_BLACK);
-    lcd->endRender (true);
+    lcd->showInfo (true);
+    lcd->present();
 
     lcd->info ("hello " + dec (count++));
     }

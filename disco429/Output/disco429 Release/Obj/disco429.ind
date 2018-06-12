@@ -1,6 +1,5 @@
 --start-group
 "Output/disco429 Release/Obj/main.o"
-"Output/disco429 Release/Obj/stm32f4xx_it.o"
 "Output/disco429 Release/Obj/stm32f429i_discovery.o"
 "Output/disco429 Release/Obj/cLcd.o"
 "Output/disco429 Release/Obj/fatFs.o"
@@ -10,6 +9,7 @@
 "Output/disco429 Release/Obj/SEGGER_HardFaultHandler.o"
 "Output/disco429 Release/Obj/thumb_crt0.o"
 "Output/disco429 Release/Obj/Cortex_M_Startup.o"
+"Output/disco429 Release/Obj/stm32f4xx_it.o"
 "Output/disco429 Release/Obj/stm32f4xx_ll_pwr.o"
 "Output/disco429 Release/Obj/stm32f4xx_ll_rcc.o"
 "Output/disco429 Release/Obj/stm32f4xx_ll_rng.o"

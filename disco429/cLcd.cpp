@@ -1,6 +1,6 @@
 // cLcd.cpp
 #include "cLcd.h"
-#include "FreeSansBold.h"
+#include "../freetype/FreeSansBold.h"
 
 //{{{
 class cFontChar {
@@ -583,23 +583,23 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x
 //}}}
 
 //{{{
-void cLcd::startRender() {
+void cLcd::start() {
   mDrawBuffer = !mDrawBuffer;
   setLayer (0, mBuffer[mDrawBuffer]);
   mDrawStartTime = HAL_GetTick();
   }
 //}}}
 //{{{
-void cLcd::endRender (bool forceInfo) {
+void cLcd::showInfo (bool force) {
 
   auto y = 0;
-  if ((mShowTitle || forceInfo) && !mTitle.empty()) {
+  if ((mShowTitle || force) && !mTitle.empty()) {
     //{{{  draw title
     text (COL_YELLOW, cWidget::getFontHeight(), mTitle, 0, y, getWidth(), cWidget::getBoxHeight());
     y += cWidget::getBoxHeight();
     }
     //}}}
-  if (mShowInfo || forceInfo) {
+  if (mShowInfo || force) {
     //{{{  draw info lines
     if (mLastLine >= 0) {
       // draw scroll bar
@@ -627,13 +627,18 @@ void cLcd::endRender (bool forceInfo) {
       }
     }
     //}}}
-  if (mShowFooter || forceInfo)
+  if (mShowFooter || force)
     //{{{  draw footer
     text (COL_WHITE, cWidget::getFontHeight(),
           "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) + " " +
           dec (mDrawTime) + "ms ",
           0, -cWidget::getFontHeight() + getHeight(), getWidth(), cWidget::getFontHeight());
     //}}}
+  }
+//}}}
+//{{{
+void cLcd::present() {
+
   ready();
 
   // show it
@@ -644,9 +649,10 @@ void cLcd::endRender (bool forceInfo) {
 //}}}
 //{{{
 void cLcd::render() {
-  startRender();
+  start();
   clear (COL_BLACK);
-  endRender (true);
+  showInfo (true);
+  present();
   }
 //}}}
 //{{{

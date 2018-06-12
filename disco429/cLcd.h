@@ -150,8 +150,9 @@ public:
   void line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
   int text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height);
 
-  void startRender();
-  void endRender (bool forceInfo);
+  void start();
+  void showInfo (bool force);
+  void present();
   void render();
   uint32_t ready();
 
