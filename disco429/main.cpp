@@ -32,7 +32,7 @@
 #define SDRAM_MODEREG_CAS_LATENCY_3              ((uint16_t)0x0030)
 #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
 //}}}
-//{{{  etm defines
+//{{{  trace defines
 #define ITM_LAR_KEY   0xC5ACCE55
 //{{{  ETM_Type       0xE0041000
 // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ihi0014q/Chdfiagc.html
@@ -179,11 +179,12 @@ typedef struct {
 //}}}
 //}}}
 
+const std::string kHello = std::string(__TIME__) + " on " + std::string(__DATE__) +
+                           " heap:" + dec (0x800000 - (LCD_WIDTH*LCD_HEIGHT*4));
+
 cLcd* lcd = nullptr;
 
-//{{{  system
-const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-uint32_t SystemCoreClock = 16000000;
+//{{{  trace
 int globalCounter = 0;
 
 //{{{
@@ -422,6 +423,10 @@ uint32_t my_ITM_SendChar (uint32_t port, uint32_t ch) {
   return (ch);
   }
 //}}}
+//}}}
+//{{{  system
+const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+uint32_t SystemCoreClock = 16000000;
 
 //{{{
 void SystemCoreClockUpdate() {
@@ -495,7 +500,6 @@ void SystemInit() {
   SCB->VTOR = FLASH_BASE; // Vector Table Relocation in Internal FLASH
   }
 //}}}
-
 //{{{
 void SystemClockConfig180() {
 //  System Clock source            = PLL (HSE)
@@ -565,64 +569,19 @@ void SystemClockConfig180() {
   HAL_RCC_ClockConfig (&RCC_ClkInitStruct, FLASH_LATENCY_5);
   }
 //}}}
-//{{{
-void memoryTest() {
-
-  uint32_t readAddress = SDRAM_BANK1_ADDR;
-  uint32_t phase = 0;
-  while (true) {
-    uint32_t len = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK1_LEN : SDRAM_BANK2_LEN;
-    uint32_t reportMask = 0xFFFFF;
-
-    //  write
-    for (uint32_t i = readAddress; i < readAddress + len; i++)
-      *(uint8_t*)readAddress = (i+phase) & 0xFF;
-
-    // read
-    uint8_t readErr = 0;
-    for (uint32_t i = readAddress; i < readAddress + len; i++) {
-      uint8_t read = *(uint8_t*)readAddress;
-      if (read != ((i+phase) & 0xFF)) {
-        readErr++;
-        //printf ("add:%x exp:%x got:%x\n", i, (i+phase) & 0xFF, read);
-        }
-
-      if ((i & reportMask) == reportMask) {
-        if (readErr)
-          printf ("add:%x err:%x rate:%d\n", (unsigned int)i, (unsigned int)readErr, (int)((readErr * 100) / reportMask));
-        else
-          printf ("add:%lx ok\n", i);
-
-        if (readErr) { // red
-          //BSP_LED_Off (LED3);
-          //BSP_LED_On (LED4);
-          readErr = 0;
-          }
-        else { // green
-          //BSP_LED_Off (LED4);
-          //BSP_LED_On (LED3);
-          }
-        }
-      }
-
-    phase++;
-    readAddress = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK2_ADDR : SDRAM_BANK1_ADDR;
-    }
-  }
-//}}}
 //}}}
 //{{{  sdRam
 //{{{
 void sdramGpioInit() {
 // Timing configuration 90 MHz SD clock frequency (180MHz/2)
-//     PG08 <-> FMC_SDCLK
-//     PC00 <-> FMC_SDNWE
-//     PC02 <-> FMC_SDNE0  BANK1 address 0xC0000000        PB06 <-> FMC_SDNE1  BANK2 address 0xD0000000
-//     PB05 <-> FMC_SDCKE1                                 PC03 <-> FMC_SDCKE0
-// PD14..15 <-> FMC_D00..01    PF00..05 <-> FMC_A00..05    PE00 <-> FMC_NBL0
-// PD00..01 <-> FMC_D02..03    PF12..15 <-> FMC_A06..09    PE01 <-> FMC_NBL1
-// PE07..15 <-> FMC_D04..12    PG00..01 <-> FMC_A10..11    PG15 <-> FMC_NCAS
-// PD08..10 <-> FMC_D13..15                                PF11 <-> FMC_NRAS
+//      PG08 -> FMC_SDCLK
+//      PC00 -> FMC_SDNWE
+//      PC02 -> FMC_SDNE0  BANK1 address 0xC0000000        PB06 -> FMC_SDNE1  BANK2 address 0xD0000000
+//      PB05 -> FMC_SDCKE1                                 PC03 -> FMC_SDCKE0
+// PD1 4..15 <-> FMC_D00..01    PF00..05 -> FMC_A00..05    PE00 -> FMC_NBL0
+// PD00..01  <-> FMC_D02..03    PF12..15 -> FMC_A06..09    PE01 -> FMC_NBL1
+// PE07..15  <-> FMC_D04..12    PG00..01 -> FMC_A10..11    PG15 -> FMC_NCAS
+// PD08..10  <-> FMC_D13..15                               PF11 -> FMC_NRAS
 
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -638,20 +597,25 @@ void sdramGpioInit() {
   GPIO_Init_Structure.Pull = GPIO_NOPULL;
   GPIO_Init_Structure.Alternate = GPIO_AF12_FMC;
 
+  // gpioB
   GPIO_Init_Structure.Pin = GPIO_PIN_5 | GPIO_PIN_6;
   HAL_GPIO_Init (GPIOB, &GPIO_Init_Structure);
 
+  // gpioC
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_2 | GPIO_PIN_3;
   HAL_GPIO_Init (GPIOC, &GPIO_Init_Structure);
 
+  // gpioD
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_1  | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 |
                             GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOD, &GPIO_Init_Structure);
 
+  // gpioE
   GPIO_Init_Structure.Pin = GPIO_PIN_0  | GPIO_PIN_1  | GPIO_PIN_7 | GPIO_PIN_8  | GPIO_PIN_9  |
                             GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOE, &GPIO_Init_Structure);
 
+  // gpioF
   GPIO_Init_Structure.Pin = GPIO_PIN_0  | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3  | GPIO_PIN_4 | GPIO_PIN_5 |
                             GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOF, &GPIO_Init_Structure);
@@ -695,7 +659,7 @@ void sdramBank1Init() {
     }
   //}}}
 
-  // Configure clock configuration enable command
+  // config clock configuration enable command
   FMC_SDRAM_CommandTypeDef Command;
   Command.CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
@@ -703,17 +667,16 @@ void sdramBank1Init() {
   Command.ModeRegisterDefinition = 0;
   HAL_SDRAM_SendCommand (&hsdram, &Command, 0x1000);
 
-  // Insert 100 ms delay
   HAL_Delay (100);
 
-  // Configure PALL (precharge all) command
+  // config PALL (precharge all) command
   Command.CommandMode = FMC_SDRAM_CMD_PALL;
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
   Command.AutoRefreshNumber = 1;
   Command.ModeRegisterDefinition = 0;
   HAL_SDRAM_SendCommand (&hsdram, &Command, 0x1000);
 
-  // Configure Auto-Refresh command
+  // config Auto-Refresh command
   Command.CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
   Command.AutoRefreshNumber = 4;
@@ -765,7 +728,7 @@ void sdramBank2Init() {
     }
   //}}}
 
-  // Configure clock configuration enable command
+  // config clock configuration enable command
   FMC_SDRAM_CommandTypeDef Command;
   Command.CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
@@ -773,17 +736,16 @@ void sdramBank2Init() {
   Command.ModeRegisterDefinition = 0;
   HAL_SDRAM_SendCommand (&hsdram, &Command, 0x1000);
 
-  // Insert 100 ms delay
   HAL_Delay (100);
 
-  // Configure PALL (precharge all) command
+  // config PALL (precharge all) command
   Command.CommandMode = FMC_SDRAM_CMD_PALL;
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
   Command.AutoRefreshNumber = 1;
   Command.ModeRegisterDefinition = 0;
   HAL_SDRAM_SendCommand (&hsdram, &Command, 0x1000);
 
-  // Configure Auto-Refresh command
+  // config Auto-Refresh command
   Command.CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
   Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
   Command.AutoRefreshNumber = 4;
@@ -800,6 +762,52 @@ void sdramBank2Init() {
 
   // Set refresh rate counter //* (15.62 us x Freq) - 20 - SDRAM refresh counter (90MHz SD clock)
   HAL_SDRAM_ProgramRefreshRate  (&hsdram, 0x0569);
+  }
+//}}}
+
+//{{{
+void memoryTest() {
+
+  uint32_t readAddress = SDRAM_BANK1_ADDR;
+  uint32_t phase = 0;
+  while (true) {
+    uint32_t len = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK1_LEN : SDRAM_BANK2_LEN;
+    uint32_t reportMask = 0xFFFFF;
+
+    //  write
+    for (uint32_t i = readAddress; i < readAddress + len; i++)
+      *(uint8_t*)readAddress = (i+phase) & 0xFF;
+
+    // read
+    uint8_t readErr = 0;
+    for (uint32_t i = readAddress; i < readAddress + len; i++) {
+      uint8_t read = *(uint8_t*)readAddress;
+      if (read != ((i+phase) & 0xFF)) {
+        readErr++;
+        //printf ("add:%x exp:%x got:%x\n", i, (i+phase) & 0xFF, read);
+        }
+
+      if ((i & reportMask) == reportMask) {
+        if (readErr)
+          printf ("add:%x err:%x rate:%d\n", (unsigned int)i, (unsigned int)readErr, (int)((readErr * 100) / reportMask));
+        else
+          printf ("add:%lx ok\n", i);
+
+        if (readErr) { // red
+          //BSP_LED_Off (LED3);
+          //BSP_LED_On (LED4);
+          readErr = 0;
+          }
+        else { // green
+          //BSP_LED_Off (LED4);
+          //BSP_LED_On (LED3);
+          }
+        }
+      }
+
+    phase++;
+    readAddress = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK2_ADDR : SDRAM_BANK1_ADDR;
+    }
   }
 //}}}
 //}}}
@@ -821,10 +829,8 @@ int main() {
   heapInit (xHeapRegions);
   //{{{  init frameBuffer
   //memset ((void*)SDRAM_BANK2_ADDR, 0, (LCD_WIDTH*LCD_HEIGHT*4));
-
   lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
-  const std::string kHello = "built " + std::string(__TIME__) + " on " + std::string(__DATE__) +
-                              " heap:" + dec (0x800000 - (LCD_WIDTH*LCD_HEIGHT*4));
+
   lcd->init ("stm32F429disco " + kHello);
 
   lcd->displayOn();

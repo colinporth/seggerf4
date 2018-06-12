@@ -5,9 +5,6 @@
 //{{{
 class cFontChar {
 public:
-  void* operator new (std::size_t size) { return pvPortMalloc (size); }
-  void operator delete (void *ptr) { vPortFree (ptr); }
-
   uint8_t* bitmap;
   int16_t left;
   int16_t top;
@@ -53,7 +50,7 @@ void cLcd::init (std::string title) {
 //}}}
 
 //{{{
-void cLcd::setShowDebug (bool title, bool info, bool lcdStats, bool footer) {
+void cLcd::setShowDebug (bool title, bool info, bool footer) {
 
   mShowTitle = title;
   mShowInfo = info;
@@ -593,14 +590,15 @@ void cLcd::start() {
 void cLcd::showInfo (bool force) {
 
   auto y = 0;
+
   if ((mShowTitle || force) && !mTitle.empty()) {
-    //{{{  draw title
+    // draw title
     text (COL_YELLOW, cWidget::getFontHeight(), mTitle, 0, y, getWidth(), cWidget::getBoxHeight());
     y += cWidget::getBoxHeight();
     }
-    //}}}
+
   if (mShowInfo || force) {
-    //{{{  draw info lines
+    // draw info lines
     if (mLastLine >= 0) {
       // draw scroll bar
       auto yorg = cWidget::getBoxHeight() + ((int)mFirstLine * mNumDrawLines * cWidget::getBoxHeight() / (mLastLine + 1));
@@ -626,14 +624,14 @@ void cLcd::showInfo (bool force) {
       y += cWidget::getBoxHeight();
       }
     }
-    //}}}
+
   if (mShowFooter || force)
-    //{{{  draw footer
+    // draw footer
     text (COL_WHITE, cWidget::getFontHeight(),
-          "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) + " " +
+          "heap:" + dec (xPortGetFreeHeapSize()) + ":" +
+          dec (xPortGetMinimumEverFreeHeapSize()) + " " +
           dec (mDrawTime) + "ms ",
           0, -cWidget::getFontHeight() + getHeight(), getWidth(), cWidget::getFontHeight());
-    //}}}
   }
 //}}}
 //{{{
@@ -847,15 +845,20 @@ void cLcd::showLayer (uint8_t layer, uint32_t frameBufferAddress, uint8_t alpha)
     }
   else
     ltdcLayer->CR &= ~LTDC_LxCR_LEN;
+
   LTDC->SRCR |= LTDC_SRCR_IMR |LTDC_SRCR_VBR;
   }
 //}}}
 //{{{
 uint32_t cLcd::wait() {
+
   uint32_t took = 0;
-  while (!(DMA2D->ISR & DMA2D_FLAG_TC)) { took++; }
-  DMA2D->IFCR |= DMA2D_IFSR_CTEIF | DMA2D_IFSR_CTCIF | DMA2D_IFSR_CTWIF|
+  while (!(DMA2D->ISR & DMA2D_FLAG_TC))  
+    took++;
+
+  DMA2D->IFCR |= DMA2D_IFSR_CTEIF | DMA2D_IFSR_CTCIF | DMA2D_IFSR_CTWIF |
                  DMA2D_IFSR_CCAEIF | DMA2D_IFSR_CCTCIF | DMA2D_IFSR_CCEIF;
+
   return took;
   }
 //}}}

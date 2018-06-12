@@ -126,7 +126,7 @@ public:
   uint16_t getWidth() { return LCD_WIDTH; }
   uint16_t getHeight() { return LCD_HEIGHT; }
 
-  void setShowDebug (bool title, bool info, bool lcdStats, bool footer);
+  void setShowDebug (bool title, bool info, bool footer);
   void info (uint16_t colour, std::string str);
   void info (std::string str);
   void debug (std::string str);
