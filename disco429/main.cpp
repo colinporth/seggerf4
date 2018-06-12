@@ -187,6 +187,10 @@ const HeapRegion_t kHeapRegions[] = {
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
+uint32_t dispAddr = SDRAM_BANK2_ADDR;
+uint32_t sramTestAddr = SDRAM_BANK1_ADDR;
+uint32_t sramTestLen  = SDRAM_BANK1_LEN;
+
 
 //{{{  trace
 int globalCounter = 0;
@@ -714,7 +718,6 @@ void sdramBank2Init() {
   hsdram.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_3;
   hsdram.Init.WriteProtection    = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
   hsdram.Init.SDClockPeriod      = FMC_SDRAM_CLOCK_PERIOD_3;
-  //hsdram.Init.ReadBurst          = FMC_SDRAM_RBURST_DISABLE;
   hsdram.Init.ReadBurst          = FMC_SDRAM_RBURST_ENABLE;
   hsdram.Init.ReadPipeDelay      = FMC_SDRAM_RPIPE_DELAY_1;
 
@@ -769,52 +772,45 @@ void sdramBank2Init() {
   HAL_SDRAM_ProgramRefreshRate  (&hsdram, 0x0569);
   }
 //}}}
-
+//}}}
 //{{{
 void memoryTest() {
 
-  uint32_t readAddress = SDRAM_BANK1_ADDR;
   uint32_t phase = 0;
   while (true) {
-    uint32_t len = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK1_LEN : SDRAM_BANK2_LEN;
     uint32_t reportMask = 0xFFFFF;
 
-    //  write
-    for (uint32_t i = readAddress; i < readAddress + len; i++)
-      *(uint8_t*)readAddress = (i+phase) & 0xFF;
+    // write
+    uint8_t* readAddress = (uint8_t*)sramTestAddr;
+    for (uint32_t i = 0; i < sramTestLen; i++)
+      *readAddress++ = (i+phase) & 0xFF;
 
     // read
     uint8_t readErr = 0;
-    for (uint32_t i = readAddress; i < readAddress + len; i++) {
-      uint8_t read = *(uint8_t*)readAddress;
-      if (read != ((i+phase) & 0xFF)) {
+    readAddress = (uint8_t*)sramTestAddr;
+    for (uint32_t i = 0; i < sramTestLen; i++) {
+
+      uint8_t read = *readAddress++;
+      if (read != ((i+phase) & 0xFF))
         readErr++;
-        //printf ("add:%x exp:%x got:%x\n", i, (i+phase) & 0xFF, read);
-        }
 
       if ((i & reportMask) == reportMask) {
-        if (readErr)
-          printf ("add:%x err:%x rate:%d\n", (unsigned int)i, (unsigned int)readErr, (int)((readErr * 100) / reportMask));
-        else
-          printf ("add:%lx ok\n", i);
-
-        if (readErr) { // red
-          //BSP_LED_Off (LED3);
-          //BSP_LED_On (LED4);
+        if (readErr) {
+          printf ("%p errors:%x\n", readAddress, readErr);
+          //lcd->info ("errors " + dec((uint32_t)readAddress) + " " + dec(readErr));
+          //lcd->render();
           readErr = 0;
           }
-        else { // green
-          //BSP_LED_Off (LED4);
-          //BSP_LED_On (LED3);
+        else {
+          printf ("ok %p\n", readAddress);
+          //lcd->info ("ok " + dec((uint32_t)readAddress));
+          //lcd->render();
           }
         }
       }
-
     phase++;
-    readAddress = (readAddress == SDRAM_BANK1_ADDR) ? SDRAM_BANK2_ADDR : SDRAM_BANK1_ADDR;
     }
   }
-//}}}
 //}}}
 
 int main() {
@@ -828,14 +824,13 @@ int main() {
   sdramBank2Init();
   heapInit (kHeapRegions);
   //{{{  init frameBuffer
-  //memset ((void*)SDRAM_BANK2_ADDR, 0, (LCD_WIDTH*LCD_HEIGHT*4));
-  lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
-
+  lcd = new cLcd (dispAddr, dispAddr + (LCD_WIDTH*LCD_HEIGHT*2));
   lcd->init ("stm32F429disco " + kHello);
 
   lcd->displayOn();
   lcd->render();
   //}}}
+  //memoryTest();
 
   int count = 0;
   while (true) {
