@@ -182,6 +182,10 @@ typedef struct {
 const std::string kHello = std::string(__TIME__) + " on " + std::string(__DATE__) +
                            " heap:" + dec (0x800000 - (LCD_WIDTH*LCD_HEIGHT*4));
 
+const HeapRegion_t kHeapRegions[] = {
+  {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2*2 },
+  { nullptr, 0 } };
+
 cLcd* lcd = nullptr;
 
 //{{{  trace
@@ -822,12 +826,7 @@ int main() {
   sdramGpioInit();
   sdramBank1Init();
   sdramBank2Init();
-
-  HeapRegion_t xHeapRegions[] = {
-    {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*4), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*4) },
-    { nullptr, 0 } };
-
-  heapInit (xHeapRegions);
+  heapInit (kHeapRegions);
   //{{{  init frameBuffer
   //memset ((void*)SDRAM_BANK2_ADDR, 0, (LCD_WIDTH*LCD_HEIGHT*4));
   lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
@@ -846,5 +845,6 @@ int main() {
     lcd->present();
 
     lcd->info ("hello " + dec (count++));
+    HAL_Delay(1000);
     }
   }
