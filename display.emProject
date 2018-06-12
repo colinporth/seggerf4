@@ -240,14 +240,12 @@
       <file file_name="../drivers/Src/stm32f4xx_ll_dac.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_dma.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_exti.c" />
-      <file file_name="../drivers/Src/stm32f4xx_ll_fmc.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_fsmc.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_gpio.c" />
       <file file_name="../drivers/Src/stm32f4xx_ll_i2c.c" />
       <file file_name="../drivers/Src/stm32f4xx_hal_dma2d.c" />
       <file file_name="../drivers/Src/stm32f4xx_hal_ltdc.c" />
       <file file_name="../drivers/Src/stm32f4xx_hal_ltdc_ex.c" />
-      <file file_name="../drivers/Src/stm32f4xx_hal_sdram.c" />
     </folder>
     <folder Name="freetype">
       <file file_name="../freetype/Src/autofit/autofit.c" />
