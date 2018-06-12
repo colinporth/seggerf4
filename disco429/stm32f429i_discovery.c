@@ -1,14 +1,116 @@
 #include "stm32f429i_discovery.h"
+//{{{  i2c defines
+#define IO_I2C_ADDRESS                         0x82
+#define TS_I2C_ADDRESS                         0x82
 
-#define __STM32F429I_DISCO_BSP_VERSION_MAIN   (0x02) /*!< [31:24] main version */
-#define __STM32F429I_DISCO_BSP_VERSION_SUB1   (0x01) /*!< [23:16] sub1 version */
-#define __STM32F429I_DISCO_BSP_VERSION_SUB2   (0x04) /*!< [15:8]  sub2 version */
-#define __STM32F429I_DISCO_BSP_VERSION_RC     (0x00) /*!< [7:0]  release candidate */
-#define __STM32F429I_DISCO_BSP_VERSION        ((__STM32F429I_DISCO_BSP_VERSION_MAIN << 24)\
-                                             |(__STM32F429I_DISCO_BSP_VERSION_SUB1 << 16)\
-                                             |(__STM32F429I_DISCO_BSP_VERSION_SUB2 << 8 )\
-                                             |(__STM32F429I_DISCO_BSP_VERSION_RC))
+#define DISCOVERY_I2Cx                          I2C3
+#define DISCOVERY_I2Cx_CLOCK_ENABLE()           __I2C3_CLK_ENABLE()
+#define DISCOVERY_I2Cx_FORCE_RESET()            __I2C3_FORCE_RESET()
+#define DISCOVERY_I2Cx_RELEASE_RESET()          __I2C3_RELEASE_RESET()
+#define DISCOVERY_I2Cx_SDA_GPIO_CLK_ENABLE()    __HAL_RCC_GPIOC_CLK_ENABLE()
+#define DISCOVERY_I2Cx_SCL_GPIO_CLK_ENABLE()    __HAL_RCC_GPIOA_CLK_ENABLE()
+#define DISCOVERY_I2Cx_SDA_GPIO_CLK_DISABLE()   __HAL_RCC_GPIOC_CLK_DISABLE()
 
+/* Definition for DISCO I2Cx Pins */
+#define DISCOVERY_I2Cx_SCL_PIN                  GPIO_PIN_8
+#define DISCOVERY_I2Cx_SCL_GPIO_PORT            GPIOA
+#define DISCOVERY_I2Cx_SCL_SDA_AF               GPIO_AF4_I2C3
+#define DISCOVERY_I2Cx_SDA_PIN                  GPIO_PIN_9
+#define DISCOVERY_I2Cx_SDA_GPIO_PORT            GPIOC
+
+/* Definition for IOE I2Cx's NVIC */
+#define DISCOVERY_I2Cx_EV_IRQn                  I2C3_EV_IRQn
+#define DISCOVERY_I2Cx_ER_IRQn                  I2C3_ER_IRQn
+
+#define BSP_I2C_SPEED                           100000
+
+#define I2Cx_TIMEOUT_MAX                        0x3000 
+//}}}
+//{{{  spi defines
+#define DISCOVERY_SPIx                    SPI5
+#define DISCOVERY_SPIx_CLK_ENABLE()       __SPI5_CLK_ENABLE()
+#define DISCOVERY_SPIx_GPIO_PORT          GPIOF                      /* GPIOF */
+#define DISCOVERY_SPIx_AF                 GPIO_AF5_SPI5
+#define DISCOVERY_SPIx_GPIO_CLK_ENABLE()  __HAL_RCC_GPIOF_CLK_ENABLE()
+#define DISCOVERY_SPIx_GPIO_CLK_DISABLE() __HAL_RCC_GPIOF_CLK_DISABLE()
+#define DISCOVERY_SPIx_SCK_PIN            GPIO_PIN_7                 /* PF.07 */
+#define DISCOVERY_SPIx_MISO_PIN           GPIO_PIN_8                 /* PF.08 */
+#define DISCOVERY_SPIx_MOSI_PIN           GPIO_PIN_9                 /* PF.09 */
+
+/* Maximum Timeout values for flags waiting loops. These timeouts are not based
+   on accurate values, they just guarantee that the application will not remain
+   stuck if the SPI communication is corrupted.
+   You may modify these timeout values depending on CPU frequency and application
+   conditions (interrupts routines ...). */
+#define SPIx_TIMEOUT_MAX           ((uint32_t)0x1000)
+
+/* Read/Write command */
+#define READWRITE_CMD              ((uint8_t)0x80)
+
+/* Multiple byte read/write command */
+#define MULTIPLEBYTE_CMD           ((uint8_t)0x40)
+
+/* Dummy Byte Send by the SPI Master device in order to generate the Clock to the Slave device */
+#define DUMMY_BYTE                 ((uint8_t)0x00)
+//}}}
+//{{{  STMPE811 defines
+#define STMPE811_INT_PIN                        GPIO_PIN_15
+#define STMPE811_INT_GPIO_PORT                  GPIOA
+#define STMPE811_INT_CLK_ENABLE()               __HAL_RCC_GPIOA_CLK_ENABLE()
+#define STMPE811_INT_CLK_DISABLE()              __HAL_RCC_GPIOA_CLK_DISABLE()
+#define STMPE811_INT_EXTI                       EXTI15_10_IRQn
+#define STMPE811_INT_EXTIHandler                EXTI15_10_IRQHandler
+//}}}
+//{{{  gyro defines
+/* Chip Select macro definition */
+#define GYRO_CS_LOW()       HAL_GPIO_WritePin(GYRO_CS_GPIO_PORT, GYRO_CS_PIN, GPIO_PIN_RESET)
+#define GYRO_CS_HIGH()      HAL_GPIO_WritePin(GYRO_CS_GPIO_PORT, GYRO_CS_PIN, GPIO_PIN_SET)
+
+#define GYRO_CS_PIN                             GPIO_PIN_1                  /* PC.01 */
+#define GYRO_CS_GPIO_PORT                       GPIOC                       /* GPIOC */
+#define GYRO_CS_GPIO_CLK_ENABLE()               __GPIOC_CLK_ENABLE()
+#define GYRO_CS_GPIO_CLK_DISABLE()              __GPIOC_CLK_DISABLE()
+
+#define GYRO_INT_GPIO_CLK_ENABLE()              __GPIOA_CLK_ENABLE()
+#define GYRO_INT_GPIO_CLK_DISABLE()             __GPIOA_CLK_DISABLE()
+#define GYRO_INT_GPIO_PORT                      GPIOA                       /* GPIOA */
+#define GYRO_INT1_PIN                           GPIO_PIN_1                  /* PA.01 */
+#define GYRO_INT1_EXTI_IRQn                     EXTI1_IRQn
+#define GYRO_INT2_PIN                           GPIO_PIN_2                  /* PA.02 */
+#define GYRO_INT2_EXTI_IRQn                     EXTI2_IRQn
+//}}}
+//{{{  led defines
+#define LED3_PIN                                GPIO_PIN_13
+#define LED3_GPIO_PORT                          GPIOG
+#define LED3_GPIO_CLK_ENABLE()                  __HAL_RCC_GPIOG_CLK_ENABLE()
+#define LED3_GPIO_CLK_DISABLE()                 __HAL_RCC_GPIOG_CLK_DISABLE()
+
+#define LED4_PIN                                GPIO_PIN_14
+#define LED4_GPIO_PORT                          GPIOG
+#define LED4_GPIO_CLK_ENABLE()                  __HAL_RCC_GPIOG_CLK_ENABLE()
+#define LED4_GPIO_CLK_DISABLE()                 __HAL_RCC_GPIOG_CLK_DISABLE()
+
+#define LEDx_GPIO_CLK_ENABLE(__INDEX__)  do{if((__INDEX__) == 0) LED3_GPIO_CLK_ENABLE(); else \
+                                            if((__INDEX__) == 1) LED4_GPIO_CLK_ENABLE(); \
+                                            }while(0)
+#define LEDx_GPIO_CLK_DISABLE(__INDEX__) do{if((__INDEX__) == 0) LED3_GPIO_CLK_DISABLE(); else \
+                                            if((__INDEX__) == 1) LED4_GPIO_CLK_DISABLE(); \
+                                            }while(0)
+//}}}
+//{{{  button defines
+#define KEY_BUTTON_PIN                         GPIO_PIN_0
+#define KEY_BUTTON_GPIO_PORT                   GPIOA
+#define KEY_BUTTON_GPIO_CLK_ENABLE()           __HAL_RCC_GPIOA_CLK_ENABLE()
+#define KEY_BUTTON_GPIO_CLK_DISABLE()          __HAL_RCC_GPIOA_CLK_DISABLE()
+#define KEY_BUTTON_EXTI_IRQn                   EXTI0_IRQn
+
+#define BUTTONx_GPIO_CLK_ENABLE(__INDEX__)     do{if((__INDEX__) == 0) KEY_BUTTON_GPIO_CLK_ENABLE(); \
+                                                 }while(0)
+#define BUTTONx_GPIO_CLK_DISABLE(__INDEX__)    do{if((__INDEX__) == 0) KEY_BUTTON_GPIO_CLK_DISABLE(); \
+                                                 }while(0)
+//}}}
+
+// vars
 GPIO_TypeDef* GPIO_PORT[LEDn] = {LED3_GPIO_PORT, LED4_GPIO_PORT};
 const uint16_t GPIO_PIN[LEDn] = {LED3_PIN, LED4_PIN};
 
@@ -22,91 +124,6 @@ uint32_t SpixTimeout = SPIx_TIMEOUT_MAX; /*<! Value of Timeout when SPI communic
 I2C_HandleTypeDef I2cHandle;
 static SPI_HandleTypeDef SpiHandle;
 static uint8_t Is_LCD_IO_Initialized = 0;
-
-//{{{
-uint32_t BSP_GetVersion()
-{
-  return __STM32F429I_DISCO_BSP_VERSION;
-}
-
-//}}}
-
-//{{{
-void BSP_LED_Init(Led_TypeDef Led)
-{
-  GPIO_InitTypeDef  GPIO_InitStruct;
-
-  /* Enable the GPIO_LED Clock */
-  LEDx_GPIO_CLK_ENABLE(Led);
-
-  /* Configure the GPIO_LED pin */
-  GPIO_InitStruct.Pin = GPIO_PIN[Led];
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-
-  HAL_GPIO_Init(GPIO_PORT[Led], &GPIO_InitStruct);
-
-  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
-}
-//}}}
-//{{{
-void BSP_LED_On(Led_TypeDef Led)
-{
-  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_SET);
-}
-//}}}
-//{{{
-void BSP_LED_Off(Led_TypeDef Led)
-{
-  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
-}
-//}}}
-//{{{
-void BSP_LED_Toggle(Led_TypeDef Led)
-{
-  HAL_GPIO_TogglePin(GPIO_PORT[Led], GPIO_PIN[Led]);
-}
-//}}}
-
-//{{{
-void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
-{
-  GPIO_InitTypeDef GPIO_InitStruct;
-
-  /* Enable the BUTTON Clock */
-  BUTTONx_GPIO_CLK_ENABLE(Button);
-
-  if (ButtonMode == BUTTON_MODE_GPIO)
-  {
-    /* Configure Button pin as input */
-    GPIO_InitStruct.Pin = BUTTON_PIN[Button];
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
-    HAL_GPIO_Init(BUTTON_PORT[Button], &GPIO_InitStruct);
-  }
-
-  if (ButtonMode == BUTTON_MODE_EXTI)
-  {
-    /* Configure Button pin as input with External interrupt */
-    GPIO_InitStruct.Pin = BUTTON_PIN[Button];
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-    HAL_GPIO_Init(BUTTON_PORT[Button], &GPIO_InitStruct);
-
-    /* Enable and set Button EXTI Interrupt to the lowest priority */
-    HAL_NVIC_SetPriority((IRQn_Type)(BUTTON_IRQn[Button]), 0x0F, 0x00);
-    HAL_NVIC_EnableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
-  }
-}
-//}}}
-//{{{
-uint32_t BSP_PB_GetState(Button_TypeDef Button)
-{
-  return HAL_GPIO_ReadPin(BUTTON_PORT[Button], BUTTON_PIN[Button]);
-}
-//}}}
 
 //{{{
 static void I2Cx_MspInit (I2C_HandleTypeDef *hi2c)
@@ -388,107 +405,6 @@ static uint8_t SPIx_WriteRead (uint8_t Byte)
 //}}}
 
 //{{{
-void LCD_IO_Init()
-{
-  GPIO_InitTypeDef GPIO_InitStructure;
-
-  if(Is_LCD_IO_Initialized == 0)
-  {
-    Is_LCD_IO_Initialized = 1;
-
-    /* Configure NCS in Output Push-Pull mode */
-    LCD_WRX_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin     = LCD_WRX_PIN;
-    GPIO_InitStructure.Mode    = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull    = GPIO_NOPULL;
-    GPIO_InitStructure.Speed   = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(LCD_WRX_GPIO_PORT, &GPIO_InitStructure);
-
-    LCD_RDX_GPIO_CLK_ENABLE();
-    GPIO_InitStructure.Pin     = LCD_RDX_PIN;
-    GPIO_InitStructure.Mode    = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull    = GPIO_NOPULL;
-    GPIO_InitStructure.Speed   = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(LCD_RDX_GPIO_PORT, &GPIO_InitStructure);
-
-    /* Configure the LCD Control pins ----------------------------------------*/
-    LCD_NCS_GPIO_CLK_ENABLE();
-
-    /* Configure NCS in Output Push-Pull mode */
-    GPIO_InitStructure.Pin     = LCD_NCS_PIN;
-    GPIO_InitStructure.Mode    = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStructure.Pull    = GPIO_NOPULL;
-    GPIO_InitStructure.Speed   = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(LCD_NCS_GPIO_PORT, &GPIO_InitStructure);
-
-    /* Set or Reset the control line */
-    LCD_CS_LOW();
-    LCD_CS_HIGH();
-
-    SPIx_Init();
-  }
-}
-//}}}
-//{{{
-void LCD_IO_WriteData (uint16_t RegValue)
-{
-  /* Set WRX to send data */
-  LCD_WRX_HIGH();
-
-  /* Reset LCD control line(/CS) and Send data */
-  LCD_CS_LOW();
-  SPIx_Write(RegValue);
-
-  /* Deselect: Chip Select high */
-  LCD_CS_HIGH();
-}
-//}}}
-//{{{
-void LCD_IO_WriteReg (uint8_t Reg)
-{
-  /* Reset WRX to send command */
-  LCD_WRX_LOW();
-
-  /* Reset LCD control line(/CS) and Send command */
-  LCD_CS_LOW();
-  SPIx_Write(Reg);
-
-  /* Deselect: Chip Select high */
-  LCD_CS_HIGH();
-}
-//}}}
-//{{{
-uint32_t LCD_IO_ReadData (uint16_t RegValue, uint8_t ReadSize)
-{
-  uint32_t readvalue = 0;
-
-  /* Select: Chip Select low */
-  LCD_CS_LOW();
-
-  /* Reset WRX to send command */
-  LCD_WRX_LOW();
-
-  SPIx_Write(RegValue);
-
-  readvalue = SPIx_Read(ReadSize);
-
-  /* Set WRX to send data */
-  LCD_WRX_HIGH();
-
-  /* Deselect: Chip Select high */
-  LCD_CS_HIGH();
-
-  return readvalue;
-}
-//}}}
-//{{{
-void LCD_Delay (uint32_t Delay)
-{
-  HAL_Delay(Delay);
-}
-//}}}
-
-//{{{
 void IOE_Init()
 {
   I2Cx_Init();
@@ -616,5 +532,82 @@ void GYRO_IO_Read (uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead)
 
   /* Set chip select High at the end of the transmission */
   GYRO_CS_HIGH();
+}
+//}}}
+
+//{{{
+void BSP_LED_Init (Led_TypeDef Led)
+{
+  GPIO_InitTypeDef  GPIO_InitStruct;
+
+  /* Enable the GPIO_LED Clock */
+  LEDx_GPIO_CLK_ENABLE(Led);
+
+  /* Configure the GPIO_LED pin */
+  GPIO_InitStruct.Pin = GPIO_PIN[Led];
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+  HAL_GPIO_Init(GPIO_PORT[Led], &GPIO_InitStruct);
+
+  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
+}
+//}}}
+//{{{
+void BSP_LED_On (Led_TypeDef Led)
+{
+  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_SET);
+}
+//}}}
+//{{{
+void BSP_LED_Off (Led_TypeDef Led)
+{
+  HAL_GPIO_WritePin(GPIO_PORT[Led], GPIO_PIN[Led], GPIO_PIN_RESET);
+}
+//}}}
+//{{{
+void BSP_LED_Toggle (Led_TypeDef Led)
+{
+  HAL_GPIO_TogglePin(GPIO_PORT[Led], GPIO_PIN[Led]);
+}
+//}}}
+
+//{{{
+void BSP_PB_Init (Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
+{
+  GPIO_InitTypeDef GPIO_InitStruct;
+
+  /* Enable the BUTTON Clock */
+  BUTTONx_GPIO_CLK_ENABLE(Button);
+
+  if (ButtonMode == BUTTON_MODE_GPIO)
+  {
+    /* Configure Button pin as input */
+    GPIO_InitStruct.Pin = BUTTON_PIN[Button];
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
+    HAL_GPIO_Init(BUTTON_PORT[Button], &GPIO_InitStruct);
+  }
+
+  if (ButtonMode == BUTTON_MODE_EXTI)
+  {
+    /* Configure Button pin as input with External interrupt */
+    GPIO_InitStruct.Pin = BUTTON_PIN[Button];
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+    HAL_GPIO_Init(BUTTON_PORT[Button], &GPIO_InitStruct);
+
+    /* Enable and set Button EXTI Interrupt to the lowest priority */
+    HAL_NVIC_SetPriority((IRQn_Type)(BUTTON_IRQn[Button]), 0x0F, 0x00);
+    HAL_NVIC_EnableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
+  }
+}
+//}}}
+//{{{
+uint32_t BSP_PB_GetState (Button_TypeDef Button)
+{
+  return HAL_GPIO_ReadPin(BUTTON_PORT[Button], BUTTON_PIN[Button]);
 }
 //}}}

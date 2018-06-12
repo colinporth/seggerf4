@@ -592,9 +592,9 @@ void sdramGpioInit() {
   __HAL_RCC_FMC_CLK_ENABLE();
 
   GPIO_InitTypeDef GPIO_Init_Structure;
+  GPIO_Init_Structure.Pull = GPIO_NOPULL;
   GPIO_Init_Structure.Mode = GPIO_MODE_AF_PP;
   GPIO_Init_Structure.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_Init_Structure.Pull = GPIO_NOPULL;
   GPIO_Init_Structure.Alternate = GPIO_AF12_FMC;
 
   // gpioB
@@ -620,6 +620,7 @@ void sdramGpioInit() {
                             GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOF, &GPIO_Init_Structure);
 
+  // gpioG
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_8 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOG, &GPIO_Init_Structure);
   }

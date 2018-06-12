@@ -14,7 +14,7 @@ SECTIONS
   __SRAM_segment_end__ = 0x20030000;
   __SRAM_segment_size__ = 0x00030000;
 
-  __HEAPSIZE__ = 100000;
+  __HEAPSIZE__ = 188000;
   __STACKSIZE_PROCESS__ = 0;
   __STACKSIZE__ = 4096;
 
