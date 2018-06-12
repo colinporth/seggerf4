@@ -65,8 +65,8 @@
         <file file_name="../system/stm32f429xx.h" />
       </folder>
       <file file_name="../system/thumb_crt0.s" />
-      <file file_name="Cortex_M_Startup.s" />
       <file file_name="../system/stm32f4xx_it.c" />
+      <file file_name="../system/Cortex_M_Startup_429.s" />
     </folder>
     <folder Name="inc">
       <file file_name="FreeSansBold.h" />

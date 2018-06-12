@@ -655,22 +655,26 @@ void cLcd::render() {
 //}}}
 //{{{
 uint32_t cLcd::ready() {
+
   if (mWait) {
     mWait = false;
     return wait();
     }
+
   return 0;
   }
 //}}}
 
 //{{{
 void cLcd::displayOn() {
-  GPIOD->BSRR = GPIO_PIN_13;   // ADJ hi
+  // ADJ hi
+  GPIOD->BSRR = GPIO_PIN_13;   
   }
 //}}}
 //{{{
 void cLcd::displayOff() {
-  GPIOD->BSRR = GPIO_PIN_13 << 16;   // ADJ lo
+  // ADJ lo
+  GPIOD->BSRR = GPIO_PIN_13 << 16;  
   }
 //}}}
 //{{{
@@ -853,7 +857,7 @@ void cLcd::showLayer (uint8_t layer, uint32_t frameBufferAddress, uint8_t alpha)
 uint32_t cLcd::wait() {
 
   uint32_t took = 0;
-  while (!(DMA2D->ISR & DMA2D_FLAG_TC))  
+  while (!(DMA2D->ISR & DMA2D_FLAG_TC))
     took++;
 
   DMA2D->IFCR |= DMA2D_IFSR_CTEIF | DMA2D_IFSR_CTCIF | DMA2D_IFSR_CTWIF |
