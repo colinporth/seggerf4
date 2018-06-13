@@ -89,9 +89,6 @@ class cFontChar;
 
 class cLcd {
 public:
-  void* operator new (std::size_t size) { return pvPortMalloc (size); }
-  void operator delete (void *ptr) { vPortFree (ptr); }
-
   //{{{
   class cTile {
   public:
@@ -122,6 +119,7 @@ public:
   //}}}
   cLcd (uint32_t buffer0, uint32_t buffer1);
   ~cLcd() {}
+
   void init (std::string title);
   uint16_t getWidth() { return LCD_WIDTH; }
   uint16_t getHeight() { return LCD_HEIGHT; }

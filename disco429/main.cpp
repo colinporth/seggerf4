@@ -580,14 +580,14 @@ void sdRamInit() {
 //   PG08 -> FMC_SDCLK
 //   PC00 -> FMC_SDNWE
 // data
-//   PD1 4..15 <-> FMC_D00..01    
-//   PD00..01  <-> FMC_D02..03    
-//   PE07..15  <-> FMC_D04..12    
-//   PD08..10  <-> FMC_D13..15                               
+//   PD1 4..15 <-> FMC_D00..01
+//   PD00..01  <-> FMC_D02..03
+//   PE07..15  <-> FMC_D04..12
+//   PD08..10  <-> FMC_D13..15
 // address
-//   PF00..05 -> FMC_A00..05    
-//   PF12..15 -> FMC_A06..09    
-//   PG00..01 -> FMC_A10..11    
+//   PF00..05 -> FMC_A00..05
+//   PF12..15 -> FMC_A06..09
+//   PG00..01 -> FMC_A10..11
 //   PE00 -> FMC_NBL0
 //   PE01 -> FMC_NBL1
 //   PG15 -> FMC_NCAS
@@ -784,7 +784,7 @@ int main() {
     lcd->showInfo (true);
     lcd->present();
 
-    lcd->info ("hello " + dec (count++));
-    HAL_Delay (1000);
+    lcd->info ("hello this is a very long line of boring text " + dec (count++));
+    HAL_Delay (200);
     }
   }
