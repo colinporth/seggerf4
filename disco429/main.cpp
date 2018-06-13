@@ -577,14 +577,21 @@ void SystemClockConfig180() {
 //{{{
 void sdRamInit() {
 // SDCLK = 90 MHz - HCLK 180MHz/2
-// PD1 4..15 <-> FMC_D00..01    PF00..05 -> FMC_A00..05    PE00 -> FMC_NBL0
-// PD00..01  <-> FMC_D02..03    PF12..15 -> FMC_A06..09    PE01 -> FMC_NBL1
-// PE07..15  <-> FMC_D04..12    PG00..01 -> FMC_A10..11    PG15 -> FMC_NCAS
-// PD08..10  <-> FMC_D13..15                               PF11 -> FMC_NRAS
-//
-// PG08 -> FMC_SDCLK
-// PC00 -> FMC_SDNWE
-//
+//   PG08 -> FMC_SDCLK
+//   PC00 -> FMC_SDNWE
+// data
+//   PD1 4..15 <-> FMC_D00..01    
+//   PD00..01  <-> FMC_D02..03    
+//   PE07..15  <-> FMC_D04..12    
+//   PD08..10  <-> FMC_D13..15                               
+// address
+//   PF00..05 -> FMC_A00..05    
+//   PF12..15 -> FMC_A06..09    
+//   PG00..01 -> FMC_A10..11    
+//   PE00 -> FMC_NBL0
+//   PE01 -> FMC_NBL1
+//   PG15 -> FMC_NCAS
+//   PF11 -> FMC_NRAS
 // BANK1 address 0xC0000000
 //   PC02 -> FMC_SDNE0
 //   PC03 -> FMC_SDCKE0
