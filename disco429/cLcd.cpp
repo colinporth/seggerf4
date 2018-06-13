@@ -846,7 +846,7 @@ void cLcd::showLayer (uint8_t layer, uint32_t frameBufferAddress, uint8_t alpha)
   else
     ltdcLayer->CR &= ~LTDC_LxCR_LEN;
 
-  LTDC->SRCR |= LTDC_SRCR_IMR |LTDC_SRCR_VBR;
+  LTDC->SRCR |= LTDC_SRCR_IMR | LTDC_SRCR_VBR;
   }
 //}}}
 //{{{

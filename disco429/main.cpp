@@ -791,7 +791,7 @@ int main() {
     lcd->showInfo (true);
     lcd->present();
 
-    lcd->info ("hello this is a very long line of qweeeeeeeeeeertyuiop asddddddddddfghjkl boring text " + dec (count++));
+    lcd->info ("hello this is a very long line of qwertyuiopasdfghjkl boring text " + dec (count++));
     HAL_Delay (200);
     }
   }
