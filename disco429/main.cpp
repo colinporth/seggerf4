@@ -179,17 +179,13 @@ typedef struct {
 //}}}
 //}}}
 
-const std::string kHello = std::string(__TIME__) + " on " + std::string(__DATE__) +
-                           " heap:" + dec (0x800000 - (LCD_WIDTH*LCD_HEIGHT*4));
+const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 
 const HeapRegion_t kHeapRegions[] = {
-  {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2*2 },
+  {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 },
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
-uint32_t dispAddr = SDRAM_BANK1_ADDR;
-uint32_t sramTestAddr = SDRAM_BANK2_ADDR;
-uint32_t sramTestLen  = SDRAM_BANK2_LEN;
 
 //{{{  trace
 int globalCounter = 0;
@@ -715,7 +711,7 @@ void sdRamInit() {
   }
 //}}}
 //{{{
-void bankTest (int iterations, uint32_t addr, uint32_t len) {
+void sdRamTest (int iterations, uint32_t addr, uint32_t len) {
 
   while (iterations--) {
     // write
@@ -764,17 +760,15 @@ int main() {
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
 
   sdRamInit();
-  bankTest (1, SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
-  bankTest (1, SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
-
+  //sdRamTest (1, SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
+  //sdRamTest (1, SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
   heapInit (kHeapRegions);
-  //{{{  init frameBuffer
-  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
-  lcd->init ("stm32F429disco " + kHello);
 
-  lcd->displayOn();
+  // init frameBuffer
+  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
+  lcd->init ("Screen Test " + kHello);
   lcd->render();
-  //}}}
+  lcd->displayOn();
 
   int count = 0;
   while (true) {
@@ -784,6 +778,6 @@ int main() {
     lcd->present();
 
     lcd->info ("hello " + dec (count++));
-    HAL_Delay(1000);
+    HAL_Delay (1000);
     }
   }
