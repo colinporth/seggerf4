@@ -81,6 +81,7 @@ void cLcd::info (std::string str) {
 //}}}
 //{{{
 void cLcd::debug (std::string str) {
+
   info (COL_WHITE, str);
   render();
   }
@@ -222,7 +223,7 @@ void cLcd::copy90 (cTile& srcTile, int16_t x, int16_t y) {
 void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
 // 2 passs size with rotates, bilinear blend but broken
 
-  uint32_t tempBuf = (uint32_t)pvPortMalloc (srcTile.mWidth * height * kTempComponents);
+  uint32_t tempBuf = (uint32_t)malloc (srcTile.mWidth * height * kTempComponents);
 
   // first pass
   uint32_t srcBase = srcTile.mPiccy + ((srcTile.mY * srcTile.mPitch) + srcTile.mX) * srcTile.mComponents;
@@ -293,7 +294,7 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     }
     //}}}
 
-  vPortFree ((void*)tempBuf);
+  free ((void*)tempBuf);
   }
 //}}}
 //{{{
@@ -431,6 +432,7 @@ void cLcd::rectClipped (uint16_t colour, int16_t x, int16_t y, uint16_t width, u
 //}}}
 //{{{
 void cLcd::rectOutline (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height, uint8_t thickness) {
+
   rectClipped (colour, x, y, width, thickness);
   rectClipped (colour, x + width-thickness, y, thickness, height);
   rectClipped (colour, x, y + height-thickness, width, thickness);
@@ -581,8 +583,9 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x
 
 //{{{
 void cLcd::start() {
+
   mDrawBuffer = !mDrawBuffer;
-  setLayer (0, mBuffer[mDrawBuffer]);
+  mCurFrameBufferAddress = mBuffer[mDrawBuffer];
   mDrawStartTime = HAL_GetTick();
   }
 //}}}
@@ -638,15 +641,13 @@ void cLcd::showInfo (bool force) {
 void cLcd::present() {
 
   ready();
-
-  // show it
   showLayer (0, mBuffer[mDrawBuffer], 255);
-
   mDrawTime = HAL_GetTick() - mDrawStartTime;
   }
 //}}}
 //{{{
 void cLcd::render() {
+
   start();
   clear (COL_BLACK);
   showInfo (true);
@@ -667,14 +668,16 @@ uint32_t cLcd::ready() {
 
 //{{{
 void cLcd::displayOn() {
+
   // ADJ hi
-  GPIOD->BSRR = GPIO_PIN_13;   
+  GPIOD->BSRR = GPIO_PIN_13;
   }
 //}}}
 //{{{
 void cLcd::displayOff() {
+
   // ADJ lo
-  GPIOD->BSRR = GPIO_PIN_13 << 16;  
+  GPIOD->BSRR = GPIO_PIN_13 << 16;
   }
 //}}}
 //{{{
@@ -723,48 +726,60 @@ void cLcd::ltdcInit (uint32_t frameBufferAddress) {
   __HAL_RCC_LTDC_CLK_ENABLE();
   //}}}
   //{{{  int gpio
-  //  CK <-> PG.07   DE <-> PF.10  ADJ <-> PD.13 - optional HS <-> PC.06, VS <-> PA.04
-  //  R2 <-> PC.10xx G2 <-> PA.06   B2 <-> PD.06
+  //  HS <-> PC.06 - unused
+  //  VS <-> PA.04 - unused
+  //  R2 <-> PC.10 - unused
+  //
+  //  CK <-> PG.07
+  //  DE <-> PF.10
+  //  G2 <-> PA.06   B2 <-> PD.06
   //  R3 <-> PB.00   G3 <-> PG.10   B3 <-> PG.11
   //  R4 <-> PA.11   G4 <-> PB.10   B4 <-> PG.12
   //  R5 <-> PA.12   G5 <-> PB.11   B5 <-> PA.03
   //  R6 <-> PB.01   G6 <-> PC.07   B6 <-> PB.08
   //  R7 <-> PG.06   G7 <-> PD.03   B7 <-> PB.09
+  //  ADJ <-> PD.13
 
+  // adj
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-  //GPIO_InitStructure.Pull = GPIO_NOPULL;
   GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStructure.Pin = GPIO_PIN_13;
   HAL_GPIO_Init (GPIOD, &GPIO_InitStructure);
 
+  // gpioA - AF14
   GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStructure.Pull = GPIO_NOPULL;
-  GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStructure.Alternate = GPIO_AF14_LTDC;
-
   GPIO_InitStructure.Pin = GPIO_PIN_3 | GPIO_PIN_6 | GPIO_PIN_11 | GPIO_PIN_12; // GPIO_PIN_4
   HAL_GPIO_Init (GPIOA, &GPIO_InitStructure);
 
+  // gpioB
   GPIO_InitStructure.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11;
   HAL_GPIO_Init (GPIOB, &GPIO_InitStructure);
 
-  GPIO_InitStructure.Pin = GPIO_PIN_7;// ; | GPIO_PIN_10; // GPIO_PIN_6
+  // gpioC
+  GPIO_InitStructure.Pin = GPIO_PIN_7; // ; | GPIO_PIN_10; // GPIO_PIN_6
   HAL_GPIO_Init (GPIOC, &GPIO_InitStructure);
 
+  // gpioD
   GPIO_InitStructure.Pin = GPIO_PIN_3 | GPIO_PIN_6;
   HAL_GPIO_Init (GPIOD, &GPIO_InitStructure);
 
+  // gpioF
   GPIO_InitStructure.Pin = GPIO_PIN_10;
   HAL_GPIO_Init (GPIOF, &GPIO_InitStructure);
 
+  // gpioG
   GPIO_InitStructure.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_11;
   HAL_GPIO_Init (GPIOG, &GPIO_InitStructure);
 
+  // gpioB - AF9
+  GPIO_InitStructure.Alternate = GPIO_AF9_LTDC;
   GPIO_InitStructure.Pin = GPIO_PIN_0 | GPIO_PIN_1;
-  GPIO_InitStructure.Alternate= GPIO_AF9_LTDC;
   HAL_GPIO_Init (GPIOB, &GPIO_InitStructure);
 
+  // gpioG - AF9
   GPIO_InitStructure.Pin = GPIO_PIN_10 | GPIO_PIN_12;
   HAL_GPIO_Init (GPIOG, &GPIO_InitStructure);
   //}}}
@@ -787,51 +802,32 @@ void cLcd::ltdcInit (uint32_t frameBufferAddress) {
   LtdcHandler.Init.Backcolor.Green = 0;
   HAL_LTDC_Init (&LtdcHandler);
 
-  //DMA2D->AMTCR = 0x3F01;
-
-  layerInit (0, frameBufferAddress);
-  showFrameBufferAddress[1] = frameBufferAddress;
-  showAlpha[1] = 0;
-  }
-//}}}
-//{{{
-void cLcd::layerInit (uint8_t layer, uint32_t frameBufferAddress) {
-
-  LTDC_LayerCfgTypeDef* curLayerCfg = &LtdcHandler.LayerCfg[layer];
-
+  LTDC_LayerCfgTypeDef* curLayerCfg = &LtdcHandler.LayerCfg[0];
   curLayerCfg->WindowX0 = 0;
-  curLayerCfg->WindowX1 = getWidth();
   curLayerCfg->WindowY0 = 0;
+  curLayerCfg->WindowX1 = getWidth();
   curLayerCfg->WindowY1 = getHeight();
-
   curLayerCfg->PixelFormat = kLtdcFormat;
-  curLayerCfg->FBStartAdress = (uint32_t)frameBufferAddress;
-
+  curLayerCfg->FBStartAdress = frameBufferAddress;
   curLayerCfg->Alpha = 255;
   curLayerCfg->Alpha0 = 0;
-
   curLayerCfg->Backcolor.Blue = 0;
   curLayerCfg->Backcolor.Green = 0;
   curLayerCfg->Backcolor.Red = 0;
-
   curLayerCfg->BlendingFactor1 = LTDC_BLENDING_FACTOR1_PAxCA;
   curLayerCfg->BlendingFactor2 = LTDC_BLENDING_FACTOR2_PAxCA;
-
   curLayerCfg->ImageWidth = getWidth();
   curLayerCfg->ImageHeight = getHeight();
-
-  HAL_LTDC_ConfigLayer (&LtdcHandler, curLayerCfg, layer);
+  HAL_LTDC_ConfigLayer (&LtdcHandler, curLayerCfg, 0);
 
   // local state
   mCurFrameBufferAddress = frameBufferAddress;
-  showFrameBufferAddress[layer] = frameBufferAddress;
-  showAlpha[layer] = 255;
-  }
-//}}}
-//{{{
-void cLcd::setLayer (uint8_t layer, uint32_t frameBufferAddress) {
+  showFrameBufferAddress[0] = frameBufferAddress;
+  showFrameBufferAddress[1] = frameBufferAddress;
+  showAlpha[0] = 255;
+  showAlpha[1] = 0;
 
-  mCurFrameBufferAddress = frameBufferAddress;
+  //DMA2D->AMTCR = 0x3F01;
   }
 //}}}
 //{{{
@@ -882,7 +878,7 @@ cFontChar* cLcd::loadChar (uint16_t fontHeight, char ch) {
   fontChar->bitmap = nullptr;
 
   if (FTglyphSlot->bitmap.buffer) {
-    fontChar->bitmap = (uint8_t*)pvPortMalloc (FTglyphSlot->bitmap.pitch * FTglyphSlot->bitmap.rows);
+    fontChar->bitmap = (uint8_t*)malloc (FTglyphSlot->bitmap.pitch * FTglyphSlot->bitmap.rows);
     memcpy (fontChar->bitmap, FTglyphSlot->bitmap.buffer, FTglyphSlot->bitmap.pitch * FTglyphSlot->bitmap.rows);
     }
 

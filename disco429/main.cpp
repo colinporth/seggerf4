@@ -576,6 +576,7 @@ void SystemClockConfig180() {
 
 //{{{
 void sdRamInit() {
+//{{{  pins
 // SDCLK = 90 MHz - HCLK 180MHz/2
 //   PG08 -> FMC_SDCLK
 //   PC00 -> FMC_SDNWE
@@ -598,6 +599,7 @@ void sdRamInit() {
 // BANK2 address 0xD0000000
 //   PB06 -> FMC_SDNE1
 //   PB05 -> FMC_SDCKE1
+//}}}
 
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -641,6 +643,7 @@ void sdRamInit() {
   //}}}
 
   //{{{  bank command
+  // 64m
   const uint32_t kBank1Command =
     FMC_SDRAM_CLOCK_PERIOD_2 |
     FMC_SDRAM_RBURST_ENABLE |
@@ -652,6 +655,7 @@ void sdRamInit() {
     FMC_SDRAM_CAS_LATENCY_3  |
     FMC_SDRAM_WRITE_PROTECTION_DISABLE;
 
+  // 128m
   const uint32_t kBank2Command =
     FMC_SDRAM_COLUMN_BITS_NUM_9 |
     FMC_SDRAM_ROW_BITS_NUM_12 |
@@ -663,7 +667,7 @@ void sdRamInit() {
   FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK1] = kBank1Command;
   FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK2] = kBank2Command;
 
-  //{{{  bank timing 
+  //{{{  bank timing
   const uint32_t kRowCycleDelay        = 7; // tRC:  min = 63 (6 x 11.90ns)
   const uint32_t kRPDelay              = 2; // tRP:  15ns => 2 x 11.90ns
   const uint32_t kLoadToActiveDelay    = 2; // tMRD: 2 Clock cycles
@@ -672,7 +676,7 @@ void sdRamInit() {
   const uint32_t kWriteRecoveryTime    = 2; // tWR:  2 Clock cycles
   const uint32_t kRCDDelay             = 2; // tRCD: 15ns => 2 x 11.90ns
 
-  const uint32_t kBank1Timing = 
+  const uint32_t kBank1Timing =
     (kLoadToActiveDelay-1)          |
    ((kExitSelfRefreshDelay-1) << 4) |
    ((kSelfRefreshTime-1) << 8)      |
@@ -681,7 +685,7 @@ void sdRamInit() {
    ((kRPDelay-1) << 20)             |
    ((kRCDDelay-1) << 24);
 
-  const uint32_t kBank2Timing = 
+  const uint32_t kBank2Timing =
     (kLoadToActiveDelay-1)          |
    ((kExitSelfRefreshDelay-1) << 4) |
    ((kSelfRefreshTime-1) << 8)      |
@@ -787,7 +791,7 @@ int main() {
     lcd->showInfo (true);
     lcd->present();
 
-    lcd->info ("hello this is a very long line of boring text " + dec (count++));
+    lcd->info ("hello this is a very long line of qweeeeeeeeeeertyuiop asddddddddddfghjkl boring text " + dec (count++));
     HAL_Delay (200);
     }
   }

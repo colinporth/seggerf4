@@ -171,8 +171,6 @@ private:
   typedef std::map<uint16_t, cFontChar*> cFontCharMap;
 
   void ltdcInit (uint32_t frameBufferAddress);
-  void layerInit (uint8_t layer, uint32_t frameBufferAddress);
-  void setLayer (uint8_t layer, uint32_t frameBufferAddress);
   void showLayer (uint8_t layer, uint32_t frameBufferAddress, uint8_t alpha);
   uint32_t wait();
 
