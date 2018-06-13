@@ -187,7 +187,7 @@ const HeapRegion_t kHeapRegions[] = {
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
-uint32_t dispAddr = SDRAM_BANK2_ADDR;
+uint32_t dispAddr = SDRAM_BANK1_ADDR;
 uint32_t sramTestAddr = SDRAM_BANK2_ADDR;
 uint32_t sramTestLen  = SDRAM_BANK2_LEN;
 
@@ -580,7 +580,7 @@ void SystemClockConfig180() {
 
 //{{{
 void sdRamInit() {
-// Timing configuration 90 MHz SD clock frequency (180MHz/2)
+// SDCLK = 90 MHz - HCLK 180MHz/2
 // PD1 4..15 <-> FMC_D00..01    PF00..05 -> FMC_A00..05    PE00 -> FMC_NBL0
 // PD00..01  <-> FMC_D02..03    PF12..15 -> FMC_A06..09    PE01 -> FMC_NBL1
 // PE07..15  <-> FMC_D04..12    PG00..01 -> FMC_A10..11    PG15 -> FMC_NCAS
@@ -638,7 +638,7 @@ void sdRamInit() {
   HAL_GPIO_Init (GPIOG, &GPIO_Init_Structure);
 
   const uint32_t kBank1Command =
-    FMC_SDRAM_CLOCK_PERIOD_3 |
+    FMC_SDRAM_CLOCK_PERIOD_2 |
     FMC_SDRAM_RBURST_ENABLE |
     FMC_SDRAM_RPIPE_DELAY_1 |
     FMC_SDRAM_COLUMN_BITS_NUM_8 |
@@ -706,8 +706,8 @@ void sdRamInit() {
   // send loadMode command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_LOAD_MODE |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
-                            ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | 
-                              SDRAM_MODEREG_CAS_LATENCY_3 | 
+                            ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE |
+                              SDRAM_MODEREG_CAS_LATENCY_3 |
                               SDRAM_MODEREG_BURST_LENGTH_4) << 9);
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
@@ -771,7 +771,7 @@ int main() {
 
   heapInit (kHeapRegions);
   //{{{  init frameBuffer
-  lcd = new cLcd (dispAddr, dispAddr + (LCD_WIDTH*LCD_HEIGHT*2));
+  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
   lcd->init ("stm32F429disco " + kHello);
 
   lcd->displayOn();
