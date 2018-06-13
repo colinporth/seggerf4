@@ -579,124 +579,7 @@ void SystemClockConfig180() {
 //}}}
 
 //{{{
-void SDRAM_Init (FMC_SDRAM_TypeDef *Device, FMC_SDRAM_InitTypeDef *Init) {
-
-  if (Init->SDBank != FMC_SDRAM_BANK2) {
-    /* Clear NC, NR, MWID, NB, CAS, WP, SDCLK, RBURST, and RPIPE bits */
-    uint32_t tmpr1 = Device->SDCR[FMC_SDRAM_BANK1];
-    tmpr1 &= ((uint32_t)~(FMC_SDCR1_NC  | FMC_SDCR1_NR | FMC_SDCR1_MWID | \
-                          FMC_SDCR1_NB  | FMC_SDCR1_CAS | FMC_SDCR1_WP | \
-                          FMC_SDCR1_SDCLK | FMC_SDCR1_RBURST | FMC_SDCR1_RPIPE));
-
-    tmpr1 |= (uint32_t)(Init->ColumnBitsNumber   |
-                        Init->RowBitsNumber      |
-                        Init->MemoryDataWidth    |
-                        Init->InternalBankNumber |
-                        Init->CASLatency         |
-                        Init->WriteProtection    |
-                        Init->SDClockPeriod      |
-                        Init->ReadBurst          |
-                        Init->ReadPipeDelay
-                        );
-    Device->SDCR[FMC_SDRAM_BANK1] = tmpr1;
-    }
-
-  else {
-    /* FMC_Bank2_SDRAM */
-
-    /* Clear NC, NR, MWID, NB, CAS, WP, SDCLK, RBURST, and RPIPE bits */
-    uint32_t tmpr1 = Device->SDCR[FMC_SDRAM_BANK1];
-    tmpr1 &= ((uint32_t)~(FMC_SDCR1_SDCLK | FMC_SDCR1_RBURST | FMC_SDCR1_RPIPE));
-    tmpr1 |= (uint32_t)(Init->SDClockPeriod      |
-                        Init->ReadBurst          |
-                        Init->ReadPipeDelay);
-
-    /* Clear NC, NR, MWID, NB, CAS, WP, SDCLK, RBURST, and RPIPE bits */
-    uint32_t tmpr2 = Device->SDCR[FMC_SDRAM_BANK2];
-    tmpr2 &= ((uint32_t)~(FMC_SDCR1_NC  | FMC_SDCR1_NR | FMC_SDCR1_MWID |
-                          FMC_SDCR1_NB  | FMC_SDCR1_CAS | FMC_SDCR1_WP |
-                          FMC_SDCR1_SDCLK | FMC_SDCR1_RBURST | FMC_SDCR1_RPIPE));
-    tmpr2 |= (uint32_t)(Init->ColumnBitsNumber  |
-                       Init->RowBitsNumber      |
-                       Init->MemoryDataWidth    |
-                       Init->InternalBankNumber |
-                       Init->CASLatency         |
-                       Init->WriteProtection);
-
-    Device->SDCR[FMC_SDRAM_BANK1] = tmpr1;
-    Device->SDCR[FMC_SDRAM_BANK2] = tmpr2;
-    }
-  }
-//}}}
-//{{{
-void SDRAM_Timing_Init (FMC_SDRAM_TypeDef *Device, FMC_SDRAM_TimingTypeDef *Timing, uint32_t Bank) {
-
-  /* Set SDRAM device timing parameters */
-  if (Bank != FMC_SDRAM_BANK2) {
-
-    /* Clear TMRD, TXSR, TRAS, TRC, TWR, TRP and TRCD bits */
-    uint32_t tmpr1 = Device->SDTR[FMC_SDRAM_BANK1];
-    tmpr1 &= ((uint32_t)~(FMC_SDTR1_TMRD  | FMC_SDTR1_TXSR | FMC_SDTR1_TRAS | \
-                          FMC_SDTR1_TRC  | FMC_SDTR1_TWR | FMC_SDTR1_TRP | \
-                          FMC_SDTR1_TRCD));
-    tmpr1 |= (uint32_t)(((Timing->LoadToActiveDelay)-1U)           |
-                       (((Timing->ExitSelfRefreshDelay)-1U) << 4U) |
-                       (((Timing->SelfRefreshTime)-1U) << 8U)      |
-                       (((Timing->RowCycleDelay)-1U) << 12U)       |
-                       (((Timing->WriteRecoveryTime)-1U) <<16U)    |
-                       (((Timing->RPDelay)-1U) << 20U)             |
-                       (((Timing->RCDDelay)-1U) << 24U));
-    Device->SDTR[FMC_SDRAM_BANK1] = tmpr1;
-    }
-
-   else {
-    // FMC_Bank2_SDRAM */
-
-    /* Clear TRC and TRP bits */
-    uint32_t tmpr1 = Device->SDTR[FMC_SDRAM_BANK1];
-    tmpr1 &= ((uint32_t)~(FMC_SDTR1_TRC | FMC_SDTR1_TRP));
-    tmpr1 |= (uint32_t)((((Timing->RowCycleDelay)-1U) << 12U) | (((Timing->RPDelay)-1U) << 20U));
-
-
-    /* Clear TMRD, TXSR, TRAS, TRC, TWR, TRP and TRCD bits */
-    uint32_t tmpr2 = Device->SDTR[FMC_SDRAM_BANK2];
-    tmpr2 &= ((uint32_t)~(FMC_SDTR1_TMRD  | FMC_SDTR1_TXSR | FMC_SDTR1_TRAS |
-                          FMC_SDTR1_TRC  | FMC_SDTR1_TWR | FMC_SDTR1_TRP | FMC_SDTR1_TRCD));
-
-    tmpr2 |= (uint32_t)((((Timing->LoadToActiveDelay)-1U)           |
-                       (((Timing->ExitSelfRefreshDelay)-1U) << 4U)  |
-                       (((Timing->SelfRefreshTime)-1U) << 8U)       |
-                       (((Timing->WriteRecoveryTime)-1U) <<16U)     |
-                       (((Timing->RCDDelay)-1U) << 24U)));
-
-    Device->SDTR[FMC_SDRAM_BANK1] = tmpr1;
-    Device->SDTR[FMC_SDRAM_BANK2] = tmpr2;
-    }
-  }
-//}}}
-//{{{
-void SDRAM_SendCommand (FMC_SDRAM_TypeDef* Device, FMC_SDRAM_CommandTypeDef* Command) {
-
-  /* Set command register */
-  __IO uint32_t tmpr = (uint32_t)((Command->CommandMode) | 
-                                  (Command->CommandTarget) |
-                                  (((Command->AutoRefreshNumber)-1U) << 5U) | 
-                                  ((Command->ModeRegisterDefinition) << 9U));
-  Device->SDCMR = tmpr;
-
-  /* Wait until command is send */
-  while (HAL_IS_BIT_SET(Device->SDSR, FMC_SDSR_BUSY)) {}
-  }
-//}}}
-//{{{
-void SDRAM_ProgramRefreshRate (FMC_SDRAM_TypeDef* Device, uint32_t RefreshRate) {
-  /* Set the refresh rate in command register */
-  Device->SDRTR |= (RefreshRate<<1U);
-  }
-//}}}
-
-//{{{
-void sdramGpioInit() {
+void sdRamInit() {
 // Timing configuration 90 MHz SD clock frequency (180MHz/2)
 // PD1 4..15 <-> FMC_D00..01    PF00..05 -> FMC_A00..05    PE00 -> FMC_NBL0
 // PD00..01  <-> FMC_D02..03    PF12..15 -> FMC_A06..09    PE01 -> FMC_NBL1
@@ -753,129 +636,82 @@ void sdramGpioInit() {
   // gpioG
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_8 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOG, &GPIO_Init_Structure);
-  }
-//}}}
-//{{{
-void sdramBank1Init() {
-// Micron MT48LC8M16A2 – 2m x 16bits x 4banks
-// PC2, PC3 - bank 1 - 0xC0000000 : 0xC10000000 - len 0x1000000
 
-  SDRAM_HandleTypeDef hsdram;
-  hsdram.Instance = FMC_SDRAM_DEVICE;
-  hsdram.Init.SDBank             = FMC_SDRAM_BANK1;
-  hsdram.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_8;
-  hsdram.Init.RowBitsNumber      = FMC_SDRAM_ROW_BITS_NUM_12;
-  hsdram.Init.MemoryDataWidth    = FMC_SDRAM_MEM_BUS_WIDTH_16;
-  hsdram.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
-  hsdram.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_3;
-  hsdram.Init.WriteProtection    = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
-  hsdram.Init.SDClockPeriod      = FMC_SDRAM_CLOCK_PERIOD_3;
-  hsdram.Init.ReadBurst          = FMC_SDRAM_RBURST_ENABLE;
-  hsdram.Init.ReadPipeDelay      = FMC_SDRAM_RPIPE_DELAY_1;
-  FMC_SDRAM_TimingTypeDef SDRAM_Timing;
-  SDRAM_Timing.LoadToActiveDelay    = 2; // TMRD: 2 Clock cycles
-  SDRAM_Timing.ExitSelfRefreshDelay = 7; // TXSR: min = 70ns (6 x 11.90ns)
-  SDRAM_Timing.SelfRefreshTime      = 4; // TRAS: min = 42ns (4 x 11.90ns) max=120k (ns)
-  SDRAM_Timing.RowCycleDelay        = 7; // TRC:  min = 63 (6 x 11.90ns)
-  SDRAM_Timing.WriteRecoveryTime    = 2; // TWR:  2 Clock cycles
-  SDRAM_Timing.RPDelay              = 2; // TRP:  15ns => 2 x 11.90ns
-  SDRAM_Timing.RCDDelay             = 2; // TRCD: 15ns => 2 x 11.90ns
+  const uint32_t kBank1Command =
+    FMC_SDRAM_CLOCK_PERIOD_3 |
+    FMC_SDRAM_RBURST_ENABLE |
+    FMC_SDRAM_RPIPE_DELAY_1 |
+    FMC_SDRAM_COLUMN_BITS_NUM_8 |
+    FMC_SDRAM_ROW_BITS_NUM_12 |
+    FMC_SDRAM_INTERN_BANKS_NUM_4 |
+    FMC_SDRAM_MEM_BUS_WIDTH_16  |
+    FMC_SDRAM_CAS_LATENCY_3  |
+    FMC_SDRAM_WRITE_PROTECTION_DISABLE;
 
-  SDRAM_Init (FMC_SDRAM_DEVICE, &hsdram.Init);
-  SDRAM_Timing_Init (FMC_SDRAM_DEVICE, &SDRAM_Timing, hsdram.Init.SDBank);
+  const uint32_t kBank2Command =
+    FMC_SDRAM_COLUMN_BITS_NUM_9 |
+    FMC_SDRAM_ROW_BITS_NUM_12 |
+    FMC_SDRAM_INTERN_BANKS_NUM_4 |
+    FMC_SDRAM_MEM_BUS_WIDTH_16 |
+    FMC_SDRAM_CAS_LATENCY_3 |
+    FMC_SDRAM_WRITE_PROTECTION_DISABLE;
 
-  // config clock configuration enable command
-  FMC_SDRAM_CommandTypeDef Command;
-  Command.CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-  Command.AutoRefreshNumber = 1;
-  Command.ModeRegisterDefinition = 0;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
+  FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK1] = kBank1Command;
+  FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK2] = kBank2Command;
+
+  const uint32_t kRowCycleDelay        = 7; // TRC:  min = 63 (6 x 11.90ns)
+  const uint32_t kRPDelay              = 2; // TRP:  15ns => 2 x 11.90ns
+
+  const uint32_t kLoadToActiveDelay    = 2; // TMRD: 2 Clock cycles
+  const uint32_t kExitSelfRefreshDelay = 7; // TXSR: min = 70ns (6 x 11.90ns)
+  const uint32_t kSelfRefreshTime      = 4; // TRAS: min = 42ns (4 x 11.90ns) max=120k (ns)
+  const uint32_t kWriteRecoveryTime    = 2; // TWR:  2 Clock cycles
+  const uint32_t kRCDDelay             = 2; // TRCD: 15ns => 2 x 11.90ns
+
+  const uint32_t kBank1Timing = (kLoadToActiveDelay-1)          |
+                               ((kExitSelfRefreshDelay-1) << 4) |
+                               ((kSelfRefreshTime-1) << 8)      |
+                               ((kRowCycleDelay-1) << 12)       |
+                               ((kWriteRecoveryTime-1) <<16)    |
+                               ((kRPDelay-1) << 20)             |
+                               ((kRCDDelay-1) << 24);
+
+  const uint32_t kBank2Timing = (kLoadToActiveDelay-1)          |
+                               ((kExitSelfRefreshDelay-1) << 4) |
+                               ((kSelfRefreshTime-1) << 8)      |
+                               ((kWriteRecoveryTime-1) <<16)    |
+                               ((kRCDDelay-1) << 24);
+
+  FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK1] = kBank1Timing;
+  FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK2] = kBank2Timing;
+
+  // send clockEnable command
+  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_CLK_ENABLE |
+                            FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
+  while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   HAL_Delay (100);
 
-  // config PALL (precharge all) command
-  Command.CommandMode = FMC_SDRAM_CMD_PALL;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-  Command.AutoRefreshNumber = 1;
-  Command.ModeRegisterDefinition = 0;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
+  // send PALL prechargeAll command
+  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_PALL |
+                            FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
+  while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
-  // config Auto-Refresh command
-  Command.CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-  Command.AutoRefreshNumber = 4;
-  Command.ModeRegisterDefinition = 0;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
+  // send autoRefresh command
+  const uint32_t kAutoRefreshNumber = 4;
+  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_AUTOREFRESH_MODE |
+                            FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
+                            ((kAutoRefreshNumber-1) << 5);
+  while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
-  Command.CommandMode = FMC_SDRAM_CMD_LOAD_MODE;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-  Command.AutoRefreshNumber = 1;
-  Command.ModeRegisterDefinition =
-    SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_BURST_LENGTH_4;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
+  // send loadMode command
+  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_LOAD_MODE |
+                            FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
+                            ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | 
+                              SDRAM_MODEREG_CAS_LATENCY_3 | 
+                              SDRAM_MODEREG_BURST_LENGTH_4) << 9);
+  while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
-  SDRAM_ProgramRefreshRate (FMC_SDRAM_DEVICE, 0x0569);
-  }
-//}}}
-//{{{
-void sdramBank2Init() {
-// PB6, PB5 - Bank2 - 0xD0000000 : 0xD0800000 len 0x800000
-
-  SDRAM_HandleTypeDef hsdram;
-  hsdram.Instance = FMC_SDRAM_DEVICE;
-  hsdram.Init.SDBank             = FMC_SDRAM_BANK2;
-  hsdram.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_9;
-  hsdram.Init.RowBitsNumber      = FMC_SDRAM_ROW_BITS_NUM_12;
-  hsdram.Init.MemoryDataWidth    = FMC_SDRAM_MEM_BUS_WIDTH_16;
-  hsdram.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
-  hsdram.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_3;
-  hsdram.Init.WriteProtection    = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
-  hsdram.Init.SDClockPeriod      = FMC_SDRAM_CLOCK_PERIOD_3;
-  hsdram.Init.ReadBurst          = FMC_SDRAM_RBURST_ENABLE;
-  hsdram.Init.ReadPipeDelay      = FMC_SDRAM_RPIPE_DELAY_1;
-  FMC_SDRAM_TimingTypeDef SDRAM_Timing;
-  SDRAM_Timing.LoadToActiveDelay    = 2; // TMRD: 2 Clock cycles
-  SDRAM_Timing.ExitSelfRefreshDelay = 7; // TXSR: min = 70ns (6 x 11.90ns)
-  SDRAM_Timing.SelfRefreshTime      = 4; // TRAS: min = 42ns (4 x 11.90ns) max=120k (ns)
-  SDRAM_Timing.RowCycleDelay        = 7; // TRC:  min = 63 (6 x 11.90ns)
-  SDRAM_Timing.WriteRecoveryTime    = 2; // TWR:  2 Clock cycles
-  SDRAM_Timing.RPDelay              = 2; // TRP:  15ns => 2 x 11.90ns
-  SDRAM_Timing.RCDDelay             = 2; // TRCD: 15ns => 2 x 11.90ns
-  SDRAM_Init (FMC_SDRAM_DEVICE, &hsdram.Init);
-  SDRAM_Timing_Init (FMC_SDRAM_DEVICE, &SDRAM_Timing, hsdram.Init.SDBank);
-
-  // config clock configuration enable command
-  FMC_SDRAM_CommandTypeDef Command;
-  Command.CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
-  Command.AutoRefreshNumber = 1;
-  Command.ModeRegisterDefinition = 0;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
-  HAL_Delay (100);
-
-  // config PALL (precharge all) command
-  Command.CommandMode = FMC_SDRAM_CMD_PALL;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
-  Command.AutoRefreshNumber = 1;
-  Command.ModeRegisterDefinition = 0;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
-
-  // config Auto-Refresh command
-  Command.CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
-  Command.AutoRefreshNumber = 4;
-  Command.ModeRegisterDefinition = 0;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
-
-  // Program external memory mode register
-  Command.CommandMode = FMC_SDRAM_CMD_LOAD_MODE;
-  Command.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK2;
-  Command.AutoRefreshNumber = 1;
-  Command.ModeRegisterDefinition = // burstSequential, operatingModeNormal
-    SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_BURST_LENGTH_4;
-  SDRAM_SendCommand (FMC_SDRAM_DEVICE, &Command);
-
-  SDRAM_ProgramRefreshRate (FMC_SDRAM_DEVICE, 0x0569);
+  FMC_SDRAM_DEVICE->SDRTR |= 0x0569 << 1;
   }
 //}}}
 //{{{
@@ -930,9 +766,7 @@ int main() {
   SystemClockConfig180();
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
 
-  sdramGpioInit();
-  sdramBank1Init();
-  sdramBank2Init();
+  sdRamInit();
   //memoryTest();
 
   heapInit (kHeapRegions);
