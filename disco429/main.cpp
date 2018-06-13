@@ -715,28 +715,26 @@ void sdRamInit() {
   }
 //}}}
 //{{{
-void memoryTest() {
+void bankTest (int iterations, uint32_t addr, uint32_t len) {
 
-  uint32_t phase = 0;
-  while (true) {
+  while (iterations--) {
     // write
-    uint8_t* readAddress = (uint8_t*)sramTestAddr;
-    for (uint32_t i = 0; i < sramTestLen; i++)
-      *readAddress++ = (i+phase) & 0xFF;
+    uint16_t* writeAddress = (uint16_t*)addr;
+    for (uint32_t i = 0; i < len/2; i++)
+      *writeAddress++ = (i+iterations) & 0xFFFF;
 
     // read
-    int32_t readErr = 0;
     int32_t readOk = 0;
-    readAddress = (uint8_t*)sramTestAddr;
-    for (uint32_t i = 0; i < sramTestLen; i++) {
-
-      uint8_t read = *readAddress++;
-      if (read == ((i+phase) & 0xFF)) {
+    int32_t readErr = 0;
+    uint16_t* readAddress = (uint16_t*)addr;
+    for (uint32_t i = 0; i < len/2; i++) {
+      uint16_t read = *readAddress++;
+      if (read == ((i+iterations) & 0xFFFF)) {
         //printf ("ok %p read:%x == %x\n", readAddress, read, (i+phase) & 0xFF);
         readOk++;
         }
       else {
-        printf ("error %p read:%x != %x\n", readAddress, read, (i+phase) & 0xFF);
+        printf ("error %p read:%x != %x\n", readAddress, read, (i+iterations) & 0xFFFF);
         readErr++;
         }
 
@@ -755,7 +753,6 @@ void memoryTest() {
         readErr = 0;
         }
       }
-    phase++;
     }
   }
 //}}}
@@ -767,7 +764,8 @@ int main() {
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
 
   sdRamInit();
-  //memoryTest();
+  bankTest (1, SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
+  bankTest (1, SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
 
   heapInit (kHeapRegions);
   //{{{  init frameBuffer
