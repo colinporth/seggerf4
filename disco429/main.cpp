@@ -612,34 +612,35 @@ void sdRamInit() {
   GPIO_Init_Structure.Mode = GPIO_MODE_AF_PP;
   GPIO_Init_Structure.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_Init_Structure.Alternate = GPIO_AF12_FMC;
-
-  // gpioB
+  //{{{  gpioB
   GPIO_Init_Structure.Pin = GPIO_PIN_5 | GPIO_PIN_6;
   HAL_GPIO_Init (GPIOB, &GPIO_Init_Structure);
-
-  // gpioC
+  //}}}
+  //{{{  gpioC
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_2 | GPIO_PIN_3;
   HAL_GPIO_Init (GPIOC, &GPIO_Init_Structure);
-
-  // gpioD
+  //}}}
+  //{{{  gpioD
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_1  | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 |
                             GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOD, &GPIO_Init_Structure);
-
-  // gpioE
+  //}}}
+  //{{{  gpioE
   GPIO_Init_Structure.Pin = GPIO_PIN_0  | GPIO_PIN_1  | GPIO_PIN_7 | GPIO_PIN_8  | GPIO_PIN_9  |
                             GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOE, &GPIO_Init_Structure);
-
-  // gpioF
+  //}}}
+  //{{{  gpioF
   GPIO_Init_Structure.Pin = GPIO_PIN_0  | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3  | GPIO_PIN_4 | GPIO_PIN_5 |
                             GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOF, &GPIO_Init_Structure);
-
-  // gpioG
+  //}}}
+  //{{{  gpioG
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_8 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOG, &GPIO_Init_Structure);
+  //}}}
 
+  //{{{  bank command
   const uint32_t kBank1Command =
     FMC_SDRAM_CLOCK_PERIOD_2 |
     FMC_SDRAM_RBURST_ENABLE |
@@ -658,62 +659,64 @@ void sdRamInit() {
     FMC_SDRAM_MEM_BUS_WIDTH_16 |
     FMC_SDRAM_CAS_LATENCY_3 |
     FMC_SDRAM_WRITE_PROTECTION_DISABLE;
-
+  //}}}
   FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK1] = kBank1Command;
   FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK2] = kBank2Command;
 
-  const uint32_t kRowCycleDelay        = 7; // TRC:  min = 63 (6 x 11.90ns)
-  const uint32_t kRPDelay              = 2; // TRP:  15ns => 2 x 11.90ns
+  //{{{  bank timing 
+  const uint32_t kRowCycleDelay        = 7; // tRC:  min = 63 (6 x 11.90ns)
+  const uint32_t kRPDelay              = 2; // tRP:  15ns => 2 x 11.90ns
+  const uint32_t kLoadToActiveDelay    = 2; // tMRD: 2 Clock cycles
+  const uint32_t kExitSelfRefreshDelay = 7; // tXSR: min = 70ns (6 x 11.90ns)
+  const uint32_t kSelfRefreshTime      = 4; // tRAS: min = 42ns (4 x 11.90ns) max=120k (ns)
+  const uint32_t kWriteRecoveryTime    = 2; // tWR:  2 Clock cycles
+  const uint32_t kRCDDelay             = 2; // tRCD: 15ns => 2 x 11.90ns
 
-  const uint32_t kLoadToActiveDelay    = 2; // TMRD: 2 Clock cycles
-  const uint32_t kExitSelfRefreshDelay = 7; // TXSR: min = 70ns (6 x 11.90ns)
-  const uint32_t kSelfRefreshTime      = 4; // TRAS: min = 42ns (4 x 11.90ns) max=120k (ns)
-  const uint32_t kWriteRecoveryTime    = 2; // TWR:  2 Clock cycles
-  const uint32_t kRCDDelay             = 2; // TRCD: 15ns => 2 x 11.90ns
+  const uint32_t kBank1Timing = 
+    (kLoadToActiveDelay-1)          |
+   ((kExitSelfRefreshDelay-1) << 4) |
+   ((kSelfRefreshTime-1) << 8)      |
+   ((kRowCycleDelay-1) << 12)       |
+   ((kWriteRecoveryTime-1) <<16)    |
+   ((kRPDelay-1) << 20)             |
+   ((kRCDDelay-1) << 24);
 
-  const uint32_t kBank1Timing = (kLoadToActiveDelay-1)          |
-                               ((kExitSelfRefreshDelay-1) << 4) |
-                               ((kSelfRefreshTime-1) << 8)      |
-                               ((kRowCycleDelay-1) << 12)       |
-                               ((kWriteRecoveryTime-1) <<16)    |
-                               ((kRPDelay-1) << 20)             |
-                               ((kRCDDelay-1) << 24);
-
-  const uint32_t kBank2Timing = (kLoadToActiveDelay-1)          |
-                               ((kExitSelfRefreshDelay-1) << 4) |
-                               ((kSelfRefreshTime-1) << 8)      |
-                               ((kWriteRecoveryTime-1) <<16)    |
-                               ((kRCDDelay-1) << 24);
-
+  const uint32_t kBank2Timing = 
+    (kLoadToActiveDelay-1)          |
+   ((kExitSelfRefreshDelay-1) << 4) |
+   ((kSelfRefreshTime-1) << 8)      |
+   ((kWriteRecoveryTime-1) <<16)    |
+   ((kRCDDelay-1) << 24);
+  //}}}
   FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK1] = kBank1Timing;
   FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK2] = kBank2Timing;
 
-  // send clockEnable command
+  //{{{  send clockEnable command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_CLK_ENABLE |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   HAL_Delay (100);
-
-  // send PALL prechargeAll command
+  //}}}
+  //{{{  send PALL prechargeAll command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_PALL |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
-
-  // send autoRefresh command
+  //}}}
+  //{{{  send autoRefresh command
   const uint32_t kAutoRefreshNumber = 4;
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_AUTOREFRESH_MODE |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
                             ((kAutoRefreshNumber-1) << 5);
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
-
-  // send loadMode command
+  //}}}
+  //{{{  send loadMode command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_LOAD_MODE |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
                             ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE |
                               SDRAM_MODEREG_CAS_LATENCY_3 |
                               SDRAM_MODEREG_BURST_LENGTH_4) << 9);
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
-
+  //}}}
   FMC_SDRAM_DEVICE->SDRTR |= 0x0569 << 1;
   }
 //}}}
