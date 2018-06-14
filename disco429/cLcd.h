@@ -163,7 +163,6 @@ public:
 private:
   //{{{  const
   const uint32_t kLtdcFormat = LTDC_PIXEL_FORMAT_RGB565;
-
   const uint32_t kDstFormat = DMA2D_RGB565;
   const uint16_t kDstComponents = 2;
 
