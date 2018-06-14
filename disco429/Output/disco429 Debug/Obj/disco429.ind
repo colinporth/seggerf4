@@ -3,6 +3,7 @@
 "Output/disco429 Debug/Obj/stm32f429i_discovery.o"
 "Output/disco429 Debug/Obj/cLcd.o"
 "Output/disco429 Debug/Obj/fatFs.o"
+"Output/disco429 Debug/Obj/stm32f429i_discovery_gyroscope.o"
 "Output/disco429 Debug/Obj/SEGGER_RTT.o"
 "Output/disco429 Debug/Obj/SEGGER_RTT_Syscalls_SES.o"
 "Output/disco429 Debug/Obj/HardFaultHandler.o"

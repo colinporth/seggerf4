@@ -829,9 +829,8 @@
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="9" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="accelerometer.h" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="622" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="audio.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="13" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="disco429/cLcd.cpp" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="28" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="disco429/cLcd.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="746" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
+  <BreakpointListItem trigger="" line="788" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="disco429/main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="583" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="stm32f4_discovery_audio.c" useHWbreakpoint="false"/>
  </Breakpoints>
  <ExecutionProfileWindow/>
@@ -877,7 +876,6 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;disco429"/>
-  <ProjectSessionItem path="display;disco429;inc"/>
   <ProjectSessionItem path="display;disco429;Source Files"/>
   <ProjectSessionItem path="display;disco429;System Files"/>
  </Project>
@@ -938,6 +936,11 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/stm32f429i_discovery_gyroscope.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="790" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="0" top="762" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="16" y="9" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/cLcd.cpp" selected="1" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="399" useTextEdit="1" useBinaryEdit="0" left="0" path="drivers/Src/stm32f4xx_hal.c" selected="0" top="389" codecName="Default"/>
+ </Files>
  <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

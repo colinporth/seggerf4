@@ -23,6 +23,10 @@ void BSP_LED_Toggle (Led_TypeDef Led);
 void BSP_PB_Init (Button_TypeDef Button, ButtonMode_TypeDef ButtonMode);
 uint32_t BSP_PB_GetState (Button_TypeDef Button);
 
+void GYRO_IO_Init();
+void GYRO_IO_Write (uint8_t *pBuffer, uint8_t WriteAddr, uint16_t NumByteToWrite);
+void GYRO_IO_Read (uint8_t *pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead);
+
 //{{{
 #ifdef __cplusplus
 }

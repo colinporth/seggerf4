@@ -3,6 +3,7 @@
 #include "cLcd.h"
 
 #include "stm32f429i_discovery.h"
+#include "stm32f429i_discovery_gyroscope.h"
 
 #include "fatFs.h"
 #include "diskio.h"
@@ -784,14 +785,22 @@ int main() {
   lcd->render();
   lcd->displayOn();
 
+  BSP_GYRO_Init();
+  auto id = BSP_GYRO_ReadID();
+  lcd->info ("read id " + dec (id));
+
   int count = 0;
   while (true) {
     lcd->start();
     lcd->clear (COL_BLACK);
     lcd->showInfo (true);
     lcd->present();
+    float xyz[3];
+    BSP_GYRO_GetXYZ (xyz);
+    lcd->info ("x:" + dec (int(xyz[0])) +
+               " y:" + dec (int(xyz[1])) +
+               " z:" + dec (int(xyz[2])) );
 
-    lcd->info ("hello this is a very long line of qwertyuiopasdfghjkl boring text " + dec (count++));
     HAL_Delay (100);
     }
   }
