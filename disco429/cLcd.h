@@ -152,11 +152,13 @@ public:
   void showInfo (bool force);
   void present();
   void render();
-  uint32_t ready();
 
   void displayOn();
   void displayOff();
   void press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc, int16_t yinc);
+
+  static cLcd* mLcd;
+  static bool mFrameWait;
 
 private:
   //{{{  const
@@ -171,9 +173,11 @@ private:
   typedef std::map<uint16_t, cFontChar*> cFontCharMap;
 
   void ltdcInit (uint16_t* frameBufferAddress);
-  uint32_t wait();
-
   cFontChar* loadChar (uint16_t fontHeight, char ch);
+
+  uint32_t wait();
+  uint32_t ready();
+
   void reset();
   void displayTop();
   void displayTail();

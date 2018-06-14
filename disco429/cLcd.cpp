@@ -2,6 +2,45 @@
 #include "cLcd.h"
 #include "../freetype/FreeSansBold.h"
 
+extern "C" {
+  //{{{
+  void LTDC_IRQHandler() {
+
+    // line Interrupt
+    if ((LTDC->ISR & LTDC_FLAG_LI) != RESET) {
+      LTDC->ICR = LTDC_FLAG_LI;
+      if (cLcd::mFrameWait)
+        cLcd::mFrameWait = false;
+      }
+
+    // register reload Interrupt
+    if ((LTDC->ISR & LTDC_FLAG_RR) != RESET) {
+      LTDC->ICR = LTDC_FLAG_RR;
+      //cLcd::mLcd->debug (LCD_COLOR_YELLOW, "ltdc reload IRQ");
+      }
+    }
+  //}}}
+  //{{{
+  void LTDC_ER_IRQHandler() {
+
+    // transfer Error Interrupt
+    if ((LTDC->ISR &  LTDC_FLAG_TE) != RESET) {
+      LTDC->ICR = LTDC_IT_TE;
+      //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc te IRQ");
+      }
+
+    // FIFO underrun Interrupt
+    if ((LTDC->ISR &  LTDC_FLAG_FU) != RESET) {
+      LTDC->ICR = LTDC_FLAG_FU;
+      //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc fifoUnderrun IRQ");
+      }
+    }
+  //}}}
+  }
+
+cLcd* cLcd::mLcd = nullptr;
+bool cLcd::mFrameWait = false;
+
 //{{{
 class cFontChar {
 public:
@@ -17,15 +56,14 @@ public:
 //{{{
 cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
 
-  mBuffer[false] = buffer0;
-  mBuffer[true] = buffer1;
+  mBuffer[0] = buffer0;
+  mBuffer[1] = buffer1;
   updateNumDrawLines();
   }
 //}}}
 //{{{
 void cLcd::init (std::string title) {
 
-  mCurFrameBufferAddress = mBuffer[mDrawBuffer];
   ltdcInit (mBuffer[mDrawBuffer]);
 
   // font init
@@ -89,7 +127,7 @@ void cLcd::debug (std::string str) {
 
 //{{{
 void cLcd::pixel (uint16_t colour, int16_t x, int16_t y) {
-  *((uint16_t*)(mCurFrameBufferAddress + ((y * getWidth()) + x) * kDstComponents)) = colour;
+  *(mBuffer[mDrawBuffer] + y * getWidth() + x) = colour;
   }
 //}}}
 //{{{
@@ -104,13 +142,13 @@ void cLcd::rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t
   DMA2D->OPFCCR  = kDstFormat;
   DMA2D->OCOLR = colour;
   DMA2D->OOR = getWidth() - width;
-  DMA2D->OMAR = uint32_t(mCurFrameBufferAddress + ((y * getWidth()) + x));
+  DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
   DMA2D->NLR = (width << 16) | height;
 
   //uint32_t regs[5];
   //regs[0] = kDstFormat;
   //regs[1] = colour;
-  //regs[2] = mCurFrameBufferAddress + ((y * getWidth()) + x) * kDstComponents;
+  //regs[2] = mBuffer[mDrawBuffer] + y * getWidth()) + x;
   //regs[3] = getWidth() - width;
   //regs[4] = (width << 16) | height;
   //ready();
@@ -139,7 +177,7 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
 //__IO uint32_t NLR;           /*!< DMA2D Number of Line Register,                  Address offset: 0x44 */
 
   //{{{  alternative code
-  //  uint32_t address = mCurFrameBufferAddress + ((y * getWidth()) + x) * kDstComponents;
+  //  uint32_t address = mBuffer[mDrawBuffer] + y * getWidth()) + x;
   //  uint32_t col = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
   //  uint32_t stride = getWidth() - width;
   //  uint32_t nlr = (width << 16) | height;
@@ -161,7 +199,7 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
   uint32_t regs[15];
   regs[0] = (uint32_t)src;
   regs[1] = 0;
-  regs[2] = uint32_t(mCurFrameBufferAddress + (y * getWidth()) + x);
+  regs[2] = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
   regs[3] = getWidth() - width;
   regs[4] = DMA2D_INPUT_A8;
   regs[5] = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
@@ -189,7 +227,7 @@ void cLcd::copy (cTile& srcTile, int16_t x, int16_t y) {
   DMA2D->FGMAR = (uint32_t)srcTile.mPiccy;
   DMA2D->FGOR = srcTile.mPitch - srcTile.mWidth;
   DMA2D->OPFCCR = kDstFormat;
-  DMA2D->OMAR = uint32_t(mCurFrameBufferAddress + ((y * getWidth()) + x));
+  DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
   DMA2D->OOR = getWidth() - srcTile.mWidth;
   DMA2D->NLR = (srcTile.mWidth << 16) | srcTile.mHeight;
   DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
@@ -200,7 +238,7 @@ void cLcd::copy (cTile& srcTile, int16_t x, int16_t y) {
 void cLcd::copy90 (cTile& srcTile, int16_t x, int16_t y) {
 
   uint32_t src = (uint32_t)srcTile.mPiccy;
-  uint32_t dst = (uint32_t)mCurFrameBufferAddress;
+  uint32_t dst = (uint32_t)mBuffer[mDrawBuffer];
 
   ready();
   DMA2D->FGPFCCR = srcTile.mFormat;
@@ -268,7 +306,7 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
   srcPitch = height * kTempComponents;
   srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
   srcPtr1 = srcPtr + srcPitch;
-  dstPtr = uint32_t(mCurFrameBufferAddress + ((y * getWidth()) + x));
+  dstPtr = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
   fccr = kTempFormat | ((blendIndex >> 13) << 24);
   dstPitch = kDstComponents;
 
@@ -303,7 +341,7 @@ void cLcd::sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16
   uint32_t xStep16 = ((srcTile.mWidth - 1) << 16) / (width - 1);
   uint32_t yStep16 = ((srcTile.mHeight - 1) << 16) / (height - 1);
 
-  uint16_t* dstPtr = (uint16_t*)(mCurFrameBufferAddress) + (y * getWidth()) + x;
+  uint16_t* dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
 
   if (srcTile.mComponents == 2) {
     uint16_t* srcBase = (uint16_t*)(srcTile.mPiccy) + (srcTile.mY * srcTile.mPitch) + srcTile.mX;
@@ -334,7 +372,7 @@ void cLcd::sizeCpuBi (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint
   uint32_t xStep16 = ((srcTile.mWidth - 1) << 16) / (width - 1);
   uint32_t yStep16 = ((srcTile.mHeight - 1) << 16) / (height - 1);
 
-  uint16_t* dstPtr = (uint16_t*)(mCurFrameBufferAddress) + (y * getWidth()) + x;
+  uint16_t* dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
 
   uint32_t ySrcOffset = srcTile.mPitch * srcTile.mComponents;
   for (uint32_t y16 = (srcTile.mY << 16); y16 < (srcTile.mY + height) * yStep16; y16 += yStep16) {
@@ -584,8 +622,6 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x
 //{{{
 void cLcd::start() {
 
-  mDrawBuffer = !mDrawBuffer;
-  mCurFrameBufferAddress = mBuffer[mDrawBuffer];
   mDrawStartTime = HAL_GetTick();
   }
 //}}}
@@ -641,12 +677,17 @@ void cLcd::showInfo (bool force) {
 void cLcd::present() {
 
   ready();
-
-  LTDC_Layer_TypeDef* ltdcLayer = (LTDC_Layer_TypeDef*)((uint32_t)LTDC + 0x84); // + (0x80*layer));
-  ltdcLayer->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
-  LTDC->SRCR |= LTDC_SRCR_IMR | LTDC_SRCR_VBR;
-
   mDrawTime = HAL_GetTick() - mDrawStartTime;
+
+  LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
+  LTDC->SRCR = LTDC_SRCR_VBR;
+  mFrameWait = true;
+  while (mFrameWait) {
+    HAL_Delay (1);
+    }
+
+  // flip
+  mDrawBuffer = !mDrawBuffer;
   }
 //}}}
 //{{{
@@ -656,17 +697,6 @@ void cLcd::render() {
   clear (COL_BLACK);
   showInfo (true);
   present();
-  }
-//}}}
-//{{{
-uint32_t cLcd::ready() {
-
-  if (mWait) {
-    mWait = false;
-    return wait();
-    }
-
-  return 0;
   }
 //}}}
 
@@ -825,6 +855,16 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   HAL_LTDC_ConfigLayer (&LtdcHandler, curLayerCfg, 0);
 
   //DMA2D->AMTCR = 0x3F01;
+
+  // set line interupt line number
+  LTDC->LIPCR = 0;
+
+  // clear interrupts
+  LTDC->IER = LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI;
+
+  mFrameWait = false;
+  HAL_NVIC_SetPriority (LTDC_IRQn, 0xE, 0);
+  HAL_NVIC_EnableIRQ (LTDC_IRQn);
   }
 //}}}
 //{{{
@@ -838,6 +878,17 @@ uint32_t cLcd::wait() {
                  DMA2D_IFSR_CCAEIF | DMA2D_IFSR_CCTCIF | DMA2D_IFSR_CCEIF;
 
   return took;
+  }
+//}}}
+//{{{
+uint32_t cLcd::ready() {
+
+  if (mWait) {
+    mWait = false;
+    return wait();
+    }
+
+  return 0;
   }
 //}}}
 
