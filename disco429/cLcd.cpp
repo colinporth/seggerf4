@@ -15,7 +15,7 @@ public:
 //}}}
 
 //{{{
-cLcd::cLcd (uint32_t buffer0, uint32_t buffer1)  {
+cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
 
   mBuffer[false] = buffer0;
   mBuffer[true] = buffer1;
@@ -25,7 +25,7 @@ cLcd::cLcd (uint32_t buffer0, uint32_t buffer1)  {
 //{{{
 void cLcd::init (std::string title) {
 
-  mDrawBuffer = !mDrawBuffer;
+  mCurFrameBufferAddress = mBuffer[mDrawBuffer];
   ltdcInit (mBuffer[mDrawBuffer]);
 
   // font init
@@ -104,7 +104,7 @@ void cLcd::rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t
   DMA2D->OPFCCR  = kDstFormat;
   DMA2D->OCOLR = colour;
   DMA2D->OOR = getWidth() - width;
-  DMA2D->OMAR = mCurFrameBufferAddress + ((y * getWidth()) + x) * kDstComponents;
+  DMA2D->OMAR = uint32_t(mCurFrameBufferAddress + ((y * getWidth()) + x));
   DMA2D->NLR = (width << 16) | height;
 
   //uint32_t regs[5];
@@ -161,7 +161,7 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
   uint32_t regs[15];
   regs[0] = (uint32_t)src;
   regs[1] = 0;
-  regs[2] = mCurFrameBufferAddress + ((y * getWidth()) + x) * kDstComponents;
+  regs[2] = uint32_t(mCurFrameBufferAddress + (y * getWidth()) + x);
   regs[3] = getWidth() - width;
   regs[4] = DMA2D_INPUT_A8;
   regs[5] = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
@@ -189,7 +189,7 @@ void cLcd::copy (cTile& srcTile, int16_t x, int16_t y) {
   DMA2D->FGMAR = (uint32_t)srcTile.mPiccy;
   DMA2D->FGOR = srcTile.mPitch - srcTile.mWidth;
   DMA2D->OPFCCR = kDstFormat;
-  DMA2D->OMAR = mCurFrameBufferAddress + ((y * getWidth()) + x) * kDstComponents;
+  DMA2D->OMAR = uint32_t(mCurFrameBufferAddress + ((y * getWidth()) + x));
   DMA2D->OOR = getWidth() - srcTile.mWidth;
   DMA2D->NLR = (srcTile.mWidth << 16) | srcTile.mHeight;
   DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
@@ -200,7 +200,7 @@ void cLcd::copy (cTile& srcTile, int16_t x, int16_t y) {
 void cLcd::copy90 (cTile& srcTile, int16_t x, int16_t y) {
 
   uint32_t src = (uint32_t)srcTile.mPiccy;
-  uint32_t dst = mCurFrameBufferAddress;
+  uint32_t dst = (uint32_t)mCurFrameBufferAddress;
 
   ready();
   DMA2D->FGPFCCR = srcTile.mFormat;
@@ -268,7 +268,7 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
   srcPitch = height * kTempComponents;
   srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
   srcPtr1 = srcPtr + srcPitch;
-  dstPtr = mCurFrameBufferAddress + (((y * getWidth()) + x) * kDstComponents);
+  dstPtr = uint32_t(mCurFrameBufferAddress + ((y * getWidth()) + x));
   fccr = kTempFormat | ((blendIndex >> 13) << 24);
   dstPitch = kDstComponents;
 
@@ -641,7 +641,11 @@ void cLcd::showInfo (bool force) {
 void cLcd::present() {
 
   ready();
-  showLayer (0, mBuffer[mDrawBuffer], 255);
+
+  LTDC_Layer_TypeDef* ltdcLayer = (LTDC_Layer_TypeDef*)((uint32_t)LTDC + 0x84); // + (0x80*layer));
+  ltdcLayer->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
+  LTDC->SRCR |= LTDC_SRCR_IMR | LTDC_SRCR_VBR;
+
   mDrawTime = HAL_GetTick() - mDrawStartTime;
   }
 //}}}
@@ -712,7 +716,7 @@ void cLcd::press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc
 
 // private
 //{{{
-void cLcd::ltdcInit (uint32_t frameBufferAddress) {
+void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
 
   //{{{  init clocks
   __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -808,7 +812,7 @@ void cLcd::ltdcInit (uint32_t frameBufferAddress) {
   curLayerCfg->WindowX1 = getWidth();
   curLayerCfg->WindowY1 = getHeight();
   curLayerCfg->PixelFormat = kLtdcFormat;
-  curLayerCfg->FBStartAdress = frameBufferAddress;
+  curLayerCfg->FBStartAdress = (uint32_t)frameBufferAddress;
   curLayerCfg->Alpha = 255;
   curLayerCfg->Alpha0 = 0;
   curLayerCfg->Backcolor.Blue = 0;
@@ -820,33 +824,7 @@ void cLcd::ltdcInit (uint32_t frameBufferAddress) {
   curLayerCfg->ImageHeight = getHeight();
   HAL_LTDC_ConfigLayer (&LtdcHandler, curLayerCfg, 0);
 
-  // local state
-  mCurFrameBufferAddress = frameBufferAddress;
-  showFrameBufferAddress[0] = frameBufferAddress;
-  showFrameBufferAddress[1] = frameBufferAddress;
-  showAlpha[0] = 255;
-  showAlpha[1] = 0;
-
   //DMA2D->AMTCR = 0x3F01;
-  }
-//}}}
-//{{{
-void cLcd::showLayer (uint8_t layer, uint32_t frameBufferAddress, uint8_t alpha) {
-
-  showFrameBufferAddress[layer] = frameBufferAddress;
-  showAlpha[layer] = alpha;
-
-  LTDC_Layer_TypeDef* ltdcLayer = (LTDC_Layer_TypeDef*)((uint32_t)LTDC + 0x84); // + (0x80*layer));
-  ltdcLayer->CFBAR = showFrameBufferAddress[0];
-  if (showAlpha[0]) {
-    ltdcLayer->CR |= LTDC_LxCR_LEN;
-    ltdcLayer->CACR &= ~LTDC_LxCACR_CONSTA;
-    ltdcLayer->CACR = showAlpha[0];
-    }
-  else
-    ltdcLayer->CR &= ~LTDC_LxCR_LEN;
-
-  LTDC->SRCR |= LTDC_SRCR_IMR | LTDC_SRCR_VBR;
   }
 //}}}
 //{{{
@@ -888,6 +866,7 @@ cFontChar* cLcd::loadChar (uint16_t fontHeight, char ch) {
   return fontCharIt->second;
   }
 //}}}
+
 //{{{
 void cLcd::reset() {
 

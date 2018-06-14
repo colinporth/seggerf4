@@ -17,10 +17,10 @@
 //#include "cDecodePic.h"
 //}}}
 //{{{  sdram defines
-#define SDRAM_BANK1_ADDR  ((uint32_t)0xC0000000)
+#define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
 #define SDRAM_BANK1_LEN   ((uint32_t)0x00800000)
 
-#define SDRAM_BANK2_ADDR  ((uint32_t)0xD0000000)
+#define SDRAM_BANK2_ADDR  ((uint16_t*)0xD0000000)
 #define SDRAM_BANK2_LEN   ((uint32_t)0x01000000)
 
 #define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
@@ -725,18 +725,18 @@ void sdRamInit() {
   }
 //}}}
 //{{{
-void sdRamTest (int iterations, uint32_t addr, uint32_t len) {
+void sdRamTest (int iterations, uint16_t* addr, uint32_t len) {
 
   while (iterations--) {
     // write
-    uint16_t* writeAddress = (uint16_t*)addr;
+    auto writeAddress = addr;
     for (uint32_t i = 0; i < len/2; i++)
       *writeAddress++ = (i+iterations) & 0xFFFF;
 
     // read
     int32_t readOk = 0;
     int32_t readErr = 0;
-    uint16_t* readAddress = (uint16_t*)addr;
+    auto readAddress = addr;
     for (uint32_t i = 0; i < len/2; i++) {
       uint16_t read = *readAddress++;
       if (read == ((i+iterations) & 0xFFFF)) {

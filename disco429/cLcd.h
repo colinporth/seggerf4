@@ -117,7 +117,7 @@ public:
     uint16_t mFormat;
     };
   //}}}
-  cLcd (uint32_t buffer0, uint32_t buffer1);
+  cLcd (uint16_t* buffer0, uint16_t* buffer1);
   ~cLcd() {}
 
   void init (std::string title);
@@ -170,8 +170,7 @@ private:
   //}}}
   typedef std::map<uint16_t, cFontChar*> cFontCharMap;
 
-  void ltdcInit (uint32_t frameBufferAddress);
-  void showLayer (uint8_t layer, uint32_t frameBufferAddress, uint8_t alpha);
+  void ltdcInit (uint16_t* frameBufferAddress);
   uint32_t wait();
 
   cFontChar* loadChar (uint16_t fontHeight, char ch);
@@ -219,15 +218,12 @@ private:
   //}}}
   cLine mLines[256];
 
+  bool mDrawBuffer = false;
+  uint16_t* mBuffer[2] = {nullptr, nullptr};
+  uint16_t* mCurFrameBufferAddress = nullptr;
   int mDrawStartTime = 0;
   int mDrawTime = 0;
-  bool mDrawBuffer = false;
-  uint32_t mBuffer[2] = {0,0};
   bool mWait = false;
-
-  uint32_t mCurFrameBufferAddress = 0;
-  uint32_t showFrameBufferAddress[2];
-  uint8_t showAlpha[2];
 
   cFontCharMap mFontCharMap;
 
