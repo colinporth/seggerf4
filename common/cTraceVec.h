@@ -66,7 +66,7 @@ private:
     //{{{
     void draw (cLcd* lcd, int16_t top, int16_t bottom) {
 
-      int32_t range = mMax - mMin;
+      int32_t range = mMax > -mMin ? mMax : -mMin;
       int16_t height = bottom - top;
 
       int32_t sample = mCurSample - (lcd->getWidth() * mAverageSamples);
@@ -74,7 +74,7 @@ private:
         int32_t value = 0;
         for (int j = 0; j < mAverageSamples; j++)
           value += sample+j > 0 ? mSamples[(sample+j) % mNumSamples] : 0;
-        value = (value * height) / (range * mAverageSamples);
+        value = (value * height) / (range * 2 * mAverageSamples);
         if (value > 0)
           lcd->rectClipped (COL_WHITE, i, top + height/2 - value, 1, value);
         else
@@ -93,8 +93,8 @@ private:
     int16_t mAverageSamples = 1;
     int16_t* mSamples = nullptr;
     int32_t mCurSample = 0;
-    int16_t mMin = 0x7FFF;
-    int16_t mMax = -0x7FFF;
+    int16_t mMin = 0;
+    int16_t mMax = 0;
     };
 
   std::vector<cTrace*> mTraces;

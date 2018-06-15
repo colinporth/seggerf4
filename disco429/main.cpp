@@ -188,7 +188,6 @@ const HeapRegion_t kHeapRegions[] = {
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
-cTraceVec* mTraceVec;
 
 //{{{  trace
 int globalCounter = 0;
@@ -687,8 +686,8 @@ int main() {
   //sdRamTest (1, SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
   heapInit (kHeapRegions);
 
-  mTraceVec = new cTraceVec();
-  mTraceVec->addTrace (1024, 1, 3);
+  cTraceVec mTraceVec;
+  mTraceVec.addTrace (1024, 1, 3);
 
   // init frameBuffer
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
@@ -702,17 +701,18 @@ int main() {
 
   int count = 0;
   while (true) {
-    int16_t xyz[3];
-    BSP_GYRO_GetXYZ (xyz);
-    //lcd->info ("x:" + dec (xyz[0],4) + " y:" + dec (xyz[1],4) + " z:" + dec (xyz[2],4) );
-    mTraceVec->addSample (0, xyz[0]);
-    mTraceVec->addSample (1, xyz[1]);
-    mTraceVec->addSample (2, xyz[2]);
+    for (int i = 0; i < 4; i++) {
+      int16_t xyz[3];
+      BSP_GYRO_GetXYZ (xyz);
+      mTraceVec.addSample (0, xyz[0]);
+      mTraceVec.addSample (1, xyz[1]);
+      mTraceVec.addSample (2, xyz[2]);
+      }
 
     lcd->start();
     lcd->clear (COL_BLACK);
     lcd->showInfo (true);
-    mTraceVec->draw (lcd, 0, lcd->getHeight());
+    mTraceVec.draw (lcd, 0, lcd->getHeight());
     lcd->present();
     }
   }

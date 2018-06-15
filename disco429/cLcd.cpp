@@ -961,11 +961,7 @@ void cLcd::displayTop() {
 //}}}
 //{{{
 void cLcd::displayTail() {
-
-  if (mLastLine > (int)mNumDrawLines-1)
-    mFirstLine = mLastLine - mNumDrawLines + 1;
-  else
-    mFirstLine = 0;
+  mFirstLine = (mLastLine > (int)mNumDrawLines-1) ? mLastLine - mNumDrawLines + 1 : 0;
   }
 //}}}
 //{{{
