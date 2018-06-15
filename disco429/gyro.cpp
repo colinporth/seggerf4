@@ -151,7 +151,7 @@ uint8_t gyroInit() {
   GYRO_IO_Write (&value, L3GD20_FIFO_CTRL_REG_ADDR, 1);
 
   // config CTRL_REG1
-  value = L3GD20_OUTPUT_DATARATE_190Hz |
+  value = L3GD20_OUTPUT_DATARATE_760Hz |
           L3GD20_BANDWIDTH_1 |
           L3GD20_MODE_ACTIVE |
           L3GD20_X_ENABLE | L3GD20_Y_ENABLE | L3GD20_Z_ENABLE;
@@ -173,35 +173,22 @@ void gyroReset() {
 //{{{
 uint8_t gyroGetStatus() {
 
-  uint8_t tmpreg;
-  GYRO_IO_Read (&tmpreg, L3GD20_STATUS_REG_ADDR, 1);
-  return tmpreg;
+  uint8_t value;
+  GYRO_IO_Read (&value, L3GD20_STATUS_REG_ADDR, 1);
+  return value;
   }
 //}}}
 //{{{
 uint8_t gyroGetFifoSrc() {
 
-  uint8_t tmpreg;
-  GYRO_IO_Read (&tmpreg, L3GD20_FIFO_SRC_REG_ADDR, 1);
-  return tmpreg;
+  uint8_t value;
+  GYRO_IO_Read (&value, L3GD20_FIFO_SRC_REG_ADDR, 1);
+  return value;
   }
 //}}}
 //{{{
 void gyroGetXYZ (int16_t* xyz) {
-
-  uint8_t tmpbuffer[6] = {0};
-  GYRO_IO_Read (tmpbuffer, L3GD20_OUT_X_L_ADDR, 6);
-
-  for (int i = 0; i < 3; i++)
-    xyz[i] = (int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
-
-  //switch (tmpreg & L3GD20_FULLSCALE_SELECTION) {
-  //  case L3GD20_FULLSCALE_250:
-  //    sensitivity = L3GD20_SENSITIVITY_250DPS;
-  //  case L3GD20_FULLSCALE_500:
-  //    sensitivity = L3GD20_SENSITIVITY_500DPS;
-  //  case L3GD20_FULLSCALE_2000:
-  //    sensitivity = L3GD20_SENSITIVITY_2000DPS;
+  GYRO_IO_Read ((uint8_t*)xyz, L3GD20_OUT_X_L_ADDR, 6);
   }
 //}}}
 
