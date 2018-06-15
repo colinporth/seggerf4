@@ -830,7 +830,6 @@
   <BreakpointListItem trigger="" line="9" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="accelerometer.h" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="622" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="audio.c" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="85" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="common/cTraceVec.h" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="701" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="disco429/main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="746" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="788" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="disco429/main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="583" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="stm32f4_discovery_audio.c" useHWbreakpoint="false"/>
@@ -878,6 +877,7 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;disco429"/>
+  <ProjectSessionItem path="display;disco429;drivers"/>
   <ProjectSessionItem path="display;disco429;Source Files"/>
   <ProjectSessionItem path="display;disco429;System Files"/>
  </Project>

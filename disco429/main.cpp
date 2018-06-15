@@ -695,15 +695,14 @@ int main() {
   lcd->render();
   lcd->displayOn();
 
-  BSP_GYRO_Init();
-  auto id = BSP_GYRO_ReadID();
+  auto id = gyroInit();
   lcd->info ("read id " + dec (id));
 
   int count = 0;
   while (true) {
-    for (int i = 0; i < 4; i++) {
+    while (!(gyroGetFifoSrc() & 0x20)) {
       int16_t xyz[3];
-      BSP_GYRO_GetXYZ (xyz);
+      gyroGetXYZ (xyz);
       mTraceVec.addSample (0, xyz[0]);
       mTraceVec.addSample (1, xyz[1]);
       mTraceVec.addSample (2, xyz[2]);

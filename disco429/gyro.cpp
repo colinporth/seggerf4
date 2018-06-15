@@ -21,6 +21,7 @@ typedef struct {
 
 //{{{  defines
 #define L3GD20_WHO_AM_I_ADDR          0x0F  /* device identification register */
+
 #define L3GD20_CTRL_REG1_ADDR         0x20  /* Control register 1 */
 #define L3GD20_CTRL_REG2_ADDR         0x21  /* Control register 2 */
 #define L3GD20_CTRL_REG3_ADDR         0x22  /* Control register 3 */
@@ -29,12 +30,14 @@ typedef struct {
 #define L3GD20_REFERENCE_REG_ADDR     0x25  /* Reference register */
 #define L3GD20_OUT_TEMP_ADDR          0x26  /* Out temp register */
 #define L3GD20_STATUS_REG_ADDR        0x27  /* Status register */
+
 #define L3GD20_OUT_X_L_ADDR           0x28  /* Output Register X */
 #define L3GD20_OUT_X_H_ADDR           0x29  /* Output Register X */
 #define L3GD20_OUT_Y_L_ADDR           0x2A  /* Output Register Y */
 #define L3GD20_OUT_Y_H_ADDR           0x2B  /* Output Register Y */
 #define L3GD20_OUT_Z_L_ADDR           0x2C  /* Output Register Z */
 #define L3GD20_OUT_Z_H_ADDR           0x2D  /* Output Register Z */
+
 #define L3GD20_FIFO_CTRL_REG_ADDR     0x2E  /* Fifo control Register */
 #define L3GD20_FIFO_SRC_REG_ADDR      0x2F  /* Fifo src Register */
 
@@ -48,66 +51,29 @@ typedef struct {
 #define L3GD20_INT1_TSH_ZL_ADDR       0x37  /* Interrupt 1 Threshold Z register */
 #define L3GD20_INT1_DURATION_ADDR     0x38  /* Interrupt 1 DURATION register */
 
+// WHO_AM_I
 #define I_AM_L3GD20                 ((uint8_t)0xD4)
 #define I_AM_L3GD20_TR              ((uint8_t)0xD5)
 
-#define L3GD20_MODE_POWERDOWN       ((uint8_t)0x00)
-#define L3GD20_MODE_ACTIVE          ((uint8_t)0x08)
-
-#define L3GD20_OUTPUT_DATARATE_1    ((uint8_t)0x00)
-#define L3GD20_OUTPUT_DATARATE_2    ((uint8_t)0x40)
-#define L3GD20_OUTPUT_DATARATE_3    ((uint8_t)0x80)
-#define L3GD20_OUTPUT_DATARATE_4    ((uint8_t)0xC0)
-
-#define L3GD20_X_ENABLE            ((uint8_t)0x02)
-#define L3GD20_Y_ENABLE            ((uint8_t)0x01)
-#define L3GD20_Z_ENABLE            ((uint8_t)0x04)
-#define L3GD20_AXES_ENABLE         ((uint8_t)0x07)
-#define L3GD20_AXES_DISABLE        ((uint8_t)0x00)
+// CTRL_REG1
+#define L3GD20_OUTPUT_DATARATE_95Hz  ((uint8_t)0x00)
+#define L3GD20_OUTPUT_DATARATE_190Hz ((uint8_t)0x40)
+#define L3GD20_OUTPUT_DATARATE_380Hz ((uint8_t)0x80)
+#define L3GD20_OUTPUT_DATARATE_760Hz ((uint8_t)0xC0)
 
 #define L3GD20_BANDWIDTH_1         ((uint8_t)0x00)
 #define L3GD20_BANDWIDTH_2         ((uint8_t)0x10)
 #define L3GD20_BANDWIDTH_3         ((uint8_t)0x20)
 #define L3GD20_BANDWIDTH_4         ((uint8_t)0x30)
 
-#define L3GD20_FULLSCALE_250       ((uint8_t)0x00)
-#define L3GD20_FULLSCALE_500       ((uint8_t)0x10)
-#define L3GD20_FULLSCALE_2000      ((uint8_t)0x20)
-#define L3GD20_FULLSCALE_SELECTION ((uint8_t)0x30)
+#define L3GD20_MODE_POWERDOWN       ((uint8_t)0x00)
+#define L3GD20_MODE_ACTIVE          ((uint8_t)0x08)
 
-#define L3GD20_SENSITIVITY_250DPS  ((float)8.75f)         /*!< gyroscope sensitivity with 250 dps full scale [DPS/LSB]  */
-#define L3GD20_SENSITIVITY_500DPS  ((float)17.50f)        /*!< gyroscope sensitivity with 500 dps full scale [DPS/LSB]  */
-#define L3GD20_SENSITIVITY_2000DPS ((float)70.00f)        /*!< gyroscope sensitivity with 2000 dps full scale [DPS/LSB] */
+#define L3GD20_X_ENABLE            ((uint8_t)0x02)
+#define L3GD20_Y_ENABLE            ((uint8_t)0x01)
+#define L3GD20_Z_ENABLE            ((uint8_t)0x04)
 
-#define L3GD20_BlockDataUpdate_Continous   ((uint8_t)0x00)
-#define L3GD20_BlockDataUpdate_Single      ((uint8_t)0x80)
-
-#define L3GD20_BLE_LSB                     ((uint8_t)0x00)
-#define L3GD20_BLE_MSB                     ((uint8_t)0x40)
-
-#define L3GD20_HIGHPASSFILTER_DISABLE      ((uint8_t)0x00)
-#define L3GD20_HIGHPASSFILTER_ENABLE       ((uint8_t)0x10)
-
-#define L3GD20_INT1                        ((uint8_t)0x00)
-#define L3GD20_INT2                        ((uint8_t)0x01)
-
-#define L3GD20_INT1INTERRUPT_DISABLE       ((uint8_t)0x00)
-#define L3GD20_INT1INTERRUPT_ENABLE        ((uint8_t)0x80)
-
-#define L3GD20_INT2INTERRUPT_DISABLE       ((uint8_t)0x00)
-#define L3GD20_INT2INTERRUPT_ENABLE        ((uint8_t)0x08)
-
-#define L3GD20_INT1INTERRUPT_LOW_EDGE      ((uint8_t)0x20)
-#define L3GD20_INT1INTERRUPT_HIGH_EDGE     ((uint8_t)0x00)
-
-#define L3GD20_BOOT_NORMALMODE             ((uint8_t)0x00)
-#define L3GD20_BOOT_REBOOTMEMORY           ((uint8_t)0x80)
-
-#define L3GD20_HPM_NORMAL_MODE_RES         ((uint8_t)0x00)
-#define L3GD20_HPM_REF_SIGNAL              ((uint8_t)0x10)
-#define L3GD20_HPM_NORMAL_MODE             ((uint8_t)0x20)
-#define L3GD20_HPM_AUTORESET_INT           ((uint8_t)0x30)
-
+// CTRL_REG2
 #define L3GD20_HPFCF_0              0x00
 #define L3GD20_HPFCF_1              0x01
 #define L3GD20_HPFCF_2              0x02
@@ -118,185 +84,148 @@ typedef struct {
 #define L3GD20_HPFCF_7              0x07
 #define L3GD20_HPFCF_8              0x08
 #define L3GD20_HPFCF_9              0x09
+
+// CTRL_REG4
+#define L3GD20_BlockDataUpdate_Single  ((uint8_t)0x80)
+#define L3GD20_BLE_MSB                 ((uint8_t)0x40)
+
+#define L3GD20_FULLSCALE_250       ((uint8_t)0x00)
+#define L3GD20_FULLSCALE_500       ((uint8_t)0x10)
+#define L3GD20_FULLSCALE_2000      ((uint8_t)0x20)
+#define L3GD20_FULLSCALE_SELECTION ((uint8_t)0x30)
+
+// CTRL_REG5
+#define L3GD20_BOOT_REBOOTMEMORY      ((uint8_t)0x80)
+#define L3GD20_BOOT_FIFO_ENABLE       ((uint8_t)0x40)
+#define L3GD20_HIGHPASSFILTER_ENABLE  ((uint8_t)0x10)
+
+#define L3GD20_INT1                        ((uint8_t)0x00)
+#define L3GD20_INT2                        ((uint8_t)0x01)
+#define L3GD20_INT1INTERRUPT_DISABLE       ((uint8_t)0x00)
+#define L3GD20_INT1INTERRUPT_ENABLE        ((uint8_t)0x80)
+#define L3GD20_INT2INTERRUPT_DISABLE       ((uint8_t)0x00)
+#define L3GD20_INT2INTERRUPT_ENABLE        ((uint8_t)0x08)
+#define L3GD20_INT1INTERRUPT_LOW_EDGE      ((uint8_t)0x20)
+#define L3GD20_INT1INTERRUPT_HIGH_EDGE     ((uint8_t)0x00)
+
+#define L3GD20_HPM_NORMAL_MODE_RES         ((uint8_t)0x00)
+#define L3GD20_HPM_REF_SIGNAL              ((uint8_t)0x10)
+#define L3GD20_HPM_NORMAL_MODE             ((uint8_t)0x20)
+#define L3GD20_HPM_AUTORESET_INT           ((uint8_t)0x30)
+
+#define L3GD20_SENSITIVITY_250DPS  ((float)8.75f)   // gyroscope sensitivity with 250 dps full scale [DPS/LSB]
+#define L3GD20_SENSITIVITY_500DPS  ((float)17.50f)  // gyroscope sensitivity with 500 dps full scale [DPS/LSB]
+#define L3GD20_SENSITIVITY_2000DPS ((float)70.00f)  // gyroscope sensitivity with 2000 dps full scale [DPS/LSB]
 //}}}
 
 //{{{
-void L3GD20_Init (uint16_t InitStruct) {
+uint8_t gyroInit() {
 
-  uint8_t ctrl = 0x00;
-
-  /* Configure the low level interface */
   GYRO_IO_Init();
 
-  /* Write value to MEMS CTRL_REG1 register */
-  ctrl = (uint8_t) InitStruct;
-  GYRO_IO_Write (&ctrl, L3GD20_CTRL_REG1_ADDR, 1);
+  uint8_t id;
+  GYRO_IO_Read (&id, L3GD20_WHO_AM_I_ADDR, 1);
 
-  /* Write value to MEMS CTRL_REG4 register */
-  ctrl = (uint8_t) (InitStruct >> 8);
-  GYRO_IO_Write (&ctrl, L3GD20_CTRL_REG4_ADDR, 1);
+  // config CTRL_REG2
+  uint8_t value = L3GD20_HPFCF_0;
+  GYRO_IO_Write (&value, L3GD20_CTRL_REG2_ADDR, 1);
+
+  // config CTRL_REG4
+  value = L3GD20_FULLSCALE_500;
+  GYRO_IO_Write (&value, L3GD20_CTRL_REG4_ADDR, 1);
+
+  // reset reference
+  //value = 0;
+  //GYRO_IO_Write (&value, L3GD20_REFERENCE_REG_ADDR, 1);
+
+  // config CTRL_REG5
+  value = L3GD20_BOOT_FIFO_ENABLE | L3GD20_HIGHPASSFILTER_ENABLE;
+  GYRO_IO_Write (&value, L3GD20_CTRL_REG5_ADDR, 1);
+
+  // config FIFO_CTRL_REG_ADDR - FIFO_MODE
+  value = 0x20;
+  GYRO_IO_Write (&value, L3GD20_FIFO_CTRL_REG_ADDR, 1);
+
+  // config CTRL_REG1
+  value = L3GD20_OUTPUT_DATARATE_190Hz |
+          L3GD20_BANDWIDTH_4 |
+          L3GD20_MODE_ACTIVE |
+          L3GD20_X_ENABLE | L3GD20_Y_ENABLE | L3GD20_Z_ENABLE;
+  GYRO_IO_Write (&value, L3GD20_CTRL_REG1_ADDR, 1);
+
+  return id;
   }
 //}}}
 //{{{
-uint8_t L3GD20_ReadID() {
+void gyroReset() {
 
-  uint8_t tmp;
-
-  /* Configure the low level interface */
-  GYRO_IO_Init();
-
-  /* Read WHO I AM register */
-  GYRO_IO_Read(&tmp, L3GD20_WHO_AM_I_ADDR, 1);
-
-  /* Return the ID */
-  return (uint8_t)tmp;
-  }
-//}}}
-//{{{
-void L3GD20_LowPower (uint16_t InitStruct) {
-
-  /* Write value to MEMS CTRL_REG1 register */
-  uint8_t ctrl = (uint8_t) InitStruct;
-  GYRO_IO_Write (&ctrl, L3GD20_CTRL_REG1_ADDR, 1);
-  }
-//}}}
-//{{{
-void L3GD20_FilterConfig (uint8_t FilterStruct) {
-
-  /* Read CTRL_REG2 register */
-  uint8_t tmpreg;
-  GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG2_ADDR, 1);
-  tmpreg &= 0xC0;
-
-  /* Configure MEMS: mode and cutoff frequency */
-  tmpreg |= FilterStruct;
-
-  /* Write value to MEMS CTRL_REG2 register */
-  GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG2_ADDR, 1);
-  }
-//}}}
-//{{{
-void L3GD20_FilterCmd (uint8_t HighPassFilterState) {
-
-  /* Read CTRL_REG5 register */
+  // Read CTRL_REG5 register
   uint8_t tmpreg;
   GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
-  tmpreg &= 0xEF;
-  tmpreg |= HighPassFilterState;
-
-  /* Write value to MEMS CTRL_REG5 register */
+  tmpreg |= L3GD20_BOOT_REBOOTMEMORY;
   GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
   }
 //}}}
 //{{{
-uint8_t L3GD20_GetDataStatus() {
+uint8_t gyroGetStatus() {
 
   uint8_t tmpreg;
-
-  /* Read STATUS_REG register */
   GYRO_IO_Read (&tmpreg, L3GD20_STATUS_REG_ADDR, 1);
-
   return tmpreg;
   }
 //}}}
-
 //{{{
-uint8_t BSP_GYRO_Init() {
-
-  uint8_t ret = GYRO_ERROR;
-  GYRO_InitTypeDef L3GD20_InitStructure;
-  GYRO_FilterConfigTypeDef L3GD20_FilterStructure={0,0};
-
-  if ((L3GD20_ReadID() == I_AM_L3GD20) || (L3GD20_ReadID() == I_AM_L3GD20_TR)) {
-    L3GD20_InitStructure.Power_Mode = L3GD20_MODE_ACTIVE;
-    L3GD20_InitStructure.Output_DataRate = L3GD20_OUTPUT_DATARATE_1;
-    L3GD20_InitStructure.Axes_Enable = L3GD20_AXES_ENABLE;
-    L3GD20_InitStructure.Band_Width = L3GD20_BANDWIDTH_4;
-    L3GD20_InitStructure.BlockData_Update = L3GD20_BlockDataUpdate_Continous;
-    L3GD20_InitStructure.Endianness = L3GD20_BLE_LSB;
-    L3GD20_InitStructure.Full_Scale = L3GD20_FULLSCALE_500;
-
-    /* Configure MEMS: data rate, power mode, full scale and axes */
-    uint16_t ctrl = L3GD20_InitStructure.Power_Mode |
-                    L3GD20_InitStructure.Output_DataRate |
-                    L3GD20_InitStructure.Axes_Enable |
-                    L3GD20_InitStructure.Band_Width |
-                    ((L3GD20_InitStructure.BlockData_Update |
-                     L3GD20_InitStructure.Endianness |
-                     L3GD20_InitStructure.Full_Scale) << 8);
-
-    L3GD20_Init (ctrl);
-
-    L3GD20_FilterStructure.HighPassFilter_Mode_Selection = L3GD20_HPM_NORMAL_MODE_RES;
-    L3GD20_FilterStructure.HighPassFilter_CutOff_Frequency = L3GD20_HPFCF_0;
-
-    ctrl = (uint8_t) ((L3GD20_FilterStructure.HighPassFilter_Mode_Selection |
-                       L3GD20_FilterStructure.HighPassFilter_CutOff_Frequency));
-
-    /* Configure the Gyroscope main parameters */
-    L3GD20_FilterConfig (ctrl) ;
-    L3GD20_FilterCmd (L3GD20_HIGHPASSFILTER_ENABLE);
-    ret = GYRO_OK;
-    }
-  else
-    ret = GYRO_ERROR;
-
-  return ret;
-  }
-//}}}
-
-//{{{
-uint8_t BSP_GYRO_ReadID() {
-  return L3GD20_ReadID();
-  }
-//}}}
-//{{{
-void BSP_GYRO_Reset() {
+uint8_t gyroGetFifoSrc() {
 
   uint8_t tmpreg;
+  GYRO_IO_Read (&tmpreg, L3GD20_FIFO_SRC_REG_ADDR, 1);
+  return tmpreg;
+  }
+//}}}
+//{{{
+void gyroGetXYZ (int16_t* xyz) {
 
-  /* Read CTRL_REG5 register */
-  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
+  uint8_t tmpbuffer[6] = {0};
+  GYRO_IO_Read (tmpbuffer, L3GD20_OUT_X_L_ADDR, 6);
 
-  /* Enable or Disable the reboot memory */
-  tmpreg |= L3GD20_BOOT_REBOOTMEMORY;
+  for (int i = 0; i < 3; i++)
+    xyz[i] = (int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
 
-  /* Write value to MEMS CTRL_REG5 register */
-  GYRO_IO_Write(&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
+  //switch (tmpreg & L3GD20_FULLSCALE_SELECTION) {
+  //  case L3GD20_FULLSCALE_250:
+  //    sensitivity = L3GD20_SENSITIVITY_250DPS;
+  //  case L3GD20_FULLSCALE_500:
+  //    sensitivity = L3GD20_SENSITIVITY_500DPS;
+  //  case L3GD20_FULLSCALE_2000:
+  //    sensitivity = L3GD20_SENSITIVITY_2000DPS;
   }
 //}}}
 
 //{{{
-void BSP_GYRO_ITConfig (GYRO_InterruptConfigTypeDef* pIntConfig) {
+void gyroITConfig (GYRO_InterruptConfigTypeDef* pIntConfig) {
 
+  // Configure latch Interrupt request and axe interrupts
   uint16_t interruptconfig = 0x0000;
-  /* Configure latch Interrupt request and axe interrupts */
   interruptconfig |= ((uint8_t)(pIntConfig->Latch_Request| pIntConfig->Interrupt_Axes) << 8);
   interruptconfig |= (uint8_t)(pIntConfig->Interrupt_ActiveEdge);
 
-  uint8_t ctrl_cfr = 0x00, ctrl3 = 0x00;
-
-  /* Read INT1_CFG register */
+  // Read INT1_CFG register
+  uint8_t ctrl_cfr = 0x00;
   GYRO_IO_Read(&ctrl_cfr, L3GD20_INT1_CFG_ADDR, 1);
-
-  /* Read CTRL_REG3 register */
-  GYRO_IO_Read(&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
-
   ctrl_cfr &= 0x80;
   ctrl_cfr |= ((uint8_t) interruptconfig >> 8);
-
-  ctrl3 &= 0xDF;
-  ctrl3 |= ((uint8_t) interruptconfig);
-
-  /* Write value to MEMS INT1_CFG register */
   GYRO_IO_Write(&ctrl_cfr, L3GD20_INT1_CFG_ADDR, 1);
 
-  /* Write value to MEMS CTRL_REG3 register */
+  // Read CTRL_REG3 register
+  uint8_t ctrl3 = 0x00;
+  GYRO_IO_Read (&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
+  ctrl3 &= 0xDF;
+  ctrl3 |= ((uint8_t) interruptconfig);
   GYRO_IO_Write(&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
   }
 //}}}
 //{{{
-void BSP_GYRO_EnableIT (uint8_t IntPin) {
+void gyroEnableIT (uint8_t IntPin) {
 
   uint8_t tmpreg;
 
@@ -317,7 +246,7 @@ void BSP_GYRO_EnableIT (uint8_t IntPin) {
   }
 //}}}
 //{{{
-void BSP_GYRO_DisableIT (uint8_t IntPin) {
+void gyroDisableIT (uint8_t IntPin) {
 
   uint8_t tmpreg;
 
@@ -335,35 +264,5 @@ void BSP_GYRO_DisableIT (uint8_t IntPin) {
 
   /* Write value to MEMS CTRL_REG3 register */
   GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
-  }
-//}}}
-
-//{{{
-void BSP_GYRO_GetXYZ (int16_t* xyz) {
-
-  int i = 0;
-
-  uint8_t tmpreg = 0;
-  GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG4_ADDR, 1);
-
-  uint8_t tmpbuffer[6] = {0};
-  GYRO_IO_Read (tmpbuffer, L3GD20_OUT_X_L_ADDR, 6);
-
-  // check in the control register 4 the data alignment (Big Endian or Little Endian)
-  int16_t RawData[3] = {0};
-  if (!(tmpreg & L3GD20_BLE_MSB))
-    for (i = 0; i < 3; i++)
-      xyz[i] = (int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
-  else
-    for (i = 0; i < 3; i++)
-      xyz[i] = (int16_t)(((uint16_t)tmpbuffer[2*i] << 8) + tmpbuffer[2*i+1]);
-
-  //switch (tmpreg & L3GD20_FULLSCALE_SELECTION) {
-  //  case L3GD20_FULLSCALE_250:
-  //    sensitivity = L3GD20_SENSITIVITY_250DPS;
-  //  case L3GD20_FULLSCALE_500:
-  //    sensitivity = L3GD20_SENSITIVITY_500DPS;
-  //  case L3GD20_FULLSCALE_2000:
-  //    sensitivity = L3GD20_SENSITIVITY_2000DPS;
   }
 //}}}
