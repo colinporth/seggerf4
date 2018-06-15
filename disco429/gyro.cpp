@@ -95,8 +95,8 @@ typedef struct {
 #define L3GD20_FULLSCALE_SELECTION ((uint8_t)0x30)
 
 // CTRL_REG5
-#define L3GD20_BOOT_REBOOTMEMORY      ((uint8_t)0x80)
-#define L3GD20_BOOT_FIFO_ENABLE       ((uint8_t)0x40)
+#define L3GD20_REBOOTMEMORY      ((uint8_t)0x80)
+#define L3GD20_FIFO_ENABLE       ((uint8_t)0x40)
 #define L3GD20_HIGHPASSFILTER_ENABLE  ((uint8_t)0x10)
 
 #define L3GD20_INT1                        ((uint8_t)0x00)
@@ -123,11 +123,15 @@ uint8_t gyroInit() {
 
   GYRO_IO_Init();
 
+  uint8_t value = L3GD20_REBOOTMEMORY;
+  GYRO_IO_Write (&value, L3GD20_CTRL_REG5_ADDR, 1);
+  HAL_Delay(10);
+
   uint8_t id;
   GYRO_IO_Read (&id, L3GD20_WHO_AM_I_ADDR, 1);
 
   // config CTRL_REG2
-  uint8_t value = L3GD20_HPFCF_0;
+  value = L3GD20_HPFCF_0;
   GYRO_IO_Write (&value, L3GD20_CTRL_REG2_ADDR, 1);
 
   // config CTRL_REG4
@@ -139,7 +143,7 @@ uint8_t gyroInit() {
   //GYRO_IO_Write (&value, L3GD20_REFERENCE_REG_ADDR, 1);
 
   // config CTRL_REG5
-  value = L3GD20_BOOT_FIFO_ENABLE | L3GD20_HIGHPASSFILTER_ENABLE;
+  value = L3GD20_FIFO_ENABLE | L3GD20_HIGHPASSFILTER_ENABLE;
   GYRO_IO_Write (&value, L3GD20_CTRL_REG5_ADDR, 1);
 
   // config FIFO_CTRL_REG_ADDR - FIFO_MODE
@@ -162,7 +166,7 @@ void gyroReset() {
   // Read CTRL_REG5 register
   uint8_t tmpreg;
   GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
-  tmpreg |= L3GD20_BOOT_REBOOTMEMORY;
+  tmpreg |= L3GD20_REBOOTMEMORY;
   GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
   }
 //}}}

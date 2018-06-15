@@ -69,6 +69,14 @@ private:
       int32_t range = mMax > -mMin ? mMax : -mMin;
       int16_t height = bottom - top;
 
+      lcd->rectClipped (COL_GREY, 0, top + height/2, lcd->getWidth(), 1);
+      for (int i = 1000; i < mMax; i += 1000)
+        lcd->rectClipped (COL_GREY,
+                          0, top + height/2 - ((i * height) / (range * 2)), lcd->getWidth(), 1);
+      for (int i = -1000; i > mMin; i -= 1000)
+        lcd->rectClipped (COL_GREY,
+                          0, top + height/2 - ((i * height) / (range * 2)), lcd->getWidth(), 1);
+
       int32_t sample = mCurSample - (lcd->getWidth() * mAverageSamples);
       for (int i = 0; i < lcd->getWidth(); i++) {
         int32_t value = 0;
@@ -82,9 +90,12 @@ private:
         sample += mAverageSamples;
         }
 
-      lcd->rectClipped (COL_GREY, 0, top + height/2, lcd->getWidth(), 1);
       lcd->text (COL_YELLOW, cWidget::getFontHeight(), dec(mSamples[(mCurSample-1) % mNumSamples],4),
                  lcd->getWidth() - 60, top + height/2, 60, cWidget::getFontHeight());
+      lcd->text (COL_GREEN, cWidget::getFontHeight(), dec(mMax,4),
+                 lcd->getWidth() - 60, top + height/2 - cWidget::getFontHeight(), 60, cWidget::getFontHeight());
+      lcd->text (COL_RED, cWidget::getFontHeight(), dec(mMin,4),
+                 lcd->getWidth() - 60, top + height/2 + cWidget::getFontHeight(), 60, cWidget::getFontHeight());
       }
     //}}}
 
