@@ -86,8 +86,8 @@ typedef struct {
 #define L3GD20_HPFCF_9              0x09
 
 // CTRL_REG4
-#define L3GD20_BlockDataUpdate_Single  ((uint8_t)0x80)
-#define L3GD20_BLE_MSB                 ((uint8_t)0x40)
+#define L3GD20_BDU                 ((uint8_t)0x80)
+#define L3GD20_BLE_MSB             ((uint8_t)0x40)
 
 #define L3GD20_FULLSCALE_250       ((uint8_t)0x00)
 #define L3GD20_FULLSCALE_500       ((uint8_t)0x10)
@@ -98,6 +98,12 @@ typedef struct {
 #define L3GD20_REBOOTMEMORY      ((uint8_t)0x80)
 #define L3GD20_FIFO_ENABLE       ((uint8_t)0x40)
 #define L3GD20_HIGHPASSFILTER_ENABLE  ((uint8_t)0x10)
+#define L3GD20_OUTSEL1           ((uint8_t)0x02)
+#define L3GD20_OUTSEL0           ((uint8_t)0x01)
+
+
+// L3GD20_FIFO_CTRL_REG_ADDR#
+#define L3GD20_STREAMING_MODE    ((uint8_t)0x60);
 
 #define L3GD20_INT1                        ((uint8_t)0x00)
 #define L3GD20_INT2                        ((uint8_t)0x01)
@@ -143,11 +149,11 @@ uint8_t gyroInit() {
   //GYRO_IO_Write (&value, L3GD20_REFERENCE_REG_ADDR, 1);
 
   // config CTRL_REG5
-  value = L3GD20_FIFO_ENABLE | L3GD20_HIGHPASSFILTER_ENABLE;
+  value = L3GD20_FIFO_ENABLE; // | L3GD20_HIGHPASSFILTER_ENABLE; // | L3GD20_OUTSEL1;
   GYRO_IO_Write (&value, L3GD20_CTRL_REG5_ADDR, 1);
 
   // config FIFO_CTRL_REG_ADDR - STREAMING_MODE
-  value = 0x60;
+  value = L3GD20_STREAMING_MODE;
   GYRO_IO_Write (&value, L3GD20_FIFO_CTRL_REG_ADDR, 1);
 
   // config CTRL_REG1
