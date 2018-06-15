@@ -71,6 +71,7 @@
       <file file_name="../system/thumb_crt0.s" />
       <file file_name="../system/stm32f4xx_it.c" />
       <file file_name="../system/Cortex_M_Startup_429.s" />
+      <file file_name="../system/system_stm32f4xx.c" />
     </folder>
     <folder Name="inc">
       <file file_name="FreeSansBold.h" />
@@ -271,6 +272,13 @@
     <folder Name="common">
       <file file_name="../common/utils.cpp" />
       <file file_name="../common/heap_5.c" />
+      <folder Name="inc">
+        <file file_name="../common/cTraceVec.h" />
+        <file file_name="../common/cPointRect.h" />
+        <file file_name="../common/heap.h" />
+        <file file_name="../common/utils.h" />
+        <file file_name="../common/font.h" />
+      </folder>
     </folder>
   </project>
 </solution>

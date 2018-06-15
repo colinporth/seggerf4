@@ -4,6 +4,7 @@
 
 #include "stm32f429i_discovery.h"
 #include "gyro.h"
+#include "cTraceVec.h"
 
 #include "fatFs.h"
 #include "diskio.h"
@@ -187,6 +188,7 @@ const HeapRegion_t kHeapRegions[] = {
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
+cTraceVec* mTraceVec;
 
 //{{{  trace
 int globalCounter = 0;
@@ -428,84 +430,8 @@ uint32_t my_ITM_SendChar (uint32_t port, uint32_t ch) {
   }
 //}}}
 //}}}
-//{{{  system
-const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-uint32_t SystemCoreClock = 16000000;
-
 //{{{
-void SystemCoreClockUpdate() {
-
-
-  // Get SYSCLK source
-  uint32_t tmp = RCC->CFGR & RCC_CFGR_SWS;
-  switch (tmp) {
-    case 0x00:  // HSI used as system clock source
-      SystemCoreClock = HSI_VALUE;
-      break;
-
-    case 0x04:  // HSE used as system clock source
-      SystemCoreClock = HSE_VALUE;
-      break;
-
-    case 0x08: { // PLL used as system clock source
-      // PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N SYSCLK = PLL_VCO / PLL_P
-      uint32_t pllsource = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;
-      uint32_t pllm = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
-      uint32_t pllp = 2;
-
-      uint32_t pllvco;
-      if (pllsource != 0) // HSE used as PLL clock source
-        pllvco = (HSE_VALUE / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6);
-      else // HSI used as PLL clock source
-        pllvco = (HSI_VALUE / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6);
-
-      pllp = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >>16) + 1 ) *2;
-      SystemCoreClock = pllvco / pllp;
-      break;
-      }
-
-    default:
-      SystemCoreClock = HSI_VALUE;
-      break;
-    }
-
-  // Compute HCLK frequency
-  // Get HCLK prescaler
-  tmp = AHBPrescTable[((RCC->CFGR & RCC_CFGR_HPRE) >> 4)];
-  SystemCoreClock >>= tmp;
-  }
-//}}}
-//{{{
-void SystemInit() {
-
-  // FPU settings
-  SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  // set CP10 and CP11 Full Access
-
-  // Reset the RCC clock configuration to the default reset state
-  // Set HSION bit
-  RCC->CR |= (uint32_t)0x00000001;
-
-  // Reset CFGR register
-  RCC->CFGR = 0x00000000;
-
-  // Reset HSEON, CSSON and PLLON bits
-  RCC->CR &= (uint32_t)0xFEF6FFFF;
-
-  // Reset PLLCFGR register
-  RCC->PLLCFGR = 0x24003010;
-
-  // Reset HSEBYP bit
-  RCC->CR &= (uint32_t)0xFFFBFFFF;
-
-  // Disable all interrupts
-  RCC->CIR = 0x00000000;
-
-  // Configure the Vector Table location add offset address
-  SCB->VTOR = FLASH_BASE; // Vector Table Relocation in Internal FLASH
-  }
-//}}}
-//{{{
-void SystemClockConfig180() {
+void SystemClockConfig() {
 //  System Clock source            = PLL (HSE)
 //    SYSCLK(Hz)                     = 180000000
 //    HCLK(Hz)                       = 180000000
@@ -521,27 +447,21 @@ void SystemClockConfig180() {
 //    Main regulator output voltage  = Scale1 mode
 //    Flash Latency(WS)              = 5
 
-  // Enable Power Control clock
   __HAL_RCC_PWR_CLK_ENABLE();
-
-  // The voltage scaling allows optimizing the power consumption when the device is
-  // clocked below the maximum system frequency, to update the voltage scaling value
-  // regarding system frequency refer to product datasheet.
   __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
 
   // Enable HSE Oscillator and activate PLL with HSE as source
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 360;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 7;
-  HAL_RCC_OscConfig (&RCC_OscInitStruct);
+  RCC_OscInitTypeDef rccOscInitStruct;
+  rccOscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  rccOscInitStruct.HSEState = RCC_HSE_ON;
+  rccOscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  rccOscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  rccOscInitStruct.PLL.PLLM = 8;
+  rccOscInitStruct.PLL.PLLN = 360;
+  rccOscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  rccOscInitStruct.PLL.PLLQ = 7;
+  HAL_RCC_OscConfig (&rccOscInitStruct);
 
-  // Activate the Over-Drive mode
   HAL_PWREx_EnableOverDrive();
 
   // PLLSAI_VCO Input  = HSE_VALUE / PLL_M = 1mhz
@@ -563,16 +483,15 @@ void SystemClockConfig180() {
   //HAL_RCCEx_PeriphCLKConfig (&rccPeriphClkInit);
 
   // Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
-                                RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  HAL_RCC_ClockConfig (&RCC_ClkInitStruct, FLASH_LATENCY_5);
+  RCC_ClkInitTypeDef rccClkInitStruct;
+  rccClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
+                               RCC_CLOCKTYPE_PCLK1  | RCC_CLOCKTYPE_PCLK2;
+  rccClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  rccClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  rccClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  rccClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  HAL_RCC_ClockConfig (&rccClkInitStruct, FLASH_LATENCY_5);
   }
-//}}}
 //}}}
 
 //{{{
@@ -771,13 +690,16 @@ void sdRamTest (int iterations, uint16_t* addr, uint32_t len) {
 int main() {
 
   HAL_Init();
-  SystemClockConfig180();
+  SystemClockConfig();
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
 
   sdRamInit();
   //sdRamTest (1, SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
   //sdRamTest (1, SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
   heapInit (kHeapRegions);
+
+  mTraceVec = new cTraceVec();
+  mTraceVec->addTrace (1024, 1, 3);
 
   // init frameBuffer
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
@@ -791,16 +713,17 @@ int main() {
 
   int count = 0;
   while (true) {
+    int16_t xyz[3];
+    BSP_GYRO_GetXYZ (xyz);
+    //lcd->info ("x:" + dec (xyz[0],4) + " y:" + dec (xyz[1],4) + " z:" + dec (xyz[2],4) );
+    mTraceVec->addSample (0, xyz[0]>>8);
+    mTraceVec->addSample (1, xyz[1]>>8);
+    mTraceVec->addSample (2, xyz[2]>>8);
+
     lcd->start();
     lcd->clear (COL_BLACK);
     lcd->showInfo (true);
+    mTraceVec->draw (lcd, 0, lcd->getHeight());
     lcd->present();
-    int16_t xyz[3];
-    BSP_GYRO_GetXYZ (xyz);
-    lcd->info ("x:" + dec (xyz[0],4) +
-               " y:" + dec (xyz[1],4) +
-               " z:" + dec (xyz[2],4) );
-
-    //HAL_Delay (100);
     }
   }
