@@ -51,7 +51,7 @@
       <file file_name="stm32f429i_discovery.c" />
       <file file_name="cLcd.cpp" />
       <file file_name="fatFs.cpp" />
-      <file file_name="stm32f429i_discovery_gyroscope.c" />
+      <file file_name="gyro.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />
@@ -90,7 +90,7 @@
       <file file_name="diskio.h" />
       <file file_name="fatFs.h" />
       <file file_name="stm32f429xx.h" />
-      <file file_name="stm32f429i_discovery_gyroscope.h" />
+      <file file_name="gyro.h" />
     </folder>
     <folder Name="drivers">
       <folder Name="inc">

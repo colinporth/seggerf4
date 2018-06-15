@@ -680,7 +680,7 @@ void cLcd::present() {
   mDrawTime = HAL_GetTick() - mDrawStartTime;
 
   LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
-  LTDC->SRCR = LTDC_SRCR_VBR;
+  LTDC->SRCR = LTDC_SRCR_VBR | LTDC_SRCR_IMR;
   mFrameWait = true;
   while (mFrameWait) {
     HAL_Delay (1);

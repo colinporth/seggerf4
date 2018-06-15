@@ -1,7 +1,7 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="1512" column="-1" path="C:/projects/seggerf4/main.cpp" number="249" extra="if (cApp::mApp->init())" color="5"/>
+  <BookmarkItem objectName="" line="1513" column="-1" path="C:/projects/seggerf4/main.cpp" number="250" extra="cApp::mApp->run();" color="5"/>
   <BookmarkItem objectName="" line="26" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="42" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="47" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -824,7 +824,7 @@
   <BookmarkItem objectName="" line="1500" column="-1" path="C:/projects/seggerf4/main.cpp" number="246" extra="audBuf[i] = int16_t(0x2000 * sin (((i % 64) / 128.f) * kPi));" color="5"/>
   <BookmarkItem objectName="" line="1508" column="-1" path="C:/projects/seggerf4/main.cpp" number="247" extra="__HAL_RCC_CLEAR_RESET_FLAGS();" color="5"/>
   <BookmarkItem objectName="" line="1509" column="-1" path="C:/projects/seggerf4/main.cpp" number="248" extra="printf (&quot;main pin:%d power:%d cApp size:%d\n&quot;, pinReset, powerOnReset, sizeof (cApp));" color="5"/>
-  <BookmarkItem objectName="" line="1513" column="-1" path="C:/projects/seggerf4/main.cpp" number="250" extra="cApp::mApp->run();" color="5"/>
+  <BookmarkItem objectName="" line="1512" column="-1" path="C:/projects/seggerf4/main.cpp" number="249" extra="if (cApp::mApp->init())" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="9" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="accelerometer.h" useHWbreakpoint="false"/>
@@ -876,6 +876,8 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;disco429"/>
+  <ProjectSessionItem path="display;disco429;drivers"/>
+  <ProjectSessionItem path="display;disco429;inc"/>
   <ProjectSessionItem path="display;disco429;Source Files"/>
   <ProjectSessionItem path="display;disco429;System Files"/>
  </Project>
@@ -936,11 +938,6 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/stm32f429i_discovery_gyroscope.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="790" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="0" top="762" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="16" y="9" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/cLcd.cpp" selected="1" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="399" useTextEdit="1" useBinaryEdit="0" left="0" path="drivers/Src/stm32f4xx_hal.c" selected="0" top="389" codecName="Default"/>
- </Files>
+ <Files/>
  <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

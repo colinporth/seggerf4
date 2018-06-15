@@ -3,7 +3,7 @@
 #include "cLcd.h"
 
 #include "stm32f429i_discovery.h"
-#include "stm32f429i_discovery_gyroscope.h"
+#include "gyro.h"
 
 #include "fatFs.h"
 #include "diskio.h"
@@ -795,12 +795,12 @@ int main() {
     lcd->clear (COL_BLACK);
     lcd->showInfo (true);
     lcd->present();
-    float xyz[3];
+    int16_t xyz[3];
     BSP_GYRO_GetXYZ (xyz);
-    lcd->info ("x:" + dec (int(xyz[0])) +
-               " y:" + dec (int(xyz[1])) +
-               " z:" + dec (int(xyz[2])) );
+    lcd->info ("x:" + dec (xyz[0],4) +
+               " y:" + dec (xyz[1],4) +
+               " z:" + dec (xyz[2],4) );
 
-    HAL_Delay (100);
+    //HAL_Delay (100);
     }
   }

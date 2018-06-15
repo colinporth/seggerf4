@@ -1,10 +1,10 @@
 #pragma once
+#include "stm32f429i_discovery.h"
 //{{{
 #ifdef __cplusplus
  extern "C" {
 #endif
 //}}}
-#include "stm32f429i_discovery.h"
 
 typedef enum {
   GYRO_OK = 0,
@@ -20,12 +20,12 @@ typedef struct {
   } GYRO_InterruptConfigTypeDef;
 
 uint8_t BSP_GYRO_Init();
-void    BSP_GYRO_Reset();
 uint8_t BSP_GYRO_ReadID();
-void    BSP_GYRO_ITConfig (GYRO_InterruptConfigTypeDef *pIntConfigStruct);
-void    BSP_GYRO_EnableIT (uint8_t IntPin);
-void    BSP_GYRO_DisableIT (uint8_t IntPin);
-void    BSP_GYRO_GetXYZ (float* pfData);
+void BSP_GYRO_Reset();
+void BSP_GYRO_ITConfig (GYRO_InterruptConfigTypeDef* pIntConfigStruct);
+void BSP_GYRO_EnableIT (uint8_t IntPin);
+void BSP_GYRO_DisableIT (uint8_t IntPin);
+void BSP_GYRO_GetXYZ (int16_t* xyz);
 
 //{{{
 #ifdef __cplusplus

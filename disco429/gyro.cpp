@@ -1,21 +1,5 @@
-#include "stm32f429i_discovery_gyroscope.h"
-//{{{  struct GYRO_DrvTypeDef
-typedef struct {
-  void       (*Init)(uint16_t);
-  void       (*DeInit)(void);
-  uint8_t    (*ReadID)(void);
-  void       (*Reset)(void);
-  void       (*LowPower)(uint16_t);
-  void       (*ConfigIT)(uint16_t);
-  void       (*EnableIT)(uint8_t);
-  void       (*DisableIT)(uint8_t);
-  uint8_t    (*ITStatus)(uint16_t, uint16_t);
-  void       (*ClearIT)(uint16_t, uint16_t);
-  void       (*FilterConfig)(uint8_t);
-  void       (*FilterCmd)(uint8_t);
-  void       (*GetXYZ)(float *);
-  } GYRO_DrvTypeDef;
-//}}}
+// L3GD20 gyro
+#include "gyro.h"
 //{{{  struct GYRO_InitTypeDef
 typedef struct {
   uint8_t Power_Mode;                         /* Power-down/Sleep/Normal Mode */
@@ -135,7 +119,6 @@ typedef struct {
 #define L3GD20_HPFCF_8              0x08
 #define L3GD20_HPFCF_9              0x09
 //}}}
-static GYRO_DrvTypeDef* GyroscopeDrv;
 
 //{{{
 void L3GD20_Init (uint16_t InitStruct) {
@@ -154,7 +137,6 @@ void L3GD20_Init (uint16_t InitStruct) {
   GYRO_IO_Write (&ctrl, L3GD20_CTRL_REG4_ADDR, 1);
   }
 //}}}
-void L3GD20_DeInit() {}
 //{{{
 uint8_t L3GD20_ReadID() {
 
@@ -171,94 +153,11 @@ uint8_t L3GD20_ReadID() {
   }
 //}}}
 //{{{
-void L3GD20_RebootCmd() {
-
-  uint8_t tmpreg;
-
-  /* Read CTRL_REG5 register */
-  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
-
-  /* Enable or Disable the reboot memory */
-  tmpreg |= L3GD20_BOOT_REBOOTMEMORY;
-
-  /* Write value to MEMS CTRL_REG5 register */
-  GYRO_IO_Write(&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
-  }
-//}}}
-//{{{
 void L3GD20_LowPower (uint16_t InitStruct) {
 
-  uint8_t ctrl = 0x00;
-
   /* Write value to MEMS CTRL_REG1 register */
-  ctrl = (uint8_t) InitStruct;
-  GYRO_IO_Write(&ctrl, L3GD20_CTRL_REG1_ADDR, 1);
-  }
-//}}}
-//{{{
-void L3GD20_INT1InterruptConfig (uint16_t Int1Config) {
-
-  uint8_t ctrl_cfr = 0x00, ctrl3 = 0x00;
-
-  /* Read INT1_CFG register */
-  GYRO_IO_Read(&ctrl_cfr, L3GD20_INT1_CFG_ADDR, 1);
-
-  /* Read CTRL_REG3 register */
-  GYRO_IO_Read(&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
-
-  ctrl_cfr &= 0x80;
-  ctrl_cfr |= ((uint8_t) Int1Config >> 8);
-
-  ctrl3 &= 0xDF;
-  ctrl3 |= ((uint8_t) Int1Config);
-
-  /* Write value to MEMS INT1_CFG register */
-  GYRO_IO_Write(&ctrl_cfr, L3GD20_INT1_CFG_ADDR, 1);
-
-  /* Write value to MEMS CTRL_REG3 register */
-  GYRO_IO_Write(&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
-  }
-//}}}
-//{{{
-void L3GD20_EnableIT (uint8_t IntSel) {
-
-  uint8_t tmpreg;
-
-  /* Read CTRL_REG3 register */
-  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
-
-  if (IntSel == L3GD20_INT1) {
-    tmpreg &= 0x7F;
-    tmpreg |= L3GD20_INT1INTERRUPT_ENABLE;
-    }
-  else if (IntSel == L3GD20_INT2) {
-    tmpreg &= 0xF7;
-    tmpreg |= L3GD20_INT2INTERRUPT_ENABLE;
-    }
-
-  /* Write value to MEMS CTRL_REG3 register */
-  GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
-  }
-//}}}
-//{{{
-void L3GD20_DisableIT (uint8_t IntSel) {
-
-  uint8_t tmpreg;
-
-  /* Read CTRL_REG3 register */
-  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
-
-  if (IntSel == L3GD20_INT1) {
-    tmpreg &= 0x7F;
-    tmpreg |= L3GD20_INT1INTERRUPT_DISABLE;
-    }
-  else if(IntSel == L3GD20_INT2) {
-    tmpreg &= 0xF7;
-    tmpreg |= L3GD20_INT2INTERRUPT_DISABLE;
-    }
-
-  /* Write value to MEMS CTRL_REG3 register */
-  GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
+  uint8_t ctrl = (uint8_t) InitStruct;
+  GYRO_IO_Write (&ctrl, L3GD20_CTRL_REG1_ADDR, 1);
   }
 //}}}
 //{{{
@@ -283,7 +182,6 @@ void L3GD20_FilterCmd (uint8_t HighPassFilterState) {
   uint8_t tmpreg;
   GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
   tmpreg &= 0xEF;
-
   tmpreg |= HighPassFilterState;
 
   /* Write value to MEMS CTRL_REG5 register */
@@ -301,79 +199,15 @@ uint8_t L3GD20_GetDataStatus() {
   return tmpreg;
   }
 //}}}
-//{{{
-void L3GD20_ReadXYZAngRate (float* pfData) {
-
-  int i = 0;
-
-  uint8_t tmpreg = 0;
-  GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG4_ADDR, 1);
-
-  uint8_t tmpbuffer[6] = {0};
-  GYRO_IO_Read (tmpbuffer, L3GD20_OUT_X_L_ADDR, 6);
-
-  // check in the control register 4 the data alignment (Big Endian or Little Endian) 
-  int16_t RawData[3] = {0};
-  if (!(tmpreg & L3GD20_BLE_MSB))
-    for (i = 0; i < 3; i++)
-      RawData[i] = (int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
-  else
-    for (i = 0; i < 3; i++)
-      RawData[i] = (int16_t)(((uint16_t)tmpbuffer[2*i] << 8) + tmpbuffer[2*i+1]);
-
-  // Switch the sensitivity value set in the CRTL4
-  float sensitivity = 0;
-  switch (tmpreg & L3GD20_FULLSCALE_SELECTION) {
-    case L3GD20_FULLSCALE_250:
-      sensitivity = L3GD20_SENSITIVITY_250DPS;
-      break;
-
-    case L3GD20_FULLSCALE_500:
-      sensitivity = L3GD20_SENSITIVITY_500DPS;
-      break;
-
-    case L3GD20_FULLSCALE_2000:
-      sensitivity = L3GD20_SENSITIVITY_2000DPS;
-      break;
-    }
-
-  /* Divide by sensitivity */
-  for (i = 0; i < 3; i++)
-    pfData[i] = (float)(RawData[i] * sensitivity);
-  }
-//}}}
-//{{{
-GYRO_DrvTypeDef L3gd20Drv = {
-  L3GD20_Init,
-  L3GD20_DeInit,
-  L3GD20_ReadID,
-  L3GD20_RebootCmd,
-  L3GD20_LowPower,
-  L3GD20_INT1InterruptConfig,
-  L3GD20_EnableIT,
-  L3GD20_DisableIT,
-  0,
-  0,
-  L3GD20_FilterConfig,
-  L3GD20_FilterCmd,
-  L3GD20_ReadXYZAngRate
-  };
-//}}}
 
 //{{{
 uint8_t BSP_GYRO_Init() {
 
   uint8_t ret = GYRO_ERROR;
-  uint16_t ctrl = 0x0000;
   GYRO_InitTypeDef L3GD20_InitStructure;
   GYRO_FilterConfigTypeDef L3GD20_FilterStructure={0,0};
 
-  if((L3gd20Drv.ReadID() == I_AM_L3GD20) || (L3gd20Drv.ReadID() == I_AM_L3GD20_TR)) {
-    /* Initialize the Gyroscope driver structure */
-    GyroscopeDrv = &L3gd20Drv;
-
-    /* MEMS configuration ----------------------------------------------------*/
-    /* Fill the Gyroscope structure */
+  if ((L3GD20_ReadID() == I_AM_L3GD20) || (L3GD20_ReadID() == I_AM_L3GD20_TR)) {
     L3GD20_InitStructure.Power_Mode = L3GD20_MODE_ACTIVE;
     L3GD20_InitStructure.Output_DataRate = L3GD20_OUTPUT_DATARATE_1;
     L3GD20_InitStructure.Axes_Enable = L3GD20_AXES_ENABLE;
@@ -383,25 +217,25 @@ uint8_t BSP_GYRO_Init() {
     L3GD20_InitStructure.Full_Scale = L3GD20_FULLSCALE_500;
 
     /* Configure MEMS: data rate, power mode, full scale and axes */
-    ctrl = (uint16_t) (L3GD20_InitStructure.Power_Mode | L3GD20_InitStructure.Output_DataRate | \
-                       L3GD20_InitStructure.Axes_Enable | L3GD20_InitStructure.Band_Width);
+    uint16_t ctrl = L3GD20_InitStructure.Power_Mode |
+                    L3GD20_InitStructure.Output_DataRate |
+                    L3GD20_InitStructure.Axes_Enable |
+                    L3GD20_InitStructure.Band_Width |
+                    ((L3GD20_InitStructure.BlockData_Update |
+                     L3GD20_InitStructure.Endianness |
+                     L3GD20_InitStructure.Full_Scale) << 8);
 
-    ctrl |= (uint16_t) ((L3GD20_InitStructure.BlockData_Update | L3GD20_InitStructure.Endianness | \
-                         L3GD20_InitStructure.Full_Scale) << 8);
-
-    /* Configure the Gyroscope main parameters */
-    GyroscopeDrv->Init (ctrl);
+    L3GD20_Init (ctrl);
 
     L3GD20_FilterStructure.HighPassFilter_Mode_Selection = L3GD20_HPM_NORMAL_MODE_RES;
     L3GD20_FilterStructure.HighPassFilter_CutOff_Frequency = L3GD20_HPFCF_0;
 
-    ctrl = (uint8_t) ((L3GD20_FilterStructure.HighPassFilter_Mode_Selection |\
+    ctrl = (uint8_t) ((L3GD20_FilterStructure.HighPassFilter_Mode_Selection |
                        L3GD20_FilterStructure.HighPassFilter_CutOff_Frequency));
 
     /* Configure the Gyroscope main parameters */
-    GyroscopeDrv->FilterConfig (ctrl) ;
-    GyroscopeDrv->FilterCmd (L3GD20_HIGHPASSFILTER_ENABLE);
-
+    L3GD20_FilterConfig (ctrl) ;
+    L3GD20_FilterCmd (L3GD20_HIGHPASSFILTER_ENABLE);
     ret = GYRO_OK;
     }
   else
@@ -410,55 +244,126 @@ uint8_t BSP_GYRO_Init() {
   return ret;
   }
 //}}}
+
 //{{{
 uint8_t BSP_GYRO_ReadID() {
-
-  uint8_t id = 0x00;
-  if (GyroscopeDrv->ReadID != NULL)
-    id = GyroscopeDrv->ReadID();
-  return id;
+  return L3GD20_ReadID();
   }
 //}}}
 //{{{
 void BSP_GYRO_Reset() {
 
-  if (GyroscopeDrv->Reset != NULL)
-    GyroscopeDrv->Reset();
+  uint8_t tmpreg;
+
+  /* Read CTRL_REG5 register */
+  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
+
+  /* Enable or Disable the reboot memory */
+  tmpreg |= L3GD20_BOOT_REBOOTMEMORY;
+
+  /* Write value to MEMS CTRL_REG5 register */
+  GYRO_IO_Write(&tmpreg, L3GD20_CTRL_REG5_ADDR, 1);
   }
 //}}}
+
 //{{{
 void BSP_GYRO_ITConfig (GYRO_InterruptConfigTypeDef* pIntConfig) {
 
   uint16_t interruptconfig = 0x0000;
+  /* Configure latch Interrupt request and axe interrupts */
+  interruptconfig |= ((uint8_t)(pIntConfig->Latch_Request| pIntConfig->Interrupt_Axes) << 8);
+  interruptconfig |= (uint8_t)(pIntConfig->Interrupt_ActiveEdge);
 
-  if(GyroscopeDrv->ConfigIT != NULL) {
-    /* Configure latch Interrupt request and axe interrupts */
-    interruptconfig |= ((uint8_t)(pIntConfig->Latch_Request| \
-                                  pIntConfig->Interrupt_Axes) << 8);
+  uint8_t ctrl_cfr = 0x00, ctrl3 = 0x00;
 
-    interruptconfig |= (uint8_t)(pIntConfig->Interrupt_ActiveEdge);
+  /* Read INT1_CFG register */
+  GYRO_IO_Read(&ctrl_cfr, L3GD20_INT1_CFG_ADDR, 1);
 
-    GyroscopeDrv->ConfigIT(interruptconfig);
-    }
+  /* Read CTRL_REG3 register */
+  GYRO_IO_Read(&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
+
+  ctrl_cfr &= 0x80;
+  ctrl_cfr |= ((uint8_t) interruptconfig >> 8);
+
+  ctrl3 &= 0xDF;
+  ctrl3 |= ((uint8_t) interruptconfig);
+
+  /* Write value to MEMS INT1_CFG register */
+  GYRO_IO_Write(&ctrl_cfr, L3GD20_INT1_CFG_ADDR, 1);
+
+  /* Write value to MEMS CTRL_REG3 register */
+  GYRO_IO_Write(&ctrl3, L3GD20_CTRL_REG3_ADDR, 1);
   }
 //}}}
 //{{{
 void BSP_GYRO_EnableIT (uint8_t IntPin) {
 
-  if(GyroscopeDrv->EnableIT != NULL)
-    GyroscopeDrv->EnableIT(IntPin);
+  uint8_t tmpreg;
+
+  /* Read CTRL_REG3 register */
+  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
+
+  if (IntPin == L3GD20_INT1) {
+    tmpreg &= 0x7F;
+    tmpreg |= L3GD20_INT1INTERRUPT_ENABLE;
+    }
+  else if (IntPin == L3GD20_INT2) {
+    tmpreg &= 0xF7;
+    tmpreg |= L3GD20_INT2INTERRUPT_ENABLE;
+    }
+
+  /* Write value to MEMS CTRL_REG3 register */
+  GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
   }
 //}}}
 //{{{
 void BSP_GYRO_DisableIT (uint8_t IntPin) {
 
-  if(GyroscopeDrv->DisableIT != NULL)
-    GyroscopeDrv->DisableIT(IntPin);
+  uint8_t tmpreg;
+
+  /* Read CTRL_REG3 register */
+  GYRO_IO_Read(&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
+
+  if (IntPin == L3GD20_INT1) {
+    tmpreg &= 0x7F;
+    tmpreg |= L3GD20_INT1INTERRUPT_DISABLE;
+    }
+  else if(IntPin == L3GD20_INT2) {
+    tmpreg &= 0xF7;
+    tmpreg |= L3GD20_INT2INTERRUPT_DISABLE;
+    }
+
+  /* Write value to MEMS CTRL_REG3 register */
+  GYRO_IO_Write (&tmpreg, L3GD20_CTRL_REG3_ADDR, 1);
   }
 //}}}
+
 //{{{
-void BSP_GYRO_GetXYZ (float* pfData) {
-  if (GyroscopeDrv->GetXYZ != NULL)
-    GyroscopeDrv->GetXYZ (pfData);
+void BSP_GYRO_GetXYZ (int16_t* xyz) {
+
+  int i = 0;
+
+  uint8_t tmpreg = 0;
+  GYRO_IO_Read (&tmpreg, L3GD20_CTRL_REG4_ADDR, 1);
+
+  uint8_t tmpbuffer[6] = {0};
+  GYRO_IO_Read (tmpbuffer, L3GD20_OUT_X_L_ADDR, 6);
+
+  // check in the control register 4 the data alignment (Big Endian or Little Endian)
+  int16_t RawData[3] = {0};
+  if (!(tmpreg & L3GD20_BLE_MSB))
+    for (i = 0; i < 3; i++)
+      xyz[i] = (int16_t)(((uint16_t)tmpbuffer[2*i+1] << 8) + tmpbuffer[2*i]);
+  else
+    for (i = 0; i < 3; i++)
+      xyz[i] = (int16_t)(((uint16_t)tmpbuffer[2*i] << 8) + tmpbuffer[2*i+1]);
+
+  //switch (tmpreg & L3GD20_FULLSCALE_SELECTION) {
+  //  case L3GD20_FULLSCALE_250:
+  //    sensitivity = L3GD20_SENSITIVITY_250DPS;
+  //  case L3GD20_FULLSCALE_500:
+  //    sensitivity = L3GD20_SENSITIVITY_500DPS;
+  //  case L3GD20_FULLSCALE_2000:
+  //    sensitivity = L3GD20_SENSITIVITY_2000DPS;
   }
 //}}}
