@@ -35,7 +35,6 @@ public:
   //}}}
 
 private:
-  //{{{
   class cTrace {
   public:
     //{{{
@@ -82,6 +81,10 @@ private:
           lcd->rectClipped (COL_WHITE, i, top + height/2, 1, -value);
         sample += mAverageSamples;
         }
+
+      lcd->rectClipped (COL_GREY, 0, top + height/2, lcd->getWidth(), 1);
+      lcd->text (COL_YELLOW, cWidget::getFontHeight(), dec(mSamples[(mCurSample-1) % mNumSamples],4),
+                 lcd->getWidth() - 60, top + height/2, 60, cWidget::getFontHeight());
       }
     //}}}
 
@@ -93,6 +96,6 @@ private:
     int16_t mMin = 0x7FFF;
     int16_t mMax = -0x7FFF;
     };
-  //}}}
+
   std::vector<cTrace*> mTraces;
   };

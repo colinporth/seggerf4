@@ -464,17 +464,6 @@ void SystemClockConfig() {
 
   HAL_PWREx_EnableOverDrive();
 
-  // PLLSAI_VCO Input  = HSE_VALUE / PLL_M = 1mhz
-  // PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN     = 130mhz
-  // PLLLCDCLK         = PLLSAI_VCO Output / PLLSAIR    = 130/2 = 65mhz
-  // LTDC clock        = PLLLCDCLK / LTDC_PLLSAI_DIVR_2 = 65/2  = 32.5mhz
-  RCC_PeriphCLKInitTypeDef rccPeriphClkInit;
-  rccPeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
-  rccPeriphClkInit.PLLSAI.PLLSAIN = LTDC_CLOCK_4;  // hclk = 192mhz, 138/4 = 34.5mhz
-  rccPeriphClkInit.PLLSAI.PLLSAIR = 2;
-  rccPeriphClkInit.PLLSAIDivR = RCC_PLLSAIDIVR_2;
-  HAL_RCCEx_PeriphCLKConfig (&rccPeriphClkInit);
-
   //rccPeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_SDIO | RCC_PERIPHCLK_CK48;
   //rccPeriphClkInit.SdioClockSelection = RCC_SDIOCLKSOURCE_CK48;
   //rccPeriphClkInit.Clk48ClockSelection = RCC_CK48CLKSOURCE_PLLSAIP;
@@ -716,9 +705,9 @@ int main() {
     int16_t xyz[3];
     BSP_GYRO_GetXYZ (xyz);
     //lcd->info ("x:" + dec (xyz[0],4) + " y:" + dec (xyz[1],4) + " z:" + dec (xyz[2],4) );
-    mTraceVec->addSample (0, xyz[0]>>8);
-    mTraceVec->addSample (1, xyz[1]>>8);
-    mTraceVec->addSample (2, xyz[2]>>8);
+    mTraceVec->addSample (0, xyz[0]);
+    mTraceVec->addSample (1, xyz[1]);
+    mTraceVec->addSample (2, xyz[2]);
 
     lcd->start();
     lcd->clear (COL_BLACK);

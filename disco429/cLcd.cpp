@@ -1,6 +1,19 @@
 // cLcd.cpp
 #include "cLcd.h"
 #include "../freetype/FreeSansBold.h"
+//{{{  screen resolution defines
+#ifdef NEXXY_SCREEN
+  // NEXXY 7 inch
+  #define LTDC_CLOCK_4      130  // 32.5Mhz
+  #define HORIZ_SYNC         64
+  #define VERT_SYNC           1
+#else
+  // ASUS eee 10 inch
+  #define LTDC_CLOCK_4      100  // 25Mhz
+  #define HORIZ_SYNC        136  // min  136  typ 176   max 216
+  #define VERT_SYNC          12  // min   12  typ  25   max  38
+#endif
+//}}}
 
 extern "C" {
   //{{{
@@ -749,6 +762,16 @@ void cLcd::press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc
 //{{{
 void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
 
+  // PLLSAI_VCO Input  = HSE_VALUE / PLL_M = 1mhz
+  // PLLSAI_VCO Output = PLLSAI_VCO Input * PLLSAIN     = 130mhz
+  // PLLLCDCLK         = PLLSAI_VCO Output / PLLSAIR    = 130/2 = 65mhz
+  // LTDC clock        = PLLLCDCLK / LTDC_PLLSAI_DIVR_2 = 65/2  = 32.5mhz
+  RCC_PeriphCLKInitTypeDef rccPeriphClkInit;
+  rccPeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LTDC;
+  rccPeriphClkInit.PLLSAI.PLLSAIN = LTDC_CLOCK_4;  // hclk = 192mhz, 138/4 = 34.5mhz
+  rccPeriphClkInit.PLLSAI.PLLSAIR = 2;
+  rccPeriphClkInit.PLLSAIDivR = RCC_PLLSAIDIVR_2;
+  HAL_RCCEx_PeriphCLKConfig (&rccPeriphClkInit);
   //{{{  init clocks
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -760,6 +783,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   __HAL_RCC_DMA2D_CLK_ENABLE();
   __HAL_RCC_LTDC_CLK_ENABLE();
   //}}}
+
   //{{{  int gpio
   //  HS <-> PC.06 - unused
   //  VS <-> PA.04 - unused

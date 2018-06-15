@@ -10,52 +10,23 @@
 #include FT_FREETYPE_H
 //}}}
 //{{{  colour defines
-#define COL_WHITE         0xFFFF
-//#define COL_LIGHTGREY     0xFFD3D3D3
-//#define COL_GREY          0xFF808080
-//#define COL_DARKGREY      0xFF404040
-//#define COL_DARKERGREY    0xFF202020
 #define COL_BLACK         0x0000
+#define COL_GREY          0x7BEF
+#define COL_WHITE         0xFFFF
 
 #define COL_BLUE          0x001F
-//#define COL_LIGHTBLUE     0xFF8080FF
-//#define COL_DARKBLUE      0xFF000080
-
 #define COL_GREEN         0x07E0
-//#define COL_LIGHTGREEN    0xFF80FF80
-//#define COL_DARKGREEN     0xFF008000
-//#define COL_DARKERGREEN   0xFF004000
-
 #define COL_RED           0xF800
-//#define COL_LIGHTRED      0xFFFF8080
-//#define COL_DARKRED       0xFF800000
 
 #define COL_CYAN          0x07FF
-//#define COL_LIGHTCYAN     0xFF80FFFF
-//#define COL_DARKCYAN      0xFF008080
-
 #define COL_MAGENTA       0xF81F
-//#define COL_LIGHTMAGENTA  0xFFFF80FF
-//#define COL_DARKMAGENTA   0xFF800080
-
 #define COL_YELLOW        0xFFE0
-//#define COL_LIGHTYELLOW   0xFFFFFF80
-//#define COL_DARKYELLOW    0xFF808000
-//#define COL_DARKERYELLOW  0xFF202000
-
-//#define COL_BROWN         0xFFA52A2A
-//#define COL_ORANGE        0xFFFFA500
-//#define COL_DARKORANGE    0xFFC07800
-//#define COL_DARKERORANGE  0xFF805000
 //}}}
 //{{{  screen resolution defines
 #ifdef NEXXY_SCREEN
   // NEXXY 7 inch
-  #define LTDC_CLOCK_4      130  // 32.5Mhz
   #define LCD_WIDTH         800
   #define LCD_HEIGHT       1280
-  #define HORIZ_SYNC         64
-  #define VERT_SYNC           1
 
   #define BOX_HEIGHT         30
   #define SMALL_FONT_HEIGHT  12
@@ -64,11 +35,8 @@
 
 #else
   // ASUS eee 10 inch
-  #define LTDC_CLOCK_4      100  // 25Mhz
   #define LCD_WIDTH        1024  // min 39Mhz typ 45Mhz max 51.42Mhz
   #define LCD_HEIGHT        600
-  #define HORIZ_SYNC        136  // min  136  typ 176   max 216
-  #define VERT_SYNC          12  // min   12  typ  25   max  38
 
   #define BOX_HEIGHT         20
   #define SMALL_FONT_HEIGHT  10
