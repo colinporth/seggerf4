@@ -45,14 +45,6 @@
 #endif
 //}}}
 
-class cWidget {
-public:
-  static uint16_t getBoxHeight() { return BOX_HEIGHT; }
-  static uint16_t getSmallFontHeight() { return SMALL_FONT_HEIGHT; }
-  static uint16_t getFontHeight() { return FONT_HEIGHT; }
-  static uint16_t getBigFontHeight() { return BIG_FONT_HEIGHT; }
-  };
-
 class cFontChar;
 
 class cLcd {
@@ -89,8 +81,13 @@ public:
   ~cLcd() {}
 
   void init (std::string title);
-  uint16_t getWidth() { return LCD_WIDTH; }
-  uint16_t getHeight() { return LCD_HEIGHT; }
+  static uint16_t getWidth() { return LCD_WIDTH; }
+  static uint16_t getHeight() { return LCD_HEIGHT; }
+
+  static uint16_t getBoxHeight() { return BOX_HEIGHT; }
+  static uint16_t getSmallFontHeight() { return SMALL_FONT_HEIGHT; }
+  static uint16_t getFontHeight() { return FONT_HEIGHT; }
+  static uint16_t getBigFontHeight() { return BIG_FONT_HEIGHT; }
 
   void setShowDebug (bool title, bool info, bool footer);
   void info (uint16_t colour, std::string str);

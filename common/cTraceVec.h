@@ -90,12 +90,12 @@ private:
         sample += mAverageSamples;
         }
 
-      lcd->text (COL_YELLOW, cWidget::getFontHeight(), dec(mSamples[(mCurSample-1) % mNumSamples],4),
-                 lcd->getWidth() - 60, top + height/2, 60, cWidget::getFontHeight());
-      lcd->text (COL_GREEN, cWidget::getFontHeight(), dec(mMax,4),
-                 lcd->getWidth() - 60, top + height/2 - cWidget::getFontHeight(), 60, cWidget::getFontHeight());
-      lcd->text (COL_RED, cWidget::getFontHeight(), dec(mMin,4),
-                 lcd->getWidth() - 60, top + height/2 + cWidget::getFontHeight(), 60, cWidget::getFontHeight());
+      lcd->text (COL_GREEN, cLcd::getFontHeight(), dec(mMax),  
+                 lcd->getWidth() - 60, top + height/2 - cLcd::getFontHeight()*3/2, 60, cLcd::getFontHeight());
+      lcd->text (COL_YELLOW, cLcd::getFontHeight(), dec(mSamples[(mCurSample-1) % mNumSamples]),
+                 lcd->getWidth() - 60, top + height/2 - cLcd::getFontHeight()/2, 60, cLcd::getFontHeight());
+      lcd->text (COL_RED, cLcd::getFontHeight(), dec(mMin),
+                 lcd->getWidth() - 60, top + height/2 + cLcd::getFontHeight()/2, 60, cLcd::getFontHeight());
       }
     //}}}
 

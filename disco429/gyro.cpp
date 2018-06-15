@@ -125,7 +125,7 @@ uint8_t gyroInit() {
 
   uint8_t value = L3GD20_REBOOTMEMORY;
   GYRO_IO_Write (&value, L3GD20_CTRL_REG5_ADDR, 1);
-  HAL_Delay(10);
+  HAL_Delay(250);
 
   uint8_t id;
   GYRO_IO_Read (&id, L3GD20_WHO_AM_I_ADDR, 1);
@@ -146,13 +146,13 @@ uint8_t gyroInit() {
   value = L3GD20_FIFO_ENABLE | L3GD20_HIGHPASSFILTER_ENABLE;
   GYRO_IO_Write (&value, L3GD20_CTRL_REG5_ADDR, 1);
 
-  // config FIFO_CTRL_REG_ADDR - FIFO_MODE
-  value = 0x20;
+  // config FIFO_CTRL_REG_ADDR - STREAMING_MODE
+  value = 0x60;
   GYRO_IO_Write (&value, L3GD20_FIFO_CTRL_REG_ADDR, 1);
 
   // config CTRL_REG1
   value = L3GD20_OUTPUT_DATARATE_190Hz |
-          L3GD20_BANDWIDTH_4 |
+          L3GD20_BANDWIDTH_1 |
           L3GD20_MODE_ACTIVE |
           L3GD20_X_ENABLE | L3GD20_Y_ENABLE | L3GD20_Z_ENABLE;
   GYRO_IO_Write (&value, L3GD20_CTRL_REG1_ADDR, 1);

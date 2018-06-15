@@ -711,7 +711,7 @@ int main() {
     lcd->start();
     lcd->clear (COL_BLACK);
     lcd->showInfo (true);
-    mTraceVec.draw (lcd, 0, lcd->getHeight());
+    mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
     lcd->present();
     }
   }

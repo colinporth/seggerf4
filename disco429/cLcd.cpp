@@ -86,7 +86,7 @@ void cLcd::init (std::string title) {
 
   // preload fontChars
   for (char ch = 0x20; ch <= 0x7F; ch++)
-    loadChar (cWidget::getFontHeight(), ch);
+    loadChar (getFontHeight(), ch);
   //for (char ch = 0x21; ch <= 0x3F; ch++)
   //  loadChar (getBigFontHeight(), ch);
   //for (char ch = 0x21; ch <= 0x3F; ch++)
@@ -645,16 +645,16 @@ void cLcd::showInfo (bool force) {
 
   if ((mShowTitle || force) && !mTitle.empty()) {
     // draw title
-    text (COL_YELLOW, cWidget::getFontHeight(), mTitle, 0, y, getWidth(), cWidget::getBoxHeight());
-    y += cWidget::getBoxHeight();
+    text (COL_YELLOW, getFontHeight(), mTitle, 0, y, getWidth(), getBoxHeight());
+    y += getBoxHeight();
     }
 
   if (mShowInfo || force) {
     // draw info lines
     if (mLastLine >= 0) {
       // draw scroll bar
-      auto yorg = cWidget::getBoxHeight() + ((int)mFirstLine * mNumDrawLines * cWidget::getBoxHeight() / (mLastLine + 1));
-      auto height = mNumDrawLines * mNumDrawLines * cWidget::getBoxHeight() / (mLastLine + 1);
+      auto yorg = getBoxHeight() + ((int)mFirstLine * mNumDrawLines * getBoxHeight() / (mLastLine + 1));
+      auto height = mNumDrawLines * mNumDrawLines * getBoxHeight() / (mLastLine + 1);
       rectClipped (COL_YELLOW, 0, yorg, 8, height);
       }
 
@@ -664,25 +664,25 @@ void cLcd::showInfo (bool force) {
 
     for (auto lineIndex = (int)mFirstLine; lineIndex <= lastLine; lineIndex++) {
       auto x = 0;
-      auto xinc = text (COL_GREEN, cWidget::getFontHeight(),
+      auto xinc = text (COL_GREEN, getFontHeight(),
                         dec ((mLines[lineIndex].mTime-mStartTime) / 1000) + "." +
                         dec ((mLines[lineIndex].mTime-mStartTime) % 1000, 3, '0'),
-                        x, y, getWidth(), cWidget::getBoxHeight());
+                        x, y, getWidth(), getBoxHeight());
       x += xinc + 3;
 
-      text (mLines[lineIndex].mColour, cWidget::getFontHeight(), mLines[lineIndex].mString,
+      text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
             x, y, getWidth()-x, getHeight());
 
-      y += cWidget::getBoxHeight();
+      y += getBoxHeight();
       }
     }
 
   if (mShowFooter || force)
     // draw footer
-    text (COL_WHITE, cWidget::getFontHeight(),
+    text (COL_WHITE, getFontHeight(),
           "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
           " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
-          0, -cWidget::getFontHeight() + getHeight(), getWidth(), cWidget::getFontHeight());
+          0, -getFontHeight() + getHeight(), getWidth(), getFontHeight());
   }
 //}}}
 //{{{
@@ -731,20 +731,20 @@ void cLcd::displayOff() {
 //{{{
 void cLcd::press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc, int16_t yinc) {
 
-  if ((pressCount > 30) && (x <= mStringPos) && (y <= cWidget::getBoxHeight()))
+  if ((pressCount > 30) && (x <= mStringPos) && (y <= getBoxHeight()))
     reset();
   else if (pressCount == 0) {
     if (x <= mStringPos) {
       // set displayFirstLine
-      if (y < 2 * cWidget::getBoxHeight())
+      if (y < 2 * getBoxHeight())
         displayTop();
-      else if (y > getHeight() - 2 * cWidget::getBoxHeight())
+      else if (y > getHeight() - 2 * getBoxHeight())
         displayTail();
       }
     }
   else {
     // inc firstLine
-    float value = mFirstLine - ((2.0f * yinc) / cWidget::getBoxHeight());
+    float value = mFirstLine - ((2.0f * yinc) / getBoxHeight());
 
     if (value < 0)
       mFirstLine = 0;
@@ -967,9 +967,9 @@ void cLcd::displayTail() {
 //{{{
 void cLcd::updateNumDrawLines() {
 
-  mStringPos = cWidget::getBoxHeight()*3;
+  mStringPos = getBoxHeight()*3;
 
-  auto numDrawLines = getHeight() / cWidget::getBoxHeight();
+  auto numDrawLines = getHeight() / getBoxHeight();
   if (mShowTitle && !mTitle.empty())
     numDrawLines--;
   if (mShowFooter)
