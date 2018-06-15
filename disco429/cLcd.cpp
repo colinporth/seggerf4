@@ -667,9 +667,8 @@ void cLcd::showInfo (bool force) {
   if (mShowFooter || force)
     // draw footer
     text (COL_WHITE, cWidget::getFontHeight(),
-          "heap:" + dec (xPortGetFreeHeapSize()) + ":" +
-          dec (xPortGetMinimumEverFreeHeapSize()) + " " +
-          dec (mDrawTime) + "ms ",
+          "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
+          " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
           0, -cWidget::getFontHeight() + getHeight(), getWidth(), cWidget::getFontHeight());
   }
 //}}}
@@ -679,12 +678,14 @@ void cLcd::present() {
   ready();
   mDrawTime = HAL_GetTick() - mDrawStartTime;
 
+  mWaitStartTime = HAL_GetTick();
   LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
   LTDC->SRCR = LTDC_SRCR_VBR | LTDC_SRCR_IMR;
   mFrameWait = true;
   while (mFrameWait) {
     HAL_Delay (1);
     }
+  mWaitTime = HAL_GetTick() - mWaitStartTime;
 
   // flip
   mDrawBuffer = !mDrawBuffer;

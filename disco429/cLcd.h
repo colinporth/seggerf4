@@ -224,8 +224,11 @@ private:
   bool mDrawBuffer = false;
   uint16_t* mBuffer[2] = {nullptr, nullptr};
   uint16_t* mCurFrameBufferAddress = nullptr;
-  int mDrawStartTime = 0;
-  int mDrawTime = 0;
+
+  uint32_t mDrawStartTime = 0;
+  uint32_t mDrawTime = 0;
+  uint32_t mWaitStartTime = 0;
+  uint32_t mWaitTime = 0;
   bool mWait = false;
 
   cFontCharMap mFontCharMap;
