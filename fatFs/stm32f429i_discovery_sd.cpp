@@ -1,12 +1,13 @@
 #include "stm32f429i_discovery_sd.h"
+#include "cLcd.h"
 
-static SD_HandleTypeDef gSdHandle;
-static DMA_HandleTypeDef gDmaRxHandle;
-static DMA_HandleTypeDef gDmaTxHandle;
+SD_HandleTypeDef gSdHandle;
+DMA_HandleTypeDef gDmaRxHandle;
+DMA_HandleTypeDef gDmaTxHandle;
 
-void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); }
-void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); }
-void DMA2_Stream6_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmatx); }
+extern "C" { void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); } }
+extern "C" { void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); } }
+extern "C" { void DMA2_Stream6_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmatx); } }
 
 //{{{
 uint8_t BSP_SD_Init() {
@@ -127,7 +128,7 @@ uint8_t BSP_SD_IsDetected() {
 //}}}
 //{{{
 uint8_t BSP_SD_GetCardState() {
-  return((HAL_SD_GetCardState(&gSdHandle) == HAL_SD_CARD_TRANSFER ) ? SD_TRANSFER_OK : SD_TRANSFER_BUSY);
+  return HAL_SD_GetCardState(&gSdHandle) == HAL_SD_CARD_TRANSFER ? SD_TRANSFER_OK : SD_TRANSFER_BUSY;
   }
 //}}}
 //{{{
@@ -138,11 +139,14 @@ void BSP_SD_GetCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) {
 
 //{{{
 uint8_t BSP_SD_ReadBlocks_DMA (uint32_t* data, uint32_t readAddr, uint32_t numBlocks) {
-  return HAL_SD_ReadBlocks_DMA(&gSdHandle, (uint8_t*)data, readAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
+
+  cLcd::mLcd->debug (COL_GREEN, 
+                     "readBlocks " + hex (uint32_t(data)) + " " + dec (readAddr) + " " + dec(numBlocks));
+  return HAL_SD_ReadBlocks_DMA (&gSdHandle, (uint8_t*)data, readAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
   }
 //}}}
 //{{{
-uint8_t BSP_SD_WriteBlocks_DMA (uint32_t *data, uint32_t writeAddr, uint32_t numBlocks) {
+uint8_t BSP_SD_WriteBlocks_DMA (uint32_t* data, uint32_t writeAddr, uint32_t numBlocks) {
   return HAL_SD_WriteBlocks_DMA (&gSdHandle, (uint8_t*)data, writeAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
   }
 //}}}

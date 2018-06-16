@@ -288,9 +288,9 @@
       <file file_name="../fatFs/diskio.c" />
       <file file_name="../fatFs/diskio.h" />
       <file file_name="../fatFs/sd_diskio.h" />
-      <file file_name="../fatFs/stm32f429i_discovery_sd.c" />
       <file file_name="../fatFs/stm32f429i_discovery_sd.h" />
       <file file_name="../fatFs/ccsbcs.c" />
+      <file file_name="../fatFs/stm32f429i_discovery_sd.cpp" />
     </folder>
     <configuration Name="Release" gcc_optimization_level="None" />
     <folder Name="LibJPEG">

@@ -896,6 +896,7 @@
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;disco429"/>
   <ProjectSessionItem path="display;disco429;fatFs"/>
+  <ProjectSessionItem path="display;disco429;LibJPEG"/>
   <ProjectSessionItem path="display;disco429;Source Files"/>
   <ProjectSessionItem path="display;disco429;System Files"/>
  </Project>
@@ -957,14 +958,8 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="50" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/sd_diskio.h" selected="0" top="26" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="114" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/sd_diskio.c" selected="0" top="97" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="10" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/stm32f429i_discovery_sd.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="802" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="0" top="780" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="3287" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/ff.c" selected="0" top="3259" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="23" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/ccsbcs.c" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="20" y="7" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/diskio.h" selected="1" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="17" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/ff_gen_drv.h" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="5" useTextEdit="1" useBinaryEdit="0" left="0" path="fatFs/sd_diskio.h" selected="0" top="5" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="21" y="786" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="0" top="774" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../common/cTraceVec.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

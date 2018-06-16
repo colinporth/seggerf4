@@ -25,10 +25,10 @@
 //}}}
 //{{{  sdram defines
 #define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
-#define SDRAM_BANK1_LEN   ((uint32_t)0x00800000)
+#define SDRAM_BANK1_LEN    ((uint32_t)0x00800000)
 
 #define SDRAM_BANK2_ADDR  ((uint16_t*)0xD0000000)
-#define SDRAM_BANK2_LEN   ((uint32_t)0x01000000)
+#define SDRAM_BANK2_LEN    ((uint32_t)0x01000000)
 
 #define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
 #define SDRAM_MODEREG_BURST_LENGTH_2             ((uint16_t)0x0001)
@@ -202,6 +202,7 @@ cLcd* lcd = nullptr;
 
 FATFS SDFatFs;  /* File system object for SD disk logical drive */
 char SDPath[4]; /* SD disk logical drive path */
+FIL gFile = { 0 };
 
 //{{{  trace
 int globalCounter = 0;
@@ -512,15 +513,18 @@ void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
               dec ((filInfo.fdate >> 9) + 1980)
               );
 
-  FIL gFile = { 0 };
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
     lcd->debug (fileName + " not opened");
     return;
     }
 
-  UINT bytesRead;
-  f_read (&gFile, (void*)buf, (UINT)filInfo.fsize, &bytesRead);
-  lcd->info ("- read " + dec(bytesRead));
+  UINT bytesRead = 0;
+  uint8_t* ptr = buf;
+  do {
+    f_read (&gFile, (void*)ptr, (UINT)filInfo.fsize, &bytesRead);
+    lcd->info ("- read " + dec(bytesRead));
+    ptr += bytesRead;
+    } while (bytesRead > 0);
   f_close (&gFile);
 
   if (bytesRead > 0) {
@@ -793,14 +797,14 @@ int main() {
   if (FATFS_LinkDriver(&SD_Driver, SDPath) == 0) {
     if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) == FR_OK) {
       // get label
-      //char label[20] = {0};
-      //DWORD vsn = 0;
-      //f_getlabel ("", label, &vsn);
-      //lcd->info ("sdCard mounted");
+      char label[20] = {0};
+      DWORD vsn = 0;
+      f_getlabel ("", label, &vsn);
+      lcd->debug ("sdCard mounted label:" + std::string(label));
 
       std::string path1 = "";
       readDirectory (path1);
-      loadFile ("kSloth.jpg", (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);
+      loadFile ("kSloth.jpg", (uint8_t*)0xD0100000, (uint16_t*)0xD0200000);
       }
     else
       lcd->info ("sdCard not mounted");

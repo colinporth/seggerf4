@@ -45,8 +45,8 @@ DSTATUS disk_initialize (BYTE pdrv       /* Physical drive nmuber to identify th
   * @retval DRESULT: Operation result
   */
 DRESULT disk_read (BYTE pdrv,    /* Physical drive nmuber to identify the drive */
-                   BYTE *buff,   /* Data buffer to store read data */
-                   DWORD sector,         /* Sector address in LBA */
+                   BYTE* buff,   /* Data buffer to store read data */
+                   DWORD sector, /* Sector address in LBA */
                    UINT count    /* Number of sectors to read */) {
 
   return disk.drv[pdrv]->disk_read (disk.lun[pdrv], buff, sector, count);
@@ -61,10 +61,10 @@ DRESULT disk_read (BYTE pdrv,    /* Physical drive nmuber to identify the drive 
   * @param  count: Number of sectors to write (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT disk_write (BYTE pdrv,    /* Physical drive nmuber to identify the drive */
-                    const BYTE *buff, /* Data to be written */
-                    DWORD sector,   /* Sector address in LBA */
-                    UINT count          /* Number of sectors to write */) {
+DRESULT disk_write (BYTE pdrv,        /* Physical drive nmuber to identify the drive */
+                    const BYTE* buff, /* Data to be written */
+                    DWORD sector,     /* Sector address in LBA */
+                    UINT count        /* Number of sectors to write */) {
 
   return disk.drv[pdrv]->disk_write (disk.lun[pdrv], buff, sector, count);
   }
@@ -77,9 +77,9 @@ DRESULT disk_write (BYTE pdrv,    /* Physical drive nmuber to identify the drive
   * @param  *buff: Buffer to send/receive control data
   * @retval DRESULT: Operation result
   */
-DRESULT disk_ioctl (BYTE pdrv,    /* Physical drive nmuber (0..) */
+DRESULT disk_ioctl (BYTE pdrv,  /* Physical drive nmuber (0..) */
                     BYTE cmd,   /* Control code */
-                    void *buff    /* Buffer to send/receive control data */) {
+                    void* buff  /* Buffer to send/receive control data */) {
 
   return disk.drv[pdrv]->disk_ioctl (disk.lun[pdrv], cmd, buff);
   }
