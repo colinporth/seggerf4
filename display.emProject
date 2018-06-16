@@ -50,9 +50,7 @@
       <file file_name="main.cpp" />
       <file file_name="stm32f429i_discovery.c" />
       <file file_name="cLcd.cpp" />
-      <file file_name="fatFs.cpp" />
       <file file_name="gyro.cpp" />
-      <file file_name="../FatFs/ff.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />
@@ -89,8 +87,6 @@
       <file file_name="cmsis_gcc.h" />
       <file file_name="core_cm4.h" />
       <file file_name="cPngPic.h" />
-      <file file_name="diskio.h" />
-      <file file_name="fatFs.h" />
       <file file_name="stm32f429xx.h" />
       <file file_name="gyro.h" />
     </folder>
@@ -280,6 +276,20 @@
         <file file_name="../common/utils.h" />
         <file file_name="../common/font.h" />
       </folder>
+    </folder>
+    <folder Name="fatFs">
+      <file file_name="../fatFs/ff_gen_drv.c" />
+      <file file_name="../fatFs/ff_gen_drv.h" />
+      <file file_name="../fatFs/ffconf.h" />
+      <file file_name="../fatFs/integer.h" />
+      <file file_name="../fatFs/ff.c" />
+      <file file_name="../fatFs/ff.h" />
+      <file file_name="../fatFs/sd_diskio.c" />
+      <file file_name="../fatFs/diskio.c" />
+      <file file_name="../fatFs/diskio.h" />
+      <file file_name="../fatFs/sd_diskio.h" />
+      <file file_name="../fatFs/stm32f429i_discovery_sd.c" />
+      <file file_name="../fatFs/stm32f429i_discovery_sd.h" />
     </folder>
   </project>
 </solution>
