@@ -104,6 +104,7 @@
 "Output/disco429 Release/Obj/sd_diskio.o"
 "Output/disco429 Release/Obj/diskio.o"
 "Output/disco429 Release/Obj/stm32f429i_discovery_sd.o"
+"Output/disco429 Release/Obj/ccsbcs.o"
 "C:/Program Files/SEGGER/SEGGER Embedded Studio for ARM 3.40/lib/libdebugio_mempoll_v7em_fpv4_sp_d16_hard_t_le_eabi.a"
 "C:/Program Files/SEGGER/SEGGER Embedded Studio for ARM 3.40/lib/libm_v7em_fpv4_sp_d16_hard_t_le_eabi.a"
 "C:/Program Files/SEGGER/SEGGER Embedded Studio for ARM 3.40/lib/libc_v7em_fpv4_sp_d16_hard_t_le_eabi.a"
