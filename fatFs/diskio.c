@@ -49,8 +49,7 @@ DRESULT disk_read (BYTE pdrv,    /* Physical drive nmuber to identify the drive 
                    DWORD sector,         /* Sector address in LBA */
                    UINT count    /* Number of sectors to read */) {
 
-  DRESULT res = disk.drv[pdrv]->disk_read(disk.lun[pdrv], buff, sector, count);
-  return res;
+  return disk.drv[pdrv]->disk_read (disk.lun[pdrv], buff, sector, count);
   }
 //}}}
 //{{{
@@ -67,8 +66,7 @@ DRESULT disk_write (BYTE pdrv,    /* Physical drive nmuber to identify the drive
                     DWORD sector,   /* Sector address in LBA */
                     UINT count          /* Number of sectors to write */) {
 
-  DRESULT res = disk.drv[pdrv]->disk_write (disk.lun[pdrv], buff, sector, count);
-  return res;
+  return disk.drv[pdrv]->disk_write (disk.lun[pdrv], buff, sector, count);
   }
 //}}}
 //{{{
@@ -83,9 +81,8 @@ DRESULT disk_ioctl (BYTE pdrv,    /* Physical drive nmuber (0..) */
                     BYTE cmd,   /* Control code */
                     void *buff    /* Buffer to send/receive control data */) {
 
-  DRESULT res = disk.drv[pdrv]->disk_ioctl(disk.lun[pdrv], cmd, buff);
-  return res;
-}
+  return disk.drv[pdrv]->disk_ioctl (disk.lun[pdrv], cmd, buff);
+  }
 //}}}
 
 //{{{

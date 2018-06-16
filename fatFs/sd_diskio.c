@@ -2,12 +2,11 @@
 #include "sd_diskio.h"
 
 #define SD_TIMEOUT 1000
-
 #define SD_DEFAULT_BLOCK_SIZE 512
 
 static volatile DSTATUS Stat = STA_NOINIT;
 
-static DSTATUS SD_CheckStatus(BYTE lun);
+static DSTATUS SD_CheckStatus (BYTE lun);
 
 DSTATUS SD_initialize (BYTE);
 DSTATUS SD_status (BYTE);
@@ -17,19 +16,13 @@ DRESULT SD_write (BYTE, const BYTE*, DWORD, UINT);
 DRESULT SD_ioctl (BYTE, BYTE, void*);
 
 //{{{
-const Diskio_drvTypeDef  SD_Driver =
-{
+const Diskio_drvTypeDef SD_Driver = {
   SD_initialize,
   SD_status,
   SD_read,
-#if  _USE_WRITE == 1
   SD_write,
-#endif /* _USE_WRITE == 1 */
-
-#if  _USE_IOCTL == 1
   SD_ioctl,
-#endif /* _USE_IOCTL == 1 */
-};
+  };
 //}}}
 
 //{{{
@@ -88,16 +81,16 @@ DSTATUS SD_status (BYTE lun)
   * @param  count: Number of sectors to read (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT SD_read (BYTE lun, BYTE *buff, DWORD sector, UINT count) {
+DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
 
   DRESULT res = RES_ERROR;
 
   if (BSP_SD_ReadBlocks_DMA ((uint32_t*)buff, (uint32_t) (sector), count) == MSD_OK) {
     /* wait until the read operation is finished */
     int wait = 0;
-    while (BSP_SD_GetCardState() != MSD_OK) 
+    while (BSP_SD_GetCardState() != MSD_OK)
       wait++;
-      
+
     res = RES_OK;
     }
 
@@ -105,7 +98,7 @@ DRESULT SD_read (BYTE lun, BYTE *buff, DWORD sector, UINT count) {
   }
 //}}}
 //{{{
-DRESULT SD_write (BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
+DRESULT SD_write (BYTE lun, const BYTE* buff, DWORD sector, UINT count) {
 
   DRESULT res = RES_ERROR;
   if (BSP_SD_WriteBlocks_DMA((uint32_t*)buff, (uint32_t)(sector), count) == MSD_OK) {
@@ -120,7 +113,7 @@ DRESULT SD_write (BYTE lun, const BYTE *buff, DWORD sector, UINT count) {
   }
 //}}}
 //{{{
-DRESULT SD_ioctl (BYTE lun, BYTE cmd, void *buff)
+DRESULT SD_ioctl (BYTE lun, BYTE cmd, void* buff)
 {
   DRESULT res = RES_ERROR;
   BSP_SD_CardInfo CardInfo;

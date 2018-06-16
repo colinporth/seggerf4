@@ -499,20 +499,18 @@ void SystemClockConfig() {
 //{{{
 void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
 
-  if (true) {
-    FILINFO filInfo;
-    if (f_stat (fileName.c_str(), &filInfo)) {
-      lcd->debug (fileName + " not found");
-      return;
-      }
-
-    lcd->debug (fileName + dec ((int)(filInfo.fsize)));
-    lcd->debug (dec ((filInfo.fdate >> 9) + 1980) + " " +
-                dec ((filInfo.fdate >> 5) & 15) + " " +
-                dec (filInfo.fdate & 31) + " " +
-                dec (filInfo.ftime >> 11) + " " +
-                dec ((filInfo.ftime >> 5) & 63));
+  FILINFO filInfo;
+  if (f_stat (fileName.c_str(), &filInfo)) {
+    lcd->debug (fileName + " not found");
+    return;
     }
+
+  lcd->debug (fileName + dec ((int)(filInfo.fsize)) + " " +
+              dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63) + " " +
+              dec (filInfo.fdate & 31) + ":" +
+              dec ((filInfo.fdate >> 5) & 15) + ":" +
+              dec ((filInfo.fdate >> 9) + 1980)
+              );
 
   FIL gFile = { 0 };
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
@@ -521,7 +519,7 @@ void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
     }
 
   UINT bytesRead;
-  f_read (&gFile, (void*)buf, (UINT)0x1000, &bytesRead);
+  f_read (&gFile, (void*)buf, (UINT)filInfo.fsize, &bytesRead);
   lcd->info ("- read " + dec(bytesRead));
   f_close (&gFile);
 

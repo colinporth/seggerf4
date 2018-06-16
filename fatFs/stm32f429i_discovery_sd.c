@@ -1,8 +1,8 @@
 #include "stm32f429i_discovery_sd.h"
 
-SD_HandleTypeDef gSdHandle;
-DMA_HandleTypeDef gDmaRxHandle;
-DMA_HandleTypeDef gDmaTxHandle;
+static SD_HandleTypeDef gSdHandle;
+static DMA_HandleTypeDef gDmaRxHandle;
+static DMA_HandleTypeDef gDmaTxHandle;
 
 void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); }
 void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); }
@@ -119,79 +119,30 @@ uint8_t BSP_SD_Init() {
   return  sd_state;
   }
 //}}}
-//{{{
-uint8_t BSP_SD_DeInit()
-{
-  uint8_t sd_state = MSD_OK;
-  return  sd_state;
-}
-//}}}
 
 //{{{
 uint8_t BSP_SD_IsDetected() {
   return SD_PRESENT;
   }
 //}}}
-
 //{{{
-uint8_t BSP_SD_ReadBlocks (uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks, uint32_t Timeout) {
-
-  if (HAL_SD_ReadBlocks(&gSdHandle, (uint8_t *)pData, ReadAddr, NumOfBlocks, Timeout) != HAL_OK)
-    return MSD_ERROR;
-  else
-    return MSD_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_SD_WriteBlocks (uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks, uint32_t Timeout) {
-
-  if(HAL_SD_WriteBlocks(&gSdHandle, (uint8_t *)pData, WriteAddr, NumOfBlocks, Timeout) != HAL_OK)
-    return MSD_ERROR;
-  else
-    return MSD_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_SD_ReadBlocks_DMA (uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks) {
-
-  /* Read block(s) in DMA transfer mode */
-  if (HAL_SD_ReadBlocks_DMA(&gSdHandle, (uint8_t *)pData, ReadAddr, NumOfBlocks) != HAL_OK)
-    return MSD_ERROR;
-  else
-    return MSD_OK;
-  }
-//}}}
-//{{{
-uint8_t BSP_SD_WriteBlocks_DMA (uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks) {
-
-  /* Write block(s) in DMA transfer mode */
-  if(HAL_SD_WriteBlocks_DMA(&gSdHandle, (uint8_t *)pData, WriteAddr, NumOfBlocks) != HAL_OK)
-    return MSD_ERROR;
-  else
-    return MSD_OK;
-  }
-//}}}
-
-//{{{
-/**
-  * @brief  Gets the current SD card data status.
-  * @retval Data transfer state.
-  *          This value can be one of the following values:
-  *            @arg  SD_TRANSFER_OK: No data transfer is acting
-  *            @arg  SD_TRANSFER_BUSY: Data transfer is acting
-  */
-uint8_t BSP_SD_GetCardState()
-{
+uint8_t BSP_SD_GetCardState() {
   return((HAL_SD_GetCardState(&gSdHandle) == HAL_SD_CARD_TRANSFER ) ? SD_TRANSFER_OK : SD_TRANSFER_BUSY);
-}
-
+  }
 //}}}
-void BSP_SD_GetCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) { HAL_SD_GetCardInfo(&gSdHandle, CardInfo); }
+//{{{
+void BSP_SD_GetCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) {
+  HAL_SD_GetCardInfo (&gSdHandle, CardInfo);
+  }
+//}}}
 
-void HAL_SD_AbortCallback (SD_HandleTypeDef *hsd) { BSP_SD_AbortCallback(); }
-void HAL_SD_TxCpltCallback (SD_HandleTypeDef *hsd) { BSP_SD_WriteCpltCallback(); }
-void HAL_SD_RxCpltCallback (SD_HandleTypeDef *hsd) { BSP_SD_ReadCpltCallback(); }
-
-__weak void BSP_SD_AbortCallback() {}
-__weak void BSP_SD_WriteCpltCallback() { }
-__weak void BSP_SD_ReadCpltCallback() {}
+//{{{
+uint8_t BSP_SD_ReadBlocks_DMA (uint32_t* data, uint32_t readAddr, uint32_t numBlocks) {
+  return HAL_SD_ReadBlocks_DMA(&gSdHandle, (uint8_t*)data, readAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
+  }
+//}}}
+//{{{
+uint8_t BSP_SD_WriteBlocks_DMA (uint32_t *data, uint32_t writeAddr, uint32_t numBlocks) {
+  return HAL_SD_WriteBlocks_DMA (&gSdHandle, (uint8_t*)data, writeAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
+  }
+//}}}
