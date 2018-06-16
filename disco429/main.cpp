@@ -191,14 +191,11 @@ typedef struct {
 //}}}
 
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
-
 const HeapRegion_t kHeapRegions[] = {
   {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 },
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
-FATFS gFatFs = { 0 };  // encourges allocation in lower DTCM SRAM
-FIL   gFile = { 0 };
 
 //{{{  trace
 int globalCounter = 0;
@@ -496,7 +493,7 @@ void SystemClockConfig() {
 //{{{
 void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
 
-  if (false) {
+  if (true) {
     FILINFO filInfo;
     if (f_stat (fileName.c_str(), &filInfo)) {
       lcd->debug (fileName + " not found");
@@ -511,6 +508,7 @@ void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
                 dec ((filInfo.ftime >> 5) & 63));
     }
 
+  FIL gFile = { 0 };
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
     lcd->debug (fileName + " not opened");
     return;
@@ -768,27 +766,42 @@ void sdRamTest (int iterations, uint16_t* addr, uint32_t len) {
   }
 //}}}
 
-bool gDebug = true;
-volatile DSTATUS gStat = STA_NOINIT;
+// sd card
 SD_HandleTypeDef gSdHandle;
 DMA_HandleTypeDef gDmaRxHandle;
 DMA_HandleTypeDef gDmaTxHandle;
 volatile bool gReadDmaOk = false;
 volatile bool gWriteDmaOk = false;
+bool gDebug = true;
+volatile DSTATUS gStat = STA_NOINIT;
 extern "C" { void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); } }
 extern "C" { void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); } }
 extern "C" { void DMA2_Stream6_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmatx); } }
 //{{{
-bool init() {
+void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
+  gWriteDmaOk = true;
+  }
+//}}}
+//{{{
+void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
+  gReadDmaOk = true;
+  }
+//}}}
+//{{{
+DSTATUS diskStatus() {
 
-  // SD device interface configuration
-  gSdHandle.Instance = SDIO;
-  gSdHandle.Init.ClockEdge           = SDIO_CLOCK_EDGE_RISING;
-  gSdHandle.Init.ClockBypass         = SDIO_CLOCK_BYPASS_DISABLE;  // SDIO_CLOCK_BYPASS_ENABLE;
-  gSdHandle.Init.ClockPowerSave      = SDIO_CLOCK_POWER_SAVE_DISABLE;
-  gSdHandle.Init.BusWide             = SDIO_BUS_WIDE_1B;
-  gSdHandle.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  gSdHandle.Init.ClockDiv            = 0;
+  gStat = STA_NOINIT;
+
+  if (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
+    gStat &= ~STA_NOINIT;
+
+  return gStat;
+  }
+//}}}
+//{{{
+DSTATUS diskInit() {
+
+  gStat = STA_NOINIT;
 
   __HAL_RCC_SDIO_CLK_ENABLE();
   __HAL_RCC_DMA2_CLK_ENABLE();
@@ -819,6 +832,16 @@ bool init() {
   gpio_init_structure.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init (GPIOC, &gpio_init_structure);
   //}}}
+
+  // SD device interface configuration
+  gSdHandle.Instance = SDIO;
+  gSdHandle.Init.ClockEdge           = SDIO_CLOCK_EDGE_RISING;
+  gSdHandle.Init.ClockBypass         = SDIO_CLOCK_BYPASS_DISABLE;  // SDIO_CLOCK_BYPASS_ENABLE;
+  gSdHandle.Init.ClockPowerSave      = SDIO_CLOCK_POWER_SAVE_DISABLE;
+  gSdHandle.Init.BusWide             = SDIO_BUS_WIDE_1B;
+  gSdHandle.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
+  gSdHandle.Init.ClockDiv            = 0;
+
   //{{{  DMA rx parameters
   gDmaRxHandle.Instance                 = DMA2_Stream3;
   gDmaRxHandle.Init.Channel             = DMA_CHANNEL_4;
@@ -833,6 +856,7 @@ bool init() {
   gDmaRxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
   gDmaRxHandle.Init.MemBurst            = DMA_MBURST_INC4;
   gDmaRxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
+
   __HAL_LINKDMA (&gSdHandle, hdmarx, gDmaRxHandle);
   HAL_DMA_DeInit (&gDmaRxHandle);
   HAL_DMA_Init (&gDmaRxHandle);
@@ -864,46 +888,17 @@ bool init() {
   HAL_NVIC_SetPriority (SDIO_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ (SDIO_IRQn);
 
-  if (HAL_SD_Init (&gSdHandle) != HAL_OK)
-    return false;
+  if (HAL_SD_Init (&gSdHandle) != HAL_OK) {
+    lcd->debug (COL_RED, "HAL_SD_Init failed");
+    return gStat;
+    }
 
   // enable wide operation
   auto result = HAL_SD_ConfigWideBusOperation (&gSdHandle, SDIO_BUS_WIDE_4B);
   if (result != HAL_OK)
-    lcd->debug ("configWide "+ dec(result));
+    lcd->debug (COL_RED, "HAL_SD_ConfigWideBusOperation failed" + dec (result));
 
-  return true;
-  }
-//}}}
-//{{{
-void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
-  gWriteDmaOk = true;
-  }
-//}}}
-//{{{
-void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
-  gReadDmaOk = true;
-  }
-//}}}
-DWORD getFatTime() {}
-//{{{
-DSTATUS diskStatus() {
-
-  gStat = STA_NOINIT;
-
-  if (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
-    gStat &= ~STA_NOINIT;
-
-  return gStat;
-  }
-//}}}
-//{{{
-DSTATUS diskInit() {
-
-  gStat = STA_NOINIT;
-
-  if (init())
-    gStat = diskStatus();
+  gStat = diskStatus();
 
   return gStat;
   }
@@ -947,20 +942,25 @@ DRESULT diskIoctl (BYTE cmd, void* buf) {
 DRESULT diskRead (const BYTE* buf, uint32_t sector, uint32_t numSectors) {
 
   if (gDebug)
-    lcd->debug (COL_GREEN, "diskRead " + hex((uint32_t)buf) + " " + dec(sector) + " " + dec(numSectors));
+    lcd->debug (COL_GREEN, "diskRead " + hex ((uint32_t)buf) + " " + dec (sector) + " " + dec (numSectors));
 
   if ((uint32_t)buf & 0x3) {
-    lcd->debug (COL_RED, "diskRead align fail" + dec((int)buf));
+    lcd->debug (COL_RED, "diskRead align fail" + dec ((int)buf));
     return RES_ERROR;
     }
 
   int count = 0;
   gReadDmaOk = false;
   if (HAL_SD_ReadBlocks_DMA (&gSdHandle, (uint8_t*)buf, sector, numSectors) == HAL_OK) {
-    while (!gReadDmaOk)
+    while (!gReadDmaOk) {
+      HAL_Delay (1);
       count++;
-    while (HAL_SD_GetCardState (&gSdHandle) != HAL_SD_CARD_TRANSFER)
+      }
+    while (HAL_SD_GetCardState (&gSdHandle) != HAL_SD_CARD_TRANSFER){
+      HAL_Delay (1);
       count++;
+      }
+
     gReadDmaOk = false;
     return RES_OK;
     }
@@ -979,27 +979,23 @@ DRESULT diskWrite (const BYTE* buf, uint32_t sector, uint32_t numSectors) {
   int count = 0;
   gWriteDmaOk = false;
   if (HAL_SD_WriteBlocks_DMA (&gSdHandle, (uint8_t*)buf, sector, numSectors) == HAL_OK) {
-    while (!gWriteDmaOk)
+    while (!gWriteDmaOk) {
+      HAL_Delay (1);
       count++;
-    while (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
+      }
+    while (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER) {
+      HAL_Delay (1);
       count++;
+      }
+
     gWriteDmaOk = false;
-    return  RES_OK;
+    return RES_OK;
     }
 
   return RES_ERROR;
   }
 //}}}
-//{{{
-void diskDebugEnable() {
-  gDebug = true;
-  }
-//}}}
-//{{{
-void diskDebugDisable() {
-  gDebug = false;
-  }
-//}}}
+DWORD getFatTime() {}
 
 int main() {
 
@@ -1021,6 +1017,7 @@ int main() {
   lcd->render();
   lcd->displayOn();
 
+  FATFS gFatFs = { 0 };  // encourges allocation in lower DTCM SRAM
   bool mMounted = !f_mount (&gFatFs, "", 1);
   if (mMounted) {
     // get label
@@ -1031,7 +1028,7 @@ int main() {
 
     std::string path1 = "";
     readDirectory (path1);
-    loadFile ("/kSloth.jpg", (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);
+    loadFile ("kSloth.jpg", (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);
     }
   else
     lcd->info ("sdCard not mounted");
