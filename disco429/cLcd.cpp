@@ -72,6 +72,8 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
   mBuffer[0] = buffer0;
   mBuffer[1] = buffer1;
   updateNumDrawLines();
+
+  mLcd = this;
   }
 //}}}
 //{{{
@@ -131,10 +133,15 @@ void cLcd::info (std::string str) {
   }
 //}}}
 //{{{
-void cLcd::debug (std::string str) {
+void cLcd::debug (uint16_t colour, std::string str) {
 
-  info (COL_WHITE, str);
+  info (colour, str);
   render();
+  }
+//}}}
+//{{{
+void cLcd::debug (std::string str) {
+  debug (COL_WHITE, str);
   }
 //}}}
 

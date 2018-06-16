@@ -92,6 +92,7 @@ public:
   void setShowDebug (bool title, bool info, bool footer);
   void info (uint16_t colour, std::string str);
   void info (std::string str);
+  void debug (uint16_t colour, std::string str);
   void debug (std::string str);
 
   void pixel (uint16_t colour, int16_t x, int16_t y);

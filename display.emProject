@@ -20,9 +20,9 @@
       arm_endian="Little"
       arm_fp_abi="Hard"
       arm_fpu_type="FPv4-SP-D16"
-      arm_linker_heap_size="188000"
+      arm_linker_heap_size="128000"
       arm_linker_process_stack_size="0"
-      arm_linker_stack_size="4096"
+      arm_linker_stack_size="8192"
       arm_simulator_memory_simulation_parameter="RX 08000000,00200000,FFFFFFFF;RWX 20000000,00030000,CDCDCDCD"
       arm_target_device_name="STM32F429ZI"
       arm_target_interface_type="SWD"
@@ -52,6 +52,7 @@
       <file file_name="cLcd.cpp" />
       <file file_name="fatFs.cpp" />
       <file file_name="gyro.cpp" />
+      <file file_name="../FatFs/ff.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />

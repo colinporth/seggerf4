@@ -6,8 +6,8 @@
 #include "gyro.h"
 #include "cTraceVec.h"
 
-#include "fatFs.h"
-#include "diskio.h"
+#include "../FatFs/ff.h"
+//#include "diskio.h"
 
 #define bigMalloc(size,tag)    pvPortMalloc(size)
 #define bigFree                vPortFree
@@ -17,6 +17,8 @@
 #include "heap.h"
 
 //#include "cDecodePic.h"
+#include "../FatFs/ff.h"
+#include "../FatFs/diskio.h"
 //}}}
 //{{{  sdram defines
 #define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
@@ -180,6 +182,13 @@ typedef struct {
 #define ETM_SetupMode() ETM->CR |= ETM_CR_PROGRAMMING
 //}}}
 //}}}
+//{{{  fatfs defines
+#define QUEUE_SIZE      10
+#define READ_CPLT_MSG   1
+#define WRITE_CPLT_MSG  2
+
+#define SD_TIMEOUT      2*1000
+//}}}
 
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 
@@ -188,6 +197,8 @@ const HeapRegion_t kHeapRegions[] = {
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
+FATFS gFatFs = { 0 };  // encourges allocation in lower DTCM SRAM
+FIL   gFile = { 0 };
 
 //{{{  trace
 int globalCounter = 0;
@@ -483,6 +494,88 @@ void SystemClockConfig() {
 //}}}
 
 //{{{
+void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
+
+  if (false) {
+    FILINFO filInfo;
+    if (f_stat (fileName.c_str(), &filInfo)) {
+      lcd->debug (fileName + " not found");
+      return;
+      }
+
+    lcd->debug (fileName + dec ((int)(filInfo.fsize)));
+    lcd->debug (dec ((filInfo.fdate >> 9) + 1980) + " " +
+                dec ((filInfo.fdate >> 5) & 15) + " " +
+                dec (filInfo.fdate & 31) + " " +
+                dec (filInfo.ftime >> 11) + " " +
+                dec ((filInfo.ftime >> 5) & 63));
+    }
+
+  if (f_open (&gFile, fileName.c_str(), FA_READ)) {
+    lcd->debug (fileName + " not opened");
+    return;
+    }
+
+  UINT bytesRead;
+  f_read (&gFile, (void*)buf, (UINT)0x1000, &bytesRead);
+  lcd->info ("- read " + dec(bytesRead));
+  f_close (&gFile);
+
+  if (bytesRead > 0) {
+    //jpeg_mem_src (&mCinfo, buf, bytesRead);
+    //jpeg_read_header (&mCinfo, TRUE);
+    //debug (LCD_COLOR_WHITE, "- image %dx%d", mCinfo.image_width, mCinfo.image_height);
+
+    //mCinfo.dct_method = JDCT_FLOAT;
+    //mCinfo.out_color_space = JCS_RGB;
+    //mCinfo.scale_num = 1;
+    //mCinfo.scale_denom = 4;
+    //uint8_t* bufArray = (uint8_t*)malloc (mCinfo.output_width * 3);
+    //jpeg_start_decompress (&mCinfo);
+    //while (mCinfo.output_scanline < mCinfo.output_height) {
+      //jpeg_read_scanlines (&mCinfo, &bufArray, 1);
+      //rgb888to565 (bufArray, rgb565Buf + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);
+      //}
+    //free (bufArray);
+    //jpeg_finish_decompress (&mCinfo);
+
+    //debug (LCD_COLOR_WHITE, "- load  %dx%d scale %d", mCinfo.output_width, mCinfo.output_height, 4);
+    }
+  }
+//}}}
+//{{{
+void readDirectory (const std::string& dirPath) {
+
+  DIR dir;
+  if (f_opendir (&dir, dirPath.c_str()) == FR_OK) {
+    while (true) {
+      FILINFO filinfo;
+      if (f_readdir (&dir, &filinfo) != FR_OK || !filinfo.fname[0])
+        break;
+      if (filinfo.fname[0] == '.')
+        continue;
+
+      std::string filePath = dirPath + "/" + filinfo.fname;
+      if (filinfo.fattrib & AM_DIR)
+        readDirectory (filePath);
+      else {
+        lcd->debug (filePath);
+        FILINFO filInfo;
+        //if (f_stat (filePath.c_str(), &filInfo) != FR_OK)
+        //  lcd->debug (filePath + " not found");
+        //else
+        //  lcd->debug (filePath + " " +
+        //              dec ((int)(filInfo.fsize)) + ":" + dec ((filInfo.fdate >> 9) + 1980) + ":" + dec ((filInfo.fdate >> 5) & 15) + " " +
+        //              dec (filInfo.fdate & 31) + ":" + dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63));
+        }
+      }
+
+    f_closedir (&dir);
+    }
+  }
+//}}}
+
+//{{{
 void sdRamInit() {
 //{{{  pins
 // SDCLK = 90 MHz - HCLK 180MHz/2
@@ -675,6 +768,239 @@ void sdRamTest (int iterations, uint16_t* addr, uint32_t len) {
   }
 //}}}
 
+bool gDebug = true;
+volatile DSTATUS gStat = STA_NOINIT;
+SD_HandleTypeDef gSdHandle;
+DMA_HandleTypeDef gDmaRxHandle;
+DMA_HandleTypeDef gDmaTxHandle;
+volatile bool gReadDmaOk = false;
+volatile bool gWriteDmaOk = false;
+extern "C" { void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); } }
+extern "C" { void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); } }
+extern "C" { void DMA2_Stream6_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmatx); } }
+//{{{
+bool init() {
+
+  // SD device interface configuration
+  gSdHandle.Instance = SDIO;
+  gSdHandle.Init.ClockEdge           = SDIO_CLOCK_EDGE_RISING;
+  gSdHandle.Init.ClockBypass         = SDIO_CLOCK_BYPASS_DISABLE;  // SDIO_CLOCK_BYPASS_ENABLE;
+  gSdHandle.Init.ClockPowerSave      = SDIO_CLOCK_POWER_SAVE_DISABLE;
+  gSdHandle.Init.BusWide             = SDIO_BUS_WIDE_1B;
+  gSdHandle.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
+  gSdHandle.Init.ClockDiv            = 0;
+
+  __HAL_RCC_SDIO_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  //{{{  gpio init
+  // sdPresent init - PC6
+  GPIO_InitTypeDef gpio_init_structure;
+  gpio_init_structure.Pin = GPIO_PIN_6;
+  gpio_init_structure.Mode = GPIO_MODE_INPUT;
+  gpio_init_structure.Pull = GPIO_PULLUP;
+  gpio_init_structure.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init (GPIOC, &gpio_init_structure);
+
+  // SDIO D0..D3 - PC8..PC11
+  gpio_init_structure.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11;
+  gpio_init_structure.Mode = GPIO_MODE_AF_PP;
+  gpio_init_structure.Alternate = GPIO_AF12_SDIO;
+  HAL_GPIO_Init (GPIOC, &gpio_init_structure);
+
+  // SDIO CMD - PD2
+  gpio_init_structure.Pin = GPIO_PIN_2;
+  HAL_GPIO_Init (GPIOD, &gpio_init_structure);
+
+  // SDIO CLK - PC12
+  gpio_init_structure.Pin = GPIO_PIN_12;
+  //gpio_init_structure.Pull = GPIO_NOPULL;
+  gpio_init_structure.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init (GPIOC, &gpio_init_structure);
+  //}}}
+  //{{{  DMA rx parameters
+  gDmaRxHandle.Instance                 = DMA2_Stream3;
+  gDmaRxHandle.Init.Channel             = DMA_CHANNEL_4;
+  gDmaRxHandle.Init.Direction           = DMA_PERIPH_TO_MEMORY;
+  gDmaRxHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
+  gDmaRxHandle.Init.MemInc              = DMA_MINC_ENABLE;
+  gDmaRxHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  gDmaRxHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
+  gDmaRxHandle.Init.Mode                = DMA_PFCTRL;
+  gDmaRxHandle.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
+  gDmaRxHandle.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  gDmaRxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  gDmaRxHandle.Init.MemBurst            = DMA_MBURST_INC4;
+  gDmaRxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
+  __HAL_LINKDMA (&gSdHandle, hdmarx, gDmaRxHandle);
+  HAL_DMA_DeInit (&gDmaRxHandle);
+  HAL_DMA_Init (&gDmaRxHandle);
+  //}}}
+  //{{{  DMA tx parameters
+  gDmaTxHandle.Instance                 = DMA2_Stream6;
+  gDmaTxHandle.Init.Channel             = DMA_CHANNEL_4;
+  gDmaTxHandle.Init.Direction           = DMA_MEMORY_TO_PERIPH;
+  gDmaTxHandle.Init.PeriphInc           = DMA_PINC_DISABLE;
+  gDmaTxHandle.Init.MemInc              = DMA_MINC_ENABLE;
+  gDmaTxHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  gDmaTxHandle.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
+  gDmaTxHandle.Init.Mode                = DMA_PFCTRL;
+  gDmaTxHandle.Init.Priority            = DMA_PRIORITY_VERY_HIGH;
+  gDmaTxHandle.Init.FIFOMode            = DMA_FIFOMODE_ENABLE;
+  gDmaTxHandle.Init.FIFOThreshold       = DMA_FIFO_THRESHOLD_FULL;
+  gDmaTxHandle.Init.MemBurst            = DMA_MBURST_INC4;
+  gDmaTxHandle.Init.PeriphBurst         = DMA_PBURST_INC4;
+
+  __HAL_LINKDMA (&gSdHandle, hdmatx, gDmaTxHandle);
+  HAL_DMA_DeInit (&gDmaTxHandle);
+  HAL_DMA_Init (&gDmaTxHandle);
+  //}}}
+
+  HAL_NVIC_SetPriority (DMA2_Stream3_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ (DMA2_Stream3_IRQn);
+  HAL_NVIC_SetPriority (DMA2_Stream6_IRQn, 6, 0);
+  HAL_NVIC_EnableIRQ (DMA2_Stream6_IRQn);
+  HAL_NVIC_SetPriority (SDIO_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ (SDIO_IRQn);
+
+  if (HAL_SD_Init (&gSdHandle) != HAL_OK)
+    return false;
+
+  // enable wide operation
+  auto result = HAL_SD_ConfigWideBusOperation (&gSdHandle, SDIO_BUS_WIDE_4B);
+  if (result != HAL_OK)
+    lcd->debug ("configWide "+ dec(result));
+
+  return true;
+  }
+//}}}
+//{{{
+void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
+  gWriteDmaOk = true;
+  }
+//}}}
+//{{{
+void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
+  gReadDmaOk = true;
+  }
+//}}}
+DWORD getFatTime() {}
+//{{{
+DSTATUS diskStatus() {
+
+  gStat = STA_NOINIT;
+
+  if (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
+    gStat &= ~STA_NOINIT;
+
+  return gStat;
+  }
+//}}}
+//{{{
+DSTATUS diskInit() {
+
+  gStat = STA_NOINIT;
+
+  if (init())
+    gStat = diskStatus();
+
+  return gStat;
+  }
+//}}}
+//{{{
+DRESULT diskIoctl (BYTE cmd, void* buf) {
+
+  if (gStat & STA_NOINIT)
+    return RES_NOTRDY;
+
+  HAL_SD_CardInfoTypeDef CardInfo;
+  switch (cmd) {
+    // Make sure that no pending write process
+    case CTRL_SYNC :
+      return RES_OK;
+
+    // Get number of sectors on the disk (DWORD)
+    case GET_SECTOR_COUNT :
+      HAL_SD_GetCardInfo (&gSdHandle, &CardInfo);
+      *(DWORD*)buf = CardInfo.LogBlockNbr;
+      return RES_OK;
+
+    // Get R/W sector size (WORD)
+    case GET_SECTOR_SIZE :
+      HAL_SD_GetCardInfo (&gSdHandle, &CardInfo);
+      *(WORD*)buf = CardInfo.LogBlockSize;
+      return RES_OK;
+
+    // Get erase block size in unit of sector (DWORD)
+    case GET_BLOCK_SIZE :
+      HAL_SD_GetCardInfo (&gSdHandle, &CardInfo);
+      *(DWORD*)buf = CardInfo.LogBlockSize / 512;
+      return RES_OK;
+
+    default:
+      return RES_PARERR;
+    }
+  }
+//}}}
+//{{{
+DRESULT diskRead (const BYTE* buf, uint32_t sector, uint32_t numSectors) {
+
+  if (gDebug)
+    lcd->debug (COL_GREEN, "diskRead " + hex((uint32_t)buf) + " " + dec(sector) + " " + dec(numSectors));
+
+  if ((uint32_t)buf & 0x3) {
+    lcd->debug (COL_RED, "diskRead align fail" + dec((int)buf));
+    return RES_ERROR;
+    }
+
+  int count = 0;
+  gReadDmaOk = false;
+  if (HAL_SD_ReadBlocks_DMA (&gSdHandle, (uint8_t*)buf, sector, numSectors) == HAL_OK) {
+    while (!gReadDmaOk)
+      count++;
+    while (HAL_SD_GetCardState (&gSdHandle) != HAL_SD_CARD_TRANSFER)
+      count++;
+    gReadDmaOk = false;
+    return RES_OK;
+    }
+
+  return RES_ERROR;
+  }
+//}}}
+//{{{
+DRESULT diskWrite (const BYTE* buf, uint32_t sector, uint32_t numSectors) {
+
+  if ((uint32_t)buf & 0x3) {
+    lcd->debug (COL_RED, "diskRead " + dec((int)buf) + " " + dec(sector) + " " + dec(numSectors));
+    return RES_ERROR;
+    }
+
+  int count = 0;
+  gWriteDmaOk = false;
+  if (HAL_SD_WriteBlocks_DMA (&gSdHandle, (uint8_t*)buf, sector, numSectors) == HAL_OK) {
+    while (!gWriteDmaOk)
+      count++;
+    while (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
+      count++;
+    gWriteDmaOk = false;
+    return  RES_OK;
+    }
+
+  return RES_ERROR;
+  }
+//}}}
+//{{{
+void diskDebugEnable() {
+  gDebug = true;
+  }
+//}}}
+//{{{
+void diskDebugDisable() {
+  gDebug = false;
+  }
+//}}}
+
 int main() {
 
   HAL_Init();
@@ -695,18 +1021,33 @@ int main() {
   lcd->render();
   lcd->displayOn();
 
+  bool mMounted = !f_mount (&gFatFs, "", 1);
+  if (mMounted) {
+    // get label
+    char label[20] = {0};
+    DWORD vsn = 0;
+    f_getlabel ("", label, &vsn);
+    lcd->info ("sdCard mounted");
+
+    std::string path1 = "";
+    readDirectory (path1);
+    loadFile ("/kSloth.jpg", (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);
+    }
+  else
+    lcd->info ("sdCard not mounted");
+
   auto id = gyroInit();
   lcd->info ("read id " + dec (id));
 
   int count = 0;
   while (true) {
-    while (!(gyroGetFifoSrc() & 0x20)) {
-      int16_t xyz[3];
-      gyroGetXYZ (xyz);
-      mTraceVec.addSample (0, xyz[0]);
-      mTraceVec.addSample (1, xyz[1]);
-      mTraceVec.addSample (2, xyz[2]);
-      }
+    //while (!(gyroGetFifoSrc() & 0x20)) {
+    //  int16_t xyz[3];
+    //  gyroGetXYZ (xyz);
+    //  mTraceVec.addSample (0, xyz[0]);
+    //  mTraceVec.addSample (1, xyz[1]);
+    //  mTraceVec.addSample (2, xyz[2]);
+    //  }
 
     lcd->start();
     lcd->clear (COL_BLACK);

@@ -4,6 +4,7 @@
 "Output/disco429 Debug/Obj/cLcd.o"
 "Output/disco429 Debug/Obj/fatFs.o"
 "Output/disco429 Debug/Obj/gyro.o"
+"Output/disco429 Debug/Obj/ff.o"
 "Output/disco429 Debug/Obj/SEGGER_RTT.o"
 "Output/disco429 Debug/Obj/SEGGER_RTT_Syscalls_SES.o"
 "Output/disco429 Debug/Obj/HardFaultHandler.o"
