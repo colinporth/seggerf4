@@ -240,67 +240,67 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
   }
 //}}}
 //{{{
-void cLcd::copy (cTile& srcTile, int16_t x, int16_t y) {
+void cLcd::copy (cTile* srcTile, int16_t x, int16_t y) {
 
   ready();
-  DMA2D->FGPFCCR = srcTile.mFormat;
-  DMA2D->FGMAR = (uint32_t)srcTile.mPiccy;
-  DMA2D->FGOR = srcTile.mPitch - srcTile.mWidth;
+  DMA2D->FGPFCCR = srcTile->mFormat;
+  DMA2D->FGMAR = (uint32_t)srcTile->mPiccy;
+  DMA2D->FGOR = srcTile->mPitch - srcTile->mWidth;
   DMA2D->OPFCCR = kDstFormat;
   DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
-  DMA2D->OOR = getWidth() - srcTile.mWidth;
-  DMA2D->NLR = (srcTile.mWidth << 16) | srcTile.mHeight;
+  DMA2D->OOR = getWidth() - srcTile->mWidth;
+  DMA2D->NLR = (srcTile->mWidth << 16) | srcTile->mHeight;
   DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
   mWait = true;
   }
 //}}}
 //{{{
-void cLcd::copy90 (cTile& srcTile, int16_t x, int16_t y) {
+void cLcd::copy90 (cTile* srcTile, int16_t x, int16_t y) {
 
-  uint32_t src = (uint32_t)srcTile.mPiccy;
+  uint32_t src = (uint32_t)srcTile->mPiccy;
   uint32_t dst = (uint32_t)mBuffer[mDrawBuffer];
 
   ready();
-  DMA2D->FGPFCCR = srcTile.mFormat;
+  DMA2D->FGPFCCR = srcTile->mFormat;
   DMA2D->FGOR = 0;
   DMA2D->OPFCCR = kDstFormat;
   DMA2D->OOR = getWidth() - 1;
-  DMA2D->NLR = 0x10000 | (srcTile.mWidth);
+  DMA2D->NLR = 0x10000 | (srcTile->mWidth);
 
-  for (int line = 0; line < srcTile.mHeight; line++) {
+  for (int line = 0; line < srcTile->mHeight; line++) {
     DMA2D->FGMAR = src;
     DMA2D->OMAR = dst;
     DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
-    src += srcTile.mWidth * srcTile.mComponents;
+    src += srcTile->mWidth * srcTile->mComponents;
     dst += kDstComponents;
     wait();
     }
   }
 //}}}
 //{{{
-void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
 // 2 passs size with rotates, bilinear blend but broken
 
-  auto tempBuf = (uint32_t)pvPortMalloc (srcTile.mWidth * height * kTempComponents);
+  auto tempBuf = (uint32_t)pvPortMalloc (srcTile->mWidth * height * kTempComponents);
 
   // first pass
-  uint32_t srcBase = srcTile.mPiccy + ((srcTile.mY * srcTile.mPitch) + srcTile.mX) * srcTile.mComponents;
-  uint32_t blendCoeff = ((srcTile.mHeight-1) << 21) / height;
+  uint32_t srcBase = srcTile->mPiccy + ((srcTile->mY * srcTile->mPitch) + srcTile->mX) * srcTile->mComponents;
+  uint32_t blendCoeff = ((srcTile->mHeight-1) << 21) / height;
   uint32_t blendIndex = blendCoeff >> 1;
-  uint16_t srcPitch = srcTile.mPitch * srcTile.mComponents;
+  uint16_t srcPitch = srcTile->mPitch * srcTile->mComponents;
   uint32_t srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
   uint32_t srcPtr1 = srcPtr + srcPitch;
   uint32_t dstPtr = tempBuf;
-  uint32_t fccr = srcTile.mFormat | ((blendIndex >> 13) << 24);
+  uint32_t fccr = srcTile->mFormat | ((blendIndex >> 13) << 24);
   uint16_t dstPitch = kTempComponents;
 
   ready();
   DMA2D->FGOR = 0;
-  DMA2D->BGPFCCR = 0xff000000 | srcTile.mFormat;
+  DMA2D->BGPFCCR = 0xff000000 | srcTile->mFormat;
   DMA2D->BGOR = 0;
   DMA2D->OPFCCR = kTempFormat;
   DMA2D->OOR = height - 1;
-  DMA2D->NLR = 0x10000 | srcTile.mWidth;
+  DMA2D->NLR = 0x10000 | srcTile->mWidth;
   for (int i = 0; i < height; i++) {
     //{{{  loop lines, src -> temp
     DMA2D->FGPFCCR = fccr;
@@ -310,7 +310,7 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
 
     blendIndex += blendCoeff;
-    fccr = srcTile.mFormat | ((blendIndex >> 13) << 24);
+    fccr = srcTile->mFormat | ((blendIndex >> 13) << 24);
     srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
     srcPtr1 = srcPtr + srcPitch;
     dstPtr += dstPitch;
@@ -321,7 +321,7 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
 
   // second pass
   srcBase = tempBuf;
-  blendCoeff = ((srcTile.mWidth-1) << 21) / width;
+  blendCoeff = ((srcTile->mWidth-1) << 21) / width;
   blendIndex = blendCoeff >> 1;
   srcPitch = height * kTempComponents;
   srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
@@ -356,29 +356,29 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
   }
 //}}}
 //{{{
-void cLcd::sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::sizeCpu (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
 
-  uint32_t xStep16 = ((srcTile.mWidth - 1) << 16) / (width - 1);
-  uint32_t yStep16 = ((srcTile.mHeight - 1) << 16) / (height - 1);
+  uint32_t xStep16 = ((srcTile->mWidth - 1) << 16) / (width - 1);
+  uint32_t yStep16 = ((srcTile->mHeight - 1) << 16) / (height - 1);
 
   auto dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
 
-  if (srcTile.mComponents == 2) {
-    auto srcBase = (uint16_t*)(srcTile.mPiccy) + (srcTile.mY * srcTile.mPitch) + srcTile.mX;
-    for (uint32_t y16 = (srcTile.mY << 16); y16 < ((srcTile.mY + height) * yStep16); y16 += yStep16) {
-      auto srcy1x1 = srcBase + (y16 >> 16) * srcTile.mPitch;
-      for (uint32_t x16 = srcTile.mX << 16; x16 < (srcTile.mX + width) * xStep16; x16 += xStep16)
+  if (srcTile->mComponents == 2) {
+    auto srcBase = (uint16_t*)(srcTile->mPiccy) + (srcTile->mY * srcTile->mPitch) + srcTile->mX;
+    for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + height) * yStep16); y16 += yStep16) {
+      auto srcy1x1 = srcBase + (y16 >> 16) * srcTile->mPitch;
+      for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + width) * xStep16; x16 += xStep16)
         *dstPtr++ = *(srcy1x1 + (x16 >> 16));
       dstPtr += getWidth() - width;
       }
     }
 
   else {
-    auto srcBase = (uint8_t*)(srcTile.mPiccy + ((srcTile.mY * srcTile.mPitch) + srcTile.mX) * srcTile.mComponents);
-    for (uint32_t y16 = (srcTile.mY << 16); y16 < ((srcTile.mY + height) * yStep16); y16 += yStep16) {
-      auto srcy = srcBase + ((y16 >> 16) * srcTile.mPitch) * srcTile.mComponents;
-      for (uint32_t x16 = srcTile.mX << 16; x16 < (srcTile.mX + width) * xStep16; x16 += xStep16) {
-        auto srcy1x1 = srcy + (x16 >> 16) * srcTile.mComponents;
+    auto srcBase = (uint8_t*)(srcTile->mPiccy + ((srcTile->mY * srcTile->mPitch) + srcTile->mX) * srcTile->mComponents);
+    for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + height) * yStep16); y16 += yStep16) {
+      auto srcy = srcBase + ((y16 >> 16) * srcTile->mPitch) * srcTile->mComponents;
+      for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + width) * xStep16; x16 += xStep16) {
+        auto srcy1x1 = srcy + (x16 >> 16) * srcTile->mComponents;
         *dstPtr++ = ((*srcy1x1++) >> 3) | (((*srcy1x1++) & 0xFC) << 3) | (((*srcy1x1) & 0xF8) << 8);
         }
       dstPtr += getWidth() - width;
@@ -387,26 +387,26 @@ void cLcd::sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16
   }
 //}}}
 //{{{
-void cLcd::sizeCpuBi (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::sizeCpuBi (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
 // only for src->components = 3,4
 
-  uint32_t xStep16 = ((srcTile.mWidth - 1) << 16) / (width - 1);
-  uint32_t yStep16 = ((srcTile.mHeight - 1) << 16) / (height - 1);
+  uint32_t xStep16 = ((srcTile->mWidth - 1) << 16) / (width - 1);
+  uint32_t yStep16 = ((srcTile->mHeight - 1) << 16) / (height - 1);
 
   uint16_t* dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
 
-  uint32_t ySrcOffset = srcTile.mPitch * srcTile.mComponents;
-  for (uint32_t y16 = (srcTile.mY << 16); y16 < (srcTile.mY + height) * yStep16; y16 += yStep16) {
+  uint32_t ySrcOffset = srcTile->mPitch * srcTile->mComponents;
+  for (uint32_t y16 = (srcTile->mY << 16); y16 < (srcTile->mY + height) * yStep16; y16 += yStep16) {
     uint8_t yweight2 = (y16 >> 9) & 0x7F;
     uint8_t yweight1 = 0x80 - yweight2;
-    const uint8_t* srcy = (uint8_t*)srcTile.mPiccy + ((y16 >> 16) * ySrcOffset) + (srcTile.mX * srcTile.mComponents);
-    for (uint32_t x16 = srcTile.mX << 16; x16 < (srcTile.mX + width) * xStep16; x16 += xStep16) {
+    const uint8_t* srcy = (uint8_t*)srcTile->mPiccy + ((y16 >> 16) * ySrcOffset) + (srcTile->mX * srcTile->mComponents);
+    for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + width) * xStep16; x16 += xStep16) {
       uint8_t xweight2 = (x16 >> 9) & 0x7F;
       uint8_t xweight1 = 0x80 - xweight2;
-      const uint8_t* srcy1x1 = srcy + (x16 >> 16) * srcTile.mComponents;
-      const uint8_t* srcy1x2 = srcy1x1 + srcTile.mComponents;
+      const uint8_t* srcy1x1 = srcy + (x16 >> 16) * srcTile->mComponents;
+      const uint8_t* srcy1x2 = srcy1x1 + srcTile->mComponents;
       const uint8_t* srcy2x1 = srcy1x1 + ySrcOffset;
-      const uint8_t* srcy2x2 = srcy2x1 + srcTile.mComponents;
+      const uint8_t* srcy2x2 = srcy2x1 + srcTile->mComponents;
 
       *dstPtr++ = ((((*srcy1x1++ * xweight1 + *srcy1x2++ * xweight2) * yweight1) +
                      (*srcy2x1++ * xweight1 + *srcy2x2++ * xweight2) * yweight2) >> 17) |

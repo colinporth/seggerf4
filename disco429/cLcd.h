@@ -99,11 +99,11 @@ public:
   void pixel (uint16_t colour, int16_t x, int16_t y);
   void rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height);
   void stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void copy (cTile& srcTile, int16_t x, int16_t y);
-  void copy90 (cTile& srcTile, int16_t x, int16_t y);
-  void size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void sizeCpuBi (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
+  void copy (cTile* srcTile, int16_t x, int16_t y);
+  void copy90 (cTile* srcTile, int16_t x, int16_t y);
+  void size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
+  void sizeCpu (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
+  void sizeCpuBi (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
 
   void clear (uint16_t colour);
   void pixelClipped (uint16_t colour, int16_t x, int16_t y);

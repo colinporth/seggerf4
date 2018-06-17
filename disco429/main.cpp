@@ -207,7 +207,7 @@ FIL gFile = { 0 };
 int xsize = 0;
 int ysize = 0;
 
-cLcd::cTile mTile;
+cLcd::cTile* mTile;
 
 //{{{  trace
 int globalCounter = 0;
@@ -503,12 +503,12 @@ void SystemClockConfig() {
 //}}}
 
 //{{{
-bool loadFile (const std::string& fileName, cLcd::cTile& tile) {
+cLcd::cTile* loadFile (const std::string& fileName) {
 
   FILINFO filInfo;
   if (f_stat (fileName.c_str(), &filInfo)) {
     lcd->debug (COL_RED, fileName + " not found");
-    return false;
+    return nullptr;
     }
 
   lcd->debug (fileName + " bytes:" + dec ((int)(filInfo.fsize)) + " " +
@@ -518,7 +518,7 @@ bool loadFile (const std::string& fileName, cLcd::cTile& tile) {
 
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
     lcd->debug (COL_RED, fileName + " not opened");
-    return false;
+    return nullptr;
     }
 
   auto buf = (uint8_t*)pvPortMalloc (filInfo.fsize);
@@ -553,15 +553,16 @@ bool loadFile (const std::string& fileName, cLcd::cTile& tile) {
       }
     free (rgbLine);
 
-    tile = cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
+    auto tile = new cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
 
     jpeg_finish_decompress (&mCinfo);
     jpeg_destroy_decompress (&mCinfo);
     vPortFree (buf);
-    return true;
+
+    return tile;
     }
   else
-    return false;
+    return nullptr;
   }
 //}}}
 //{{{
@@ -785,12 +786,9 @@ int main() {
 
   HAL_Init();
   SystemClockConfig();
-  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
-
   sdRamInit();
-  //sdRamTest (1, SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
-  //sdRamTest (1, SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
   heapInit (kHeapRegions);
+  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
 
   cTraceVec mTraceVec;
   mTraceVec.addTrace (1024, 1, 3);
@@ -808,21 +806,20 @@ int main() {
       DWORD vsn = 0;
       f_getlabel ("", label, &vsn);
       lcd->debug ("sdCard mounted label:" + std::string(label));
-
       std::string path1 = "";
       readDirectory (path1);
-      loadFile ("people1.jpg", mTile);
       }
     else
-      lcd->info ("sdCard not mounted");
+      lcd->debug (COL_RED, "sdCard - not mounted");
     }
   else
-    lcd->info ("sdCard - no driver");
+    lcd->debug (COL_RED, "sdCard - no driver");
 
   //auto id = gyroInit();
   //lcd->info ("read id " + dec (id));
 
-  int count = 0;
+  mTile = loadFile ("ksloth.jpg");
+
   while (true) {
     //while (!(gyroGetFifoSrc() & 0x20)) {
     //  int16_t xyz[3];
@@ -834,11 +831,10 @@ int main() {
 
     lcd->start();
     lcd->clear (COL_BLACK);
-    //lcd->copy (mTile, 0, 0);
-    lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
-
+    lcd->copy (mTile, 0, 0);
+    //lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
     lcd->showInfo (true);
-    mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
+    //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
     lcd->present();
     }
   }

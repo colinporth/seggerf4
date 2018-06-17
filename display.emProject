@@ -340,6 +340,18 @@
       <file file_name="../LibJPEG/source/jdmaster.c" />
       <file file_name="../LibJPEG/source/jdmerge.c" />
       <file file_name="../LibJPEG/source/jdpostct.c" />
+      <folder Name="inc">
+        <file file_name="../LibJPEG/include/cderror.h" />
+        <file file_name="../LibJPEG/include/cdjpeg.h" />
+        <file file_name="../LibJPEG/include/jdct.h" />
+        <file file_name="../LibJPEG/include/jerror.h" />
+        <file file_name="../LibJPEG/include/jinclude.h" />
+        <file file_name="../LibJPEG/include/jmemsys.h" />
+        <file file_name="../LibJPEG/include/jpegint.h" />
+        <file file_name="../LibJPEG/include/jpeglib.h" />
+        <file file_name="../LibJPEG/include/jversion.h" />
+        <file file_name="../LibJPEG/include/transupp.h" />
+      </folder>
     </folder>
   </project>
 </solution>
