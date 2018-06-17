@@ -5,6 +5,8 @@
 #define SD_DEFAULT_BLOCK_SIZE 512
 
 static volatile DSTATUS Stat = STA_NOINIT;
+static volatile UINT WriteStatus = 0;
+static volatile UINT ReadStatus = 0;
 
 static DSTATUS SD_CheckStatus (BYTE lun);
 
@@ -75,28 +77,38 @@ DSTATUS SD_status (BYTE lun)
 //{{{
 DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
 
+  ReadStatus = 0;
   if (BSP_SD_ReadBlocks_DMA ((uint32_t*)buff, (uint32_t) (sector), count) == MSD_OK) {
     int wait = 0;
+    while (ReadStatus == 0)
+      wait++;
     while (BSP_SD_GetCardState() != MSD_OK)
       wait++;
 
+    ReadStatus = 0;
     return RES_OK;
     }
 
+  ReadStatus = 0;
   return RES_ERROR;
   }
 //}}}
 //{{{
 DRESULT SD_write (BYTE lun, const BYTE* buff, DWORD sector, UINT count) {
 
+  WriteStatus = 0;
   if (BSP_SD_WriteBlocks_DMA ((uint32_t*)buff, (uint32_t)(sector), count) == MSD_OK) {
     int wait = 0;
-    while(BSP_SD_GetCardState() != MSD_OK)
+    while (WriteStatus == 0)
+      wait++;
+    while (BSP_SD_GetCardState() != MSD_OK)
       wait++;
 
+    WriteStatus = 0;
     return RES_OK;
     }
 
+  WriteStatus = 0;
   return RES_ERROR;
   }
 //}}}
@@ -133,5 +145,16 @@ DRESULT SD_ioctl (BYTE lun, BYTE cmd, void* buff) {
     default:
       return RES_PARERR;
     }
+  }
+//}}}
+
+//{{{
+void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
+  WriteStatus = 1;
+  }
+//}}}
+//{{{
+void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
+  ReadStatus = 1;
   }
 //}}}

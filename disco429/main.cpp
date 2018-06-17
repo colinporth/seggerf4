@@ -18,6 +18,7 @@
 #define smallFree              free
 
 #include "heap.h"
+#include "jpeglib.h"
 
 //#include "cDecodePic.h"
 #include "../FatFs/ff.h"
@@ -203,6 +204,10 @@ cLcd* lcd = nullptr;
 FATFS SDFatFs;  /* File system object for SD disk logical drive */
 char SDPath[4]; /* SD disk logical drive path */
 FIL gFile = { 0 };
+int xsize = 0;
+int ysize = 0;
+
+cLcd::cTile mTile;
 
 //{{{  trace
 int globalCounter = 0;
@@ -498,55 +503,65 @@ void SystemClockConfig() {
 //}}}
 
 //{{{
-void loadFile (const std::string& fileName, uint8_t* buf, uint16_t* rgb565Buf) {
+bool loadFile (const std::string& fileName, cLcd::cTile& tile) {
 
   FILINFO filInfo;
   if (f_stat (fileName.c_str(), &filInfo)) {
-    lcd->debug (fileName + " not found");
-    return;
+    lcd->debug (COL_RED, fileName + " not found");
+    return false;
     }
 
-  lcd->debug (fileName + dec ((int)(filInfo.fsize)) + " " +
+  lcd->debug (fileName + " bytes:" + dec ((int)(filInfo.fsize)) + " " +
               dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63) + " " +
-              dec (filInfo.fdate & 31) + ":" +
-              dec ((filInfo.fdate >> 5) & 15) + ":" +
-              dec ((filInfo.fdate >> 9) + 1980)
+              dec (filInfo.fdate & 31) + ":" + dec ((filInfo.fdate >> 5) & 15) + ":" + dec ((filInfo.fdate >> 9) + 1980)
               );
 
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
-    lcd->debug (fileName + " not opened");
-    return;
+    lcd->debug (COL_RED, fileName + " not opened");
+    return false;
     }
 
+  auto buf = (uint8_t*)pvPortMalloc (filInfo.fsize);
+
   UINT bytesRead = 0;
-  uint8_t* ptr = buf;
-  do {
-    f_read (&gFile, (void*)ptr, (UINT)filInfo.fsize, &bytesRead);
-    lcd->info ("- read " + dec(bytesRead));
-    ptr += bytesRead;
-    } while (bytesRead > 0);
+  f_read (&gFile, buf, (UINT)filInfo.fsize, &bytesRead);
+  //lcd->info ("- read " + dec(bytesRead));
   f_close (&gFile);
 
   if (bytesRead > 0) {
-    //jpeg_mem_src (&mCinfo, buf, bytesRead);
-    //jpeg_read_header (&mCinfo, TRUE);
-    //debug (LCD_COLOR_WHITE, "- image %dx%d", mCinfo.image_width, mCinfo.image_height);
+    struct jpeg_error_mgr jerr;
+    struct jpeg_decompress_struct mCinfo;
+    mCinfo.err = jpeg_std_error (&jerr);
+    jpeg_create_decompress (&mCinfo);
 
-    //mCinfo.dct_method = JDCT_FLOAT;
-    //mCinfo.out_color_space = JCS_RGB;
-    //mCinfo.scale_num = 1;
-    //mCinfo.scale_denom = 4;
-    //uint8_t* bufArray = (uint8_t*)malloc (mCinfo.output_width * 3);
-    //jpeg_start_decompress (&mCinfo);
-    //while (mCinfo.output_scanline < mCinfo.output_height) {
-      //jpeg_read_scanlines (&mCinfo, &bufArray, 1);
-      //rgb888to565 (bufArray, rgb565Buf + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);
-      //}
-    //free (bufArray);
-    //jpeg_finish_decompress (&mCinfo);
+    jpeg_mem_src (&mCinfo, buf, bytesRead);
+    jpeg_read_header (&mCinfo, TRUE);
+    lcd->debug (COL_YELLOW, "image" + dec(mCinfo.image_width) + " " + dec(mCinfo.image_height));
 
-    //debug (LCD_COLOR_WHITE, "- load  %dx%d scale %d", mCinfo.output_width, mCinfo.output_height, 4);
+    mCinfo.dct_method = JDCT_FLOAT;
+    mCinfo.out_color_space = JCS_RGB;
+    mCinfo.scale_num = 1;
+    mCinfo.scale_denom = 1; // scale
+    jpeg_start_decompress (&mCinfo);
+    lcd->debug (COL_YELLOW, "- load  " + dec(mCinfo.output_width) + " " + dec(mCinfo.output_height));
+    auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height *2);
+
+    auto rgbLine = (uint8_t*)malloc (mCinfo.output_width * 3);
+    while (mCinfo.output_scanline < mCinfo.output_height) {
+      jpeg_read_scanlines (&mCinfo, &rgbLine, 1);
+      lcd->rgb888to565cpu (rgbLine, rgb565pic + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);
+      }
+    free (rgbLine);
+
+    tile = cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
+
+    jpeg_finish_decompress (&mCinfo);
+    jpeg_destroy_decompress (&mCinfo);
+    vPortFree (buf);
+    return true;
     }
+  else
+    return false;
   }
 //}}}
 //{{{
@@ -564,16 +579,8 @@ void readDirectory (const std::string& dirPath) {
       std::string filePath = dirPath + "/" + filinfo.fname;
       if (filinfo.fattrib & AM_DIR)
         readDirectory (filePath);
-      else {
+      else
         lcd->debug (filePath);
-        FILINFO filInfo;
-        //if (f_stat (filePath.c_str(), &filInfo) != FR_OK)
-        //  lcd->debug (filePath + " not found");
-        //else
-        //  lcd->debug (filePath + " " +
-        //              dec ((int)(filInfo.fsize)) + ":" + dec ((filInfo.fdate >> 9) + 1980) + ":" + dec ((filInfo.fdate >> 5) & 15) + " " +
-        //              dec (filInfo.fdate & 31) + ":" + dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63));
-        }
       }
 
     f_closedir (&dir);
@@ -804,7 +811,7 @@ int main() {
 
       std::string path1 = "";
       readDirectory (path1);
-      loadFile ("kSloth.jpg", (uint8_t*)0xD0100000, (uint16_t*)0xD0200000);
+      loadFile ("people1.jpg", mTile);
       }
     else
       lcd->info ("sdCard not mounted");
@@ -812,8 +819,8 @@ int main() {
   else
     lcd->info ("sdCard - no driver");
 
-  auto id = gyroInit();
-  lcd->info ("read id " + dec (id));
+  //auto id = gyroInit();
+  //lcd->info ("read id " + dec (id));
 
   int count = 0;
   while (true) {
@@ -827,6 +834,9 @@ int main() {
 
     lcd->start();
     lcd->clear (COL_BLACK);
+    //lcd->copy (mTile, 0, 0);
+    lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
+
     lcd->showInfo (true);
     mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
     lcd->present();

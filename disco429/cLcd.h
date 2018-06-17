@@ -52,6 +52,7 @@ public:
   //{{{
   class cTile {
   public:
+    cTile() {};
     cTile (uint8_t* piccy, uint16_t components, uint16_t pitch,
            uint16_t x, uint16_t y, uint16_t width, uint16_t height)
        :  mPiccy((uint32_t)piccy), mComponents(components), mPitch(pitch), mX(x), mY(y), mWidth(width), mHeight(height) {
@@ -113,6 +114,9 @@ public:
   void ellipseOutline (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius);
   void line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
   int text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height);
+
+  void rgb888to565cpu (uint8_t* src, uint16_t* dst, uint16_t xsize, uint16_t ysize);
+  void copy565cpu (uint16_t* src, uint16_t xsize, uint16_t ysize);
 
   void start();
   void showInfo (bool force);

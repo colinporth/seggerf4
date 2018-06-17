@@ -281,7 +281,7 @@ void cLcd::copy90 (cTile& srcTile, int16_t x, int16_t y) {
 void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
 // 2 passs size with rotates, bilinear blend but broken
 
-  uint32_t tempBuf = (uint32_t)malloc (srcTile.mWidth * height * kTempComponents);
+  auto tempBuf = (uint32_t)pvPortMalloc (srcTile.mWidth * height * kTempComponents);
 
   // first pass
   uint32_t srcBase = srcTile.mPiccy + ((srcTile.mY * srcTile.mPitch) + srcTile.mX) * srcTile.mComponents;
@@ -352,7 +352,7 @@ void cLcd::size (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     }
     //}}}
 
-  free ((void*)tempBuf);
+  vPortFree ((void*)tempBuf);
   }
 //}}}
 //{{{
@@ -361,12 +361,12 @@ void cLcd::sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16
   uint32_t xStep16 = ((srcTile.mWidth - 1) << 16) / (width - 1);
   uint32_t yStep16 = ((srcTile.mHeight - 1) << 16) / (height - 1);
 
-  uint16_t* dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
+  auto dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
 
   if (srcTile.mComponents == 2) {
-    uint16_t* srcBase = (uint16_t*)(srcTile.mPiccy) + (srcTile.mY * srcTile.mPitch) + srcTile.mX;
+    auto srcBase = (uint16_t*)(srcTile.mPiccy) + (srcTile.mY * srcTile.mPitch) + srcTile.mX;
     for (uint32_t y16 = (srcTile.mY << 16); y16 < ((srcTile.mY + height) * yStep16); y16 += yStep16) {
-      uint16_t* srcy1x1 = srcBase + (y16 >> 16) * srcTile.mPitch;
+      auto srcy1x1 = srcBase + (y16 >> 16) * srcTile.mPitch;
       for (uint32_t x16 = srcTile.mX << 16; x16 < (srcTile.mX + width) * xStep16; x16 += xStep16)
         *dstPtr++ = *(srcy1x1 + (x16 >> 16));
       dstPtr += getWidth() - width;
@@ -374,11 +374,11 @@ void cLcd::sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16
     }
 
   else {
-    uint8_t* srcBase = (uint8_t*)(srcTile.mPiccy + ((srcTile.mY * srcTile.mPitch) + srcTile.mX) * srcTile.mComponents);
+    auto srcBase = (uint8_t*)(srcTile.mPiccy + ((srcTile.mY * srcTile.mPitch) + srcTile.mX) * srcTile.mComponents);
     for (uint32_t y16 = (srcTile.mY << 16); y16 < ((srcTile.mY + height) * yStep16); y16 += yStep16) {
-      uint8_t* srcy = srcBase + ((y16 >> 16) * srcTile.mPitch) * srcTile.mComponents;
+      auto srcy = srcBase + ((y16 >> 16) * srcTile.mPitch) * srcTile.mComponents;
       for (uint32_t x16 = srcTile.mX << 16; x16 < (srcTile.mX + width) * xStep16; x16 += xStep16) {
-        uint8_t* srcy1x1 = srcy + (x16 >> 16) * srcTile.mComponents;
+        auto srcy1x1 = srcy + (x16 >> 16) * srcTile.mComponents;
         *dstPtr++ = ((*srcy1x1++) >> 3) | (((*srcy1x1++) & 0xFC) << 3) | (((*srcy1x1) & 0xF8) << 8);
         }
       dstPtr += getWidth() - width;
@@ -388,6 +388,7 @@ void cLcd::sizeCpu (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16
 //}}}
 //{{{
 void cLcd::sizeCpuBi (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+// only for src->components = 3,4
 
   uint32_t xStep16 = ((srcTile.mWidth - 1) << 16) / (width - 1);
   uint32_t yStep16 = ((srcTile.mHeight - 1) << 16) / (height - 1);
@@ -407,7 +408,6 @@ void cLcd::sizeCpuBi (cTile& srcTile, int16_t x, int16_t y, uint16_t width, uint
       const uint8_t* srcy2x1 = srcy1x1 + ySrcOffset;
       const uint8_t* srcy2x2 = srcy2x1 + srcTile.mComponents;
 
-      // only for src->components = 3,4
       *dstPtr++ = ((((*srcy1x1++ * xweight1 + *srcy1x2++ * xweight2) * yweight1) +
                      (*srcy2x1++ * xweight1 + *srcy2x2++ * xweight2) * yweight2) >> 17) |
                   (((((*srcy1x1++ * xweight1 + *srcy1x2++ * xweight2) * yweight1) +
@@ -636,6 +636,25 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x
     }
 
   return x;
+  }
+//}}}
+
+//{{{
+void cLcd::rgb888to565cpu (uint8_t* src, uint16_t* dst, uint16_t xsize, uint16_t ysize) {
+
+  ready();
+  for (uint16_t x = 0; x < xsize; x++) {
+    uint8_t b = (*src++) & 0xF8;
+    uint8_t g = (*src++) & 0xFC;
+    uint8_t r = (*src++) & 0xF8;
+    *dst++ = (r << 8) | (g << 3) | (b >> 3);
+    }
+  }
+//}}}
+//{{{
+void cLcd::copy565cpu (uint16_t* src, uint16_t xsize, uint16_t ysize) {
+  ready();
+  memcpy (mBuffer[mDrawBuffer], src, xsize*ysize*2);
   }
 //}}}
 
