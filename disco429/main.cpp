@@ -710,7 +710,7 @@ void readDirectory (const std::string& dirPath) {
   }
 //}}}
 //{{{
-cLcd::cTile* loadFile (const std::string& fileName) {
+cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 
   FILINFO filInfo;
   if (f_stat (fileName.c_str(), &filInfo)) {
@@ -749,7 +749,7 @@ cLcd::cTile* loadFile (const std::string& fileName) {
     mCinfo.dct_method = JDCT_FLOAT;
     mCinfo.out_color_space = JCS_RGB;
     mCinfo.scale_num = 1;
-    mCinfo.scale_denom = 1; // scale
+    mCinfo.scale_denom = scale;
     jpeg_start_decompress (&mCinfo);
     lcd->debug (COL_YELLOW, "- dst  " + dec(mCinfo.output_width) + " " + dec(mCinfo.output_height));
     auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height *2);
@@ -810,7 +810,8 @@ int main() {
   //lcd->info ("read id " + dec (id));
 
   readDirectory ("");
-  auto tile = loadFile ("ksloth.jpg");
+  auto tile1 = loadFile ("DSC09872.jpg", 1);
+  //auto tile2 = loadFile ("ksloth.jpg", 1);
 
   while (true) {
     //while (!(gyroGetFifoSrc() & 0x20)) {
@@ -823,7 +824,8 @@ int main() {
 
     lcd->start();
     lcd->clear (COL_BLACK);
-    lcd->copy (tile, 0,0);
+    lcd->copy (tile1, 0,0);
+    //lcd->copy (tile2, 0,0);
     //lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
     lcd->showInfo (true);
     //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);

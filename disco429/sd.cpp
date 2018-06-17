@@ -2,6 +2,8 @@
 #include "sd.h"
 #include "cLcd.h"
 
+//#define LCD_DEBUG
+
 SD_HandleTypeDef gSdHandle;
 DMA_HandleTypeDef gDmaRxHandle;
 DMA_HandleTypeDef gDmaTxHandle;
@@ -167,7 +169,9 @@ DSTATUS SD_status (BYTE lun) {
 //{{{
 DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
 
-  cLcd::mLcd->debug (COL_GREEN, "readBlocks " + hex (uint32_t(buff)) + " " + dec (sector) + " " + dec(count));
+  #ifdef LCD_DEBUG
+    cLcd::mLcd->debug (COL_GREEN, "readBlocks " + hex (uint32_t(buff)) + " " + dec (sector) + " " + dec(count));
+  #endif
 
   gReadStatus = 0;
   if (HAL_SD_ReadBlocks_DMA (&gSdHandle, buff, sector, count) == HAL_OK) {
