@@ -9,11 +9,6 @@
 #include "sd.h"
 #include "../fatFs/ff.h"
 
-#define bigMalloc(size,tag)    pvPortMalloc(size)
-#define bigFree                vPortFree
-#define smallMalloc(size,tag)  malloc(size)
-#define smallFree              free
-
 #include "heap.h"
 #include "jpeglib.h"
 
@@ -752,7 +747,9 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     mCinfo.scale_denom = scale;
     jpeg_start_decompress (&mCinfo);
     lcd->debug (COL_YELLOW, "- dst  " + dec(mCinfo.output_width) + " " + dec(mCinfo.output_height));
-    auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height *2);
+
+    auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height * 2);
+    auto tile = new cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
 
     auto rgbLine = (uint8_t*)malloc (mCinfo.output_width * 3);
     while (mCinfo.output_scanline < mCinfo.output_height) {
@@ -761,18 +758,18 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
       }
     free (rgbLine);
 
-    auto tile = new cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
-
+    vPortFree (buf);
     jpeg_finish_decompress (&mCinfo);
     jpeg_destroy_decompress (&mCinfo);
-    vPortFree (buf);
 
     lcd->debug (COL_YELLOW, "- loaded");
-
     return tile;
     }
-  else
+  else {
+    lcd->debug (COL_RED, "loadFile read failed");
+    vPortFree (buf);
     return nullptr;
+    }
   }
 //}}}
 
@@ -806,13 +803,12 @@ int main() {
   else
     lcd->debug (COL_RED, "sdCard - no driver");
 
-  //auto id = gyroInit();
-  //lcd->info ("read id " + dec (id));
-
   readDirectory ("");
   auto tile1 = loadFile ("DSC09872.jpg", 1);
   //auto tile2 = loadFile ("ksloth.jpg", 1);
 
+  //auto id = gyroInit();
+  //lcd->info ("read id " + dec (id));
   while (true) {
     //while (!(gyroGetFifoSrc() & 0x20)) {
     //  int16_t xyz[3];
@@ -831,4 +827,5 @@ int main() {
     //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
     lcd->present();
     }
+
   }
