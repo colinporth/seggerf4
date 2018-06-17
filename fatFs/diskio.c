@@ -1,12 +1,6 @@
 #include "diskio.h"
 #include "ff_gen_drv.h"
 
-#if defined ( __GNUC__ )
-#ifndef __weak
-#define __weak __attribute__((weak))
-#endif
-#endif
-
 extern Disk_drvTypeDef  disk;
 
 //{{{

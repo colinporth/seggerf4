@@ -6,11 +6,8 @@
 #include "gyro.h"
 #include "cTraceVec.h"
 
-#include "../fatFs/stm32f429i_discovery_sd.h"
-#include "../fatFs/ff_gen_drv.h"
-#include "../fatFs/sd_diskio.h"
+#include "stm32f429i_discovery_sd.h"
 #include "../fatFs/ff.h"
-//#include "diskio.h"
 
 #define bigMalloc(size,tag)    pvPortMalloc(size)
 #define bigFree                vPortFree

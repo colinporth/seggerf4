@@ -5,9 +5,11 @@
 #endif
 //}}}
 
+#include "../FatFs/ff_gen_drv.h"
 #include "stm32F429i_discovery.h"
 
 #define BSP_SD_CardInfo HAL_SD_CardInfoTypeDef
+extern const Diskio_drvTypeDef SD_Driver;
 
 #define MSD_OK                    ((uint8_t)0x00)
 #define MSD_ERROR                 ((uint8_t)0x01)
