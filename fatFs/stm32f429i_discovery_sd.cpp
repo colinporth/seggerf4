@@ -138,15 +138,15 @@ void BSP_SD_GetCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) {
 //}}}
 
 //{{{
-uint8_t BSP_SD_ReadBlocks_DMA (uint32_t* data, uint32_t readAddr, uint32_t numBlocks) {
+uint8_t BSP_SD_ReadBlocks (uint32_t* data, uint32_t readAddr, uint32_t numBlocks) {
 
-  cLcd::mLcd->debug (COL_GREEN, 
+  cLcd::mLcd->debug (COL_GREEN,
                      "readBlocks " + hex (uint32_t(data)) + " " + dec (readAddr) + " " + dec(numBlocks));
   return HAL_SD_ReadBlocks_DMA (&gSdHandle, (uint8_t*)data, readAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
   }
 //}}}
 //{{{
-uint8_t BSP_SD_WriteBlocks_DMA (uint32_t* data, uint32_t writeAddr, uint32_t numBlocks) {
+uint8_t BSP_SD_WriteBlocks (uint32_t* data, uint32_t writeAddr, uint32_t numBlocks) {
   return HAL_SD_WriteBlocks_DMA (&gSdHandle, (uint8_t*)data, writeAddr, numBlocks) == HAL_OK ? MSD_OK : MSD_ERROR;
   }
 //}}}

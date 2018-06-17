@@ -805,9 +805,7 @@ int main() {
       char label[20] = {0};
       DWORD vsn = 0;
       f_getlabel ("", label, &vsn);
-      lcd->debug ("sdCard mounted label:" + std::string(label));
-      std::string path1 = "";
-      readDirectory (path1);
+      lcd->info ("sdCard mounted label:" + std::string(label));
       }
     else
       lcd->debug (COL_RED, "sdCard - not mounted");
@@ -818,6 +816,8 @@ int main() {
   //auto id = gyroInit();
   //lcd->info ("read id " + dec (id));
 
+  //std::string path1 = "";
+  //readDirectory (path1);
   mTile = loadFile ("ksloth.jpg");
 
   while (true) {

@@ -25,8 +25,8 @@ uint8_t BSP_SD_GetCardState();
 uint8_t BSP_SD_IsDetected();
 void    BSP_SD_GetCardInfo (HAL_SD_CardInfoTypeDef *CardInfo);
 
-uint8_t BSP_SD_ReadBlocks_DMA (uint32_t *data, uint32_t readAddr, uint32_t numBlocks);
-uint8_t BSP_SD_WriteBlocks_DMA (uint32_t *data, uint32_t writeAddr, uint32_t numBlocks);
+uint8_t BSP_SD_ReadBlocks (uint32_t *data, uint32_t readAddr, uint32_t numBlocks);
+uint8_t BSP_SD_WriteBlocks (uint32_t *data, uint32_t writeAddr, uint32_t numBlocks);
 
 //{{{
 #ifdef __cplusplus

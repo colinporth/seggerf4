@@ -1,6 +1,7 @@
 #pragma once
 //{{{  includes
 #include "utils.h"
+#include "cPointRect.h"
 #include <map>
 #include <vector>
 
