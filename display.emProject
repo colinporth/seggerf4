@@ -51,7 +51,7 @@
       <file file_name="stm32f429i_discovery.c" />
       <file file_name="cLcd.cpp" />
       <file file_name="gyro.cpp" />
-      <file file_name="stm32f429i_discovery_sd.cpp" />
+      <file file_name="sd.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />

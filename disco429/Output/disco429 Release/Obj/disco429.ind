@@ -3,7 +3,7 @@
 "Output/disco429 Release/Obj/stm32f429i_discovery.o"
 "Output/disco429 Release/Obj/cLcd.o"
 "Output/disco429 Release/Obj/gyro.o"
-"Output/disco429 Release/Obj/stm32f429i_discovery_sd.o"
+"Output/disco429 Release/Obj/sd.o"
 "Output/disco429 Release/Obj/SEGGER_RTT.o"
 "Output/disco429 Release/Obj/SEGGER_RTT_Syscalls_SES.o"
 "Output/disco429 Release/Obj/HardFaultHandler.o"

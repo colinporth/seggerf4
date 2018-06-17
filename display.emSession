@@ -1,7 +1,7 @@
 <!DOCTYPE CrossStudio_Session_File>
 <session>
  <Bookmarks>
-  <BookmarkItem objectName="" line="1513" column="-1" path="C:/projects/seggerf4/main.cpp" number="250" extra="cApp::mApp->run();" color="5"/>
+  <BookmarkItem objectName="" line="1512" column="-1" path="C:/projects/seggerf4/main.cpp" number="249" extra="if (cApp::mApp->init())" color="5"/>
   <BookmarkItem objectName="" line="26" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="std::string kVersion = &quot;WebCam 27/4/18&quot;;" color="5"/>
   <BookmarkItem objectName="" line="42" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="2" extra="&quot;&lt;/html>\r\n&quot;;" color="5"/>
   <BookmarkItem objectName="" line="47" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="1" extra="bool mButton = false;" color="5"/>
@@ -307,24 +307,24 @@
   <BookmarkItem objectName="" line="1364" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="313" extra="sys_thread_new (&quot;touch&quot;, touchThread, NULL, 2048, osPriorityNormal);" color="5"/>
   <BookmarkItem objectName="" line="1365" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="314" extra="sys_thread_new (&quot;save&quot;, saveThread, NULL, 10000, osPriorityAboveNormal);" color="5"/>
   <BookmarkItem objectName="" line="1367" column="-1" path="C:/projects/segger/usbMsc/main.cpp" number="315" extra="osKernelStart();" color="5"/>
-  <BookmarkItem objectName="" line="195" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="1" extra="{(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 }," color="5"/>
-  <BookmarkItem objectName="" line="278" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="2" extra="//TPI->CSPSR = 0x08; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
-  <BookmarkItem objectName="" line="279" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="3" extra="TPI->CSPSR = 0x01; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
-  <BookmarkItem objectName="" line="334" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="4" extra="TPI->CSPSR = 0x08; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
-  <BookmarkItem objectName="" line="335" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="5" extra="//TPI->CSPSR = 0x01; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
-  <BookmarkItem objectName="" line="408" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="6" extra="ETM->FFLR = 24; // Stall &lt;N bytes free FIFO (1..24), larger less latency, but more stalls" color="5"/>
-  <BookmarkItem objectName="" line="500" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="7" extra="if (f_stat (fileName.c_str(), &amp;filInfo)) {" color="5"/>
-  <BookmarkItem objectName="" line="513" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="8" extra="if (f_open (&amp;gFile, fileName.c_str(), FA_READ)) {" color="5"/>
-  <BookmarkItem objectName="" line="532" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="10" extra="//rgb888to565 (bufArray, rgb565Buf + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);" color="5"/>
-  <BookmarkItem objectName="" line="537" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="11" extra="//debug (LCD_COLOR_WHITE, &quot;- load %dx%d scale %d&quot;, mCinfo.output_width, mCinfo.output_height, 4);" color="5"/>
-  <BookmarkItem objectName="" line="559" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="12" extra="//if (f_stat (filePath.c_str(), &amp;filInfo) != FR_OK)" color="5"/>
-  <BookmarkItem objectName="" line="739" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="13" extra="//printf (&quot;ok %p read:%x == %x\n&quot;, readAddress, read, (i+phase) &amp; 0xFF);" color="5"/>
-  <BookmarkItem objectName="" line="743" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="14" extra="printf (&quot;error %p read:%x != %x\n&quot;, readAddress, read, (i+iterations) &amp; 0xFFFF);" color="5"/>
-  <BookmarkItem objectName="" line="749" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="15" extra="printf (&quot;%p errors:%x %x\n&quot;, readAddress, readErr, readOk);" color="5"/>
-  <BookmarkItem objectName="" line="754" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="16" extra="printf (&quot;ok %p %x\n&quot;, readAddress, readOk);" color="5"/>
-  <BookmarkItem objectName="" line="1020" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="17" extra="bool mMounted = !f_mount (&amp;gFatFs, &quot;&quot;, 1);" color="5"/>
-  <BookmarkItem objectName="" line="1025" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="18" extra="f_getlabel (&quot;&quot;, label, &amp;vsn);" color="5"/>
-  <BookmarkItem objectName="" line="1030" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="19" extra="loadFile (&quot;/kSloth.jpg&quot;, (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);" color="5"/>
+  <BookmarkItem objectName="" line="192" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="1" extra="{(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 }," color="5"/>
+  <BookmarkItem objectName="" line="275" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="2" extra="//TPI->CSPSR = 0x08; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
+  <BookmarkItem objectName="" line="276" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="3" extra="TPI->CSPSR = 0x01; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
+  <BookmarkItem objectName="" line="331" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="4" extra="TPI->CSPSR = 0x08; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
+  <BookmarkItem objectName="" line="332" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="5" extra="//TPI->CSPSR = 0x01; // 4 pins TRACED[0..3], PE2 clk, PE3,4,5,6 data" color="5"/>
+  <BookmarkItem objectName="" line="405" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="6" extra="ETM->FFLR = 24; // Stall &lt;N bytes free FIFO (1..24), larger less latency, but more stalls" color="5"/>
+  <BookmarkItem objectName="" line="497" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="7" extra="if (f_stat (fileName.c_str(), &amp;filInfo)) {" color="5"/>
+  <BookmarkItem objectName="" line="510" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="8" extra="if (f_open (&amp;gFile, fileName.c_str(), FA_READ)) {" color="5"/>
+  <BookmarkItem objectName="" line="529" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="10" extra="//rgb888to565 (bufArray, rgb565Buf + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);" color="5"/>
+  <BookmarkItem objectName="" line="534" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="11" extra="//debug (LCD_COLOR_WHITE, &quot;- load %dx%d scale %d&quot;, mCinfo.output_width, mCinfo.output_height, 4);" color="5"/>
+  <BookmarkItem objectName="" line="556" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="12" extra="//if (f_stat (filePath.c_str(), &amp;filInfo) != FR_OK)" color="5"/>
+  <BookmarkItem objectName="" line="736" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="13" extra="//printf (&quot;ok %p read:%x == %x\n&quot;, readAddress, read, (i+phase) &amp; 0xFF);" color="5"/>
+  <BookmarkItem objectName="" line="740" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="14" extra="printf (&quot;error %p read:%x != %x\n&quot;, readAddress, read, (i+iterations) &amp; 0xFFFF);" color="5"/>
+  <BookmarkItem objectName="" line="746" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="15" extra="printf (&quot;%p errors:%x %x\n&quot;, readAddress, readErr, readOk);" color="5"/>
+  <BookmarkItem objectName="" line="751" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="16" extra="printf (&quot;ok %p %x\n&quot;, readAddress, readOk);" color="5"/>
+  <BookmarkItem objectName="" line="1017" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="17" extra="bool mMounted = !f_mount (&amp;gFatFs, &quot;&quot;, 1);" color="5"/>
+  <BookmarkItem objectName="" line="1022" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="18" extra="f_getlabel (&quot;&quot;, label, &amp;vsn);" color="5"/>
+  <BookmarkItem objectName="" line="1027" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="19" extra="loadFile (&quot;/kSloth.jpg&quot;, (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);" color="5"/>
   <BookmarkItem objectName="" line="12" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };" color="5"/>
   <BookmarkItem objectName="" line="13" column="-1" path="C:/projects/seggerf4/main.cpp" number="2" extra="const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };" color="5"/>
   <BookmarkItem objectName="" line="37" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="#define POLY_X(Z) ((int32_t)((points + Z)->x))" color="5"/>
@@ -842,7 +842,7 @@
   <BookmarkItem objectName="" line="1500" column="-1" path="C:/projects/seggerf4/main.cpp" number="246" extra="audBuf[i] = int16_t(0x2000 * sin (((i % 64) / 128.f) * kPi));" color="5"/>
   <BookmarkItem objectName="" line="1508" column="-1" path="C:/projects/seggerf4/main.cpp" number="247" extra="__HAL_RCC_CLEAR_RESET_FLAGS();" color="5"/>
   <BookmarkItem objectName="" line="1509" column="-1" path="C:/projects/seggerf4/main.cpp" number="248" extra="printf (&quot;main pin:%d power:%d cApp size:%d\n&quot;, pinReset, powerOnReset, sizeof (cApp));" color="5"/>
-  <BookmarkItem objectName="" line="1512" column="-1" path="C:/projects/seggerf4/main.cpp" number="249" extra="if (cApp::mApp->init())" color="5"/>
+  <BookmarkItem objectName="" line="1513" column="-1" path="C:/projects/seggerf4/main.cpp" number="250" extra="cApp::mApp->run();" color="5"/>
  </Bookmarks>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="9" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="accelerometer.h" useHWbreakpoint="false"/>
@@ -893,7 +893,6 @@
  <Project>
   <ProjectSessionItem path="display"/>
   <ProjectSessionItem path="display;disco429"/>
-  <ProjectSessionItem path="display;disco429;fatFs"/>
   <ProjectSessionItem path="display;disco429;Source Files"/>
   <ProjectSessionItem path="display;disco429;System Files"/>
  </Project>
