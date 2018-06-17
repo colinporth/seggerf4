@@ -6,10 +6,6 @@ SD_HandleTypeDef gSdHandle;
 DMA_HandleTypeDef gDmaRxHandle;
 DMA_HandleTypeDef gDmaTxHandle;
 
-extern "C" { void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); } }
-extern "C" { void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); } }
-extern "C" { void DMA2_Stream6_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmatx); } }
-
 #define SD_TIMEOUT 1000
 #define SD_DEFAULT_BLOCK_SIZE 512
 
@@ -18,26 +14,41 @@ static volatile UINT gWriteStatus = 0;
 static volatile UINT gReadStatus = 0;
 
 //{{{
-uint8_t SD_IsDetected() {
+void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
+  gWriteStatus = 1;
+  }
+//}}}
+//{{{
+void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
+  gReadStatus = 1;
+  }
+//}}}
+
+extern "C" { void SDIO_IRQHandler() { HAL_SD_IRQHandler (&gSdHandle); } }
+extern "C" { void DMA2_Stream3_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmarx); } }
+extern "C" { void DMA2_Stream6_IRQHandler() { HAL_DMA_IRQHandler (gSdHandle.hdmatx); } }
+
+//{{{
+uint8_t isDetected() {
   return SD_PRESENT;
   }
 //}}}
 //{{{
-uint8_t SD_GetCardState() {
+uint8_t getCardState() {                
   return HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER ? SD_TRANSFER_OK : SD_TRANSFER_BUSY;
   }
 //}}}
 //{{{
-void SD_GetCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) {
+void getCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) {
   HAL_SD_GetCardInfo (&gSdHandle, CardInfo);
   }
 //}}}
 //{{{
-DSTATUS SD_CheckStatus (BYTE lun) {
+DSTATUS checkStatus (BYTE lun) {
 
   gStat = STA_NOINIT;
 
-  if (SD_GetCardState() == MSD_OK)
+  if (getCardState() == MSD_OK)
     gStat &= ~STA_NOINIT;
 
   return gStat;
@@ -60,7 +71,7 @@ DSTATUS SD_initialize (BYTE lun) {
   gSdHandle.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_ENABLE;
   gSdHandle.Init.ClockDiv            = SDIO_TRANSFER_CLK_DIV;
 
-  if (SD_IsDetected() != SD_PRESENT)
+  if (isDetected() != SD_PRESENT)
     return MSD_ERROR_SD_NOT_PRESENT;
 
   __HAL_RCC_SDIO_CLK_ENABLE();
@@ -143,17 +154,16 @@ DSTATUS SD_initialize (BYTE lun) {
   else if (HAL_SD_ConfigWideBusOperation (&gSdHandle, SDIO_BUS_WIDE_4B) != HAL_OK)
     cLcd::mLcd->debug (COL_RED, "HAL_SD_ConfigWideBusOperation failed");
 
-  gStat = SD_CheckStatus (lun);
+  gStat = checkStatus (lun);
 
   return gStat;
   }
 //}}}
 //{{{
 DSTATUS SD_status (BYTE lun) {
-  return SD_CheckStatus (lun);
+  return checkStatus (lun);
   }
 //}}}
-
 //{{{
 DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
 
@@ -164,7 +174,7 @@ DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
     int wait = 0;
     while (gReadStatus == 0)
       wait++;
-    while (SD_GetCardState() != MSD_OK)
+    while (getCardState() != MSD_OK)
       wait++;
 
     gReadStatus = 0;
@@ -184,7 +194,7 @@ DRESULT SD_write (BYTE lun, const BYTE* buff, DWORD sector, UINT count) {
     int wait = 0;
     while (gWriteStatus == 0)
       wait++;
-    while (SD_GetCardState() != MSD_OK)
+    while (getCardState() != MSD_OK)
       wait++;
 
     gWriteStatus = 0;
@@ -209,36 +219,25 @@ DRESULT SD_ioctl (BYTE lun, BYTE cmd, void* buff) {
 
     /* Get number of sectors on the disk (DWORD) */
     case GET_SECTOR_COUNT :
-      SD_GetCardInfo(&CardInfo);
+      getCardInfo(&CardInfo);
       *(DWORD*)buff = CardInfo.LogBlockNbr;
       return RES_OK;
 
     /* Get R/W sector size (WORD) */
     case GET_SECTOR_SIZE :
-      SD_GetCardInfo(&CardInfo);
+      getCardInfo(&CardInfo);
       *(WORD*)buff = CardInfo.LogBlockSize;
       return RES_OK;
 
     /* Get erase block size in unit of sector (DWORD) */
     case GET_BLOCK_SIZE :
-      SD_GetCardInfo(&CardInfo);
+      getCardInfo(&CardInfo);
       *(DWORD*)buff = CardInfo.LogBlockSize / SD_DEFAULT_BLOCK_SIZE;
       return RES_OK;
 
     default:
       return RES_PARERR;
     }
-  }
-//}}}
-
-//{{{
-void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
-  gWriteStatus = 1;
-  }
-//}}}
-//{{{
-void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
-  gReadStatus = 1;
   }
 //}}}
 
