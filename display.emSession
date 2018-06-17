@@ -322,9 +322,9 @@
   <BookmarkItem objectName="" line="740" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="14" extra="printf (&quot;error %p read:%x != %x\n&quot;, readAddress, read, (i+iterations) &amp; 0xFFFF);" color="5"/>
   <BookmarkItem objectName="" line="746" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="15" extra="printf (&quot;%p errors:%x %x\n&quot;, readAddress, readErr, readOk);" color="5"/>
   <BookmarkItem objectName="" line="751" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="16" extra="printf (&quot;ok %p %x\n&quot;, readAddress, readOk);" color="5"/>
-  <BookmarkItem objectName="" line="1017" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="17" extra="bool mMounted = !f_mount (&amp;gFatFs, &quot;&quot;, 1);" color="5"/>
-  <BookmarkItem objectName="" line="1022" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="18" extra="f_getlabel (&quot;&quot;, label, &amp;vsn);" color="5"/>
-  <BookmarkItem objectName="" line="1027" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="19" extra="loadFile (&quot;/kSloth.jpg&quot;, (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);" color="5"/>
+  <BookmarkItem objectName="" line="1022" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="17" extra="bool mMounted = !f_mount (&amp;gFatFs, &quot;&quot;, 1);" color="5"/>
+  <BookmarkItem objectName="" line="1027" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="18" extra="f_getlabel (&quot;&quot;, label, &amp;vsn);" color="5"/>
+  <BookmarkItem objectName="" line="1032" column="-1" path="C:/projects/seggerf4/disco429/main.cpp" number="19" extra="loadFile (&quot;/kSloth.jpg&quot;, (uint8_t*)0xC0010000, (uint16_t*)0xC0020000);" color="5"/>
   <BookmarkItem objectName="" line="12" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="const uint8_t kFirstMask[8] = { 0xFF, 0x7F, 0x3F, 0x1F, 0x0f, 0x07, 0x03, 0x01 };" color="5"/>
   <BookmarkItem objectName="" line="13" column="-1" path="C:/projects/seggerf4/main.cpp" number="2" extra="const uint8_t kLastMask[8] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF };" color="5"/>
   <BookmarkItem objectName="" line="37" column="-1" path="C:/projects/seggerf4/main.cpp" number="1" extra="#define POLY_X(Z) ((int32_t)((points + Z)->x))" color="5"/>
@@ -847,7 +847,6 @@
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
   <BreakpointListItem trigger="" line="9" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="accelerometer.h" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="622" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="audio.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="727" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="disco429/main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="746" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="main.cpp" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="583" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="stm32f4_discovery_audio.c" useHWbreakpoint="false"/>
  </Breakpoints>
@@ -956,10 +955,9 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="16" y="762" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="1" top="741" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="159" useTextEdit="1" useBinaryEdit="0" left="0" path="system/HardFaultHandler.S" selected="0" top="145" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="126" useTextEdit="1" useBinaryEdit="0" left="0" path="common/heap_5.c" selected="0" top="90" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="191" useTextEdit="1" useBinaryEdit="0" left="0" path="system/SEGGER_HardFaultHandler.c" selected="0" top="173" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="843" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="1" top="845" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="159" useTextEdit="1" useBinaryEdit="0" left="0" path="system/HardFaultHandler.S" selected="0" top="141" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="449" useTextEdit="1" useBinaryEdit="0" left="0" path="C:/Users/colin/AppData/Local/SEGGER/SEGGER Embedded Studio/v3/packages/libraries/STLport/stlport/stl/_cmath.h" selected="0" top="434" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../common/cTraceVec.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

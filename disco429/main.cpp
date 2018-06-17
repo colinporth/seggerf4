@@ -1,5 +1,6 @@
 // main.cpp
 //{{{  includes
+#include <vector>
 #include "cLcd.h"
 
 #include "stm32f429i_discovery.h"
@@ -195,6 +196,8 @@ cLcd* lcd = nullptr;
 
 FATFS SDFatFs;
 char SDPath[4];
+std::vector<std::string> mFileVec;
+std::vector<cLcd::cTile*> mTileVec;
 
 //{{{  trace
 int globalCounter = 0;
@@ -725,6 +728,8 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     }
 
   auto buf = (uint8_t*)pvPortMalloc (filInfo.fsize);
+  if (!buf)
+    lcd->debug (COL_RED, "buf fail");
 
   UINT bytesRead = 0;
   f_read (&gFile, buf, (UINT)filInfo.fsize, &bytesRead);
@@ -754,7 +759,7 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     auto rgbLine = (uint8_t*)malloc (mCinfo.output_width * 3);
     while (mCinfo.output_scanline < mCinfo.output_height) {
       jpeg_read_scanlines (&mCinfo, &rgbLine, 1);
-      lcd->rgb888to565cpu (rgbLine, rgb565pic + (mCinfo.output_scanline * mCinfo.output_width), mCinfo.output_width,1);
+      lcd->rgb888to565cpu (rgbLine, rgb565pic + ((mCinfo.output_scanline-1) * mCinfo.output_width), mCinfo.output_width,1);
       }
     free (rgbLine);
 
@@ -769,6 +774,41 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     lcd->debug (COL_RED, "loadFile read failed");
     vPortFree (buf);
     return nullptr;
+    }
+  }
+//}}}
+//{{{
+void loadDirectory (const std::string& dirPath, const std::string ext1, const std::string ext2) {
+
+  DIR dir;
+  if (f_opendir (&dir, dirPath.c_str()) == FR_OK) {
+    while (true) {
+      FILINFO filinfo;
+      if (f_readdir (&dir, &filinfo) != FR_OK || !filinfo.fname[0])
+        break;
+      if (filinfo.fname[0] == '.')
+        continue;
+
+      std::string filePath = dirPath + "/" + filinfo.fname;
+      if (filinfo.fattrib & AM_DIR)
+        loadDirectory (filePath, ext1, ext2);
+      else {
+        auto found = filePath.find (ext1);
+        if (found == filePath.size()-4) {
+          lcd->debug ("found ext1 " + filePath);
+          mFileVec.push_back (filePath);
+          }
+        else {
+          auto found = filePath.find (ext2);
+          if (found == filePath.size()-4) {
+            lcd->debug ("found ext2 " + filePath);
+            mFileVec.push_back (filePath);
+            }
+          }
+        }
+      }
+
+    f_closedir (&dir);
     }
   }
 //}}}
@@ -803,9 +843,12 @@ int main() {
   else
     lcd->debug (COL_RED, "sdCard - no driver");
 
-  readDirectory ("");
-  auto tile1 = loadFile ("DSC09872.jpg", 1);
-  //auto tile2 = loadFile ("ksloth.jpg", 1);
+  loadDirectory ("", ".jpg", ".JPG");
+  int items = mFileVec.size();
+  int rows = int(sqrt (float(items))) + 1;
+
+  for (auto file : mFileVec)
+    mTileVec.push_back (loadFile (file, 3));
 
   //auto id = gyroInit();
   //lcd->info ("read id " + dec (id));
@@ -820,8 +863,13 @@ int main() {
 
     lcd->start();
     lcd->clear (COL_BLACK);
-    lcd->copy (tile1, 0,0);
-    //lcd->copy (tile2, 0,0);
+    int count = 0;
+    for (auto tile : mTileVec) {
+      lcd->sizeCpu (tile,
+                    (lcd->getWidth() / rows) * (count % rows),  (lcd->getHeight() / rows) * (count / rows),
+                    lcd->getWidth() / rows, lcd->getHeight() / rows);
+      count++;
+      }
     //lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
     lcd->showInfo (true);
     //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
