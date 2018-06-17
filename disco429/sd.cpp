@@ -34,13 +34,13 @@ uint8_t isDetected() {
   }
 //}}}
 //{{{
-uint8_t getCardState() {                
+uint8_t getCardState() {
   return HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER ? SD_TRANSFER_OK : SD_TRANSFER_BUSY;
   }
 //}}}
 //{{{
-void getCardInfo (HAL_SD_CardInfoTypeDef *CardInfo) {
-  HAL_SD_GetCardInfo (&gSdHandle, CardInfo);
+void getCardInfo (HAL_SD_CardInfoTypeDef* cardInfo) {
+  HAL_SD_GetCardInfo (&gSdHandle, cardInfo);
   }
 //}}}
 //{{{
