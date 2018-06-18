@@ -202,6 +202,8 @@ std::vector<std::string> mFileVec;
 std::vector<cLcd::cTile*> mTileVec;
 SemaphoreHandle_t xSemaphore = NULL;
 
+cTraceVec mTraceVec;
+
 //{{{  trace
 int globalCounter = 0;
 
@@ -786,53 +788,32 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 //}}}
 
 //{{{
-void loadThread (void* arg) {
-
-  }
-//}}}
-//{{{
 void displayThread (void* arg) {
-
-  //cTraceVec mTraceVec;
-  //mTraceVec.addTrace (1024, 1, 3);
 
   lcd->render();
   lcd->displayOn();
 
-  if (FATFS_LinkDriver (&SD_Driver, SDPath) == 0) {
-    if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) == FR_OK) {
-      // get label
-      char label[20] = {0};
-      DWORD vsn = 0;
-      f_getlabel ("", label, &vsn);
-      lcd->info ("sdCard mounted label:" + std::string(label));
-      }
-    else
-      lcd->info (COL_RED, "sdCard - not mounted");
-    }
-  else
+  if (FATFS_LinkDriver (&SD_Driver, SDPath) != 0)
     lcd->info (COL_RED, "sdCard - no driver");
+  else if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) != FR_OK)
+    lcd->info (COL_RED, "sdCard - not mounted");
+  else {
+    // get label
+    char label[20] = {0};
+    DWORD vsn = 0;
+    f_getlabel ("", label, &vsn);
+    lcd->info ("sdCard mounted label:" + std::string(label));
 
-  loadDirectory ("", ".jpg");
-  for (auto file : mFileVec) {
-    auto tile = loadFile (file, 3);
-    //xSemaphoreTake (xSemaphore, 0);
-    mTileVec.push_back (tile);
-    //xSemaphoreGive (xSemaphore);
+    loadDirectory ("", ".jpg");
+    for (auto file : mFileVec) {
+      auto tile = loadFile (file, 4);
+      //xSemaphoreTake (xSemaphore, 0);
+      mTileVec.push_back (tile);
+      //xSemaphoreGive (xSemaphore);
+      }
     }
 
-
-  //auto id = gyroInit();
-  //lcd->info ("read id " + dec (id));
   while (true) {
-    //while (!(gyroGetFifoSrc() & 0x20)) {
-    //  int16_t xyz[3];
-    //  gyroGetXYZ (xyz);
-    //  mTraceVec.addSample (0, xyz[0]);
-    //  mTraceVec.addSample (1, xyz[1]);
-    //  mTraceVec.addSample (2, xyz[2]);
-    //  }
-
     lcd->start();
     lcd->clear (COL_BLACK);
 
@@ -841,17 +822,41 @@ void displayThread (void* arg) {
     int rows = int(sqrt (float(items))) + 1;
     int count = 0;
     for (auto tile : mTileVec) {
-      lcd->sizeCpu (tile,
-                    (lcd->getWidth() / rows) * (count % rows),  (lcd->getHeight() / rows) * (count / rows),
-                    lcd->getWidth() / rows, lcd->getHeight() / rows);
+      lcd->copy (tile, (lcd->getWidth() / rows) * (count % rows),
+                          (lcd->getHeight() / rows) * (count / rows));
+                 //lcd->getWidth() / rows, lcd->getHeight() / rows);
       count++;
       }
     //xSemaphoreGive (xSemaphore);
 
-    //lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
     lcd->showInfo (true);
-    //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
+    mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
     lcd->present();
+    }
+  }
+//}}}
+//{{{
+void loadThread (void* arg) {
+  while (true)
+    osDelay (100);
+  }
+//}}}
+//{{{
+void gyroThread (void* arg) {
+
+  auto id = gyroInit();
+  lcd->info ("gyroId " + dec (id));
+
+  while (true) {
+    if (gyroGetFifoSrc() & 0x20)
+      osDelay (2);
+    else {
+      int16_t xyz[3];
+      gyroGetXYZ (xyz);
+      mTraceVec.addSample (0, xyz[0]);
+      mTraceVec.addSample (1, xyz[1]);
+      mTraceVec.addSample (2, xyz[2]);
+      }
     }
   }
 //}}}
@@ -868,11 +873,16 @@ int main() {
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
   lcd->init ("Screen Test " + kHello);
 
+  mTraceVec.addTrace (1024, 1, 3);
+
   TaskHandle_t displayHandle;
   xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 3, &displayHandle);
 
-  //TaskHandle_t loadHandle;
-  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 3, &loadHandle);
+  TaskHandle_t loadHandle;
+  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 3, &loadHandle);
+
+  TaskHandle_t gyroHandle;
+  xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
 
   vTaskStartScheduler();
   }

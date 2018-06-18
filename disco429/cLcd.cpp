@@ -80,6 +80,7 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
 void cLcd::init (std::string title) {
 
   ltdcInit (mBuffer[mDrawBuffer]);
+  //DMA2D->AMTCR = 0x3F01;
 
   // font init
   FT_Init_FreeType (&FTlibrary);
@@ -242,14 +243,17 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
 //{{{
 void cLcd::copy (cTile* srcTile, int16_t x, int16_t y) {
 
+  uint16_t width = x + srcTile->mWidth > getWidth() ? getWidth() - x : srcTile->mWidth;
+  uint16_t height = y + srcTile->mHeight > getHeight() ? getHeight() - y : srcTile->mHeight;
+
   ready();
   DMA2D->FGPFCCR = srcTile->mFormat;
   DMA2D->FGMAR = (uint32_t)srcTile->mPiccy;
-  DMA2D->FGOR = srcTile->mPitch - srcTile->mWidth;
+  DMA2D->FGOR = srcTile->mPitch - width;
   DMA2D->OPFCCR = kDstFormat;
   DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
   DMA2D->OOR = getWidth() - srcTile->mWidth;
-  DMA2D->NLR = (srcTile->mWidth << 16) | srcTile->mHeight;
+  DMA2D->NLR = (width << 16) | height;
   DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
   mWait = true;
   }
@@ -904,8 +908,6 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   curLayerCfg->ImageWidth = getWidth();
   curLayerCfg->ImageHeight = getHeight();
   HAL_LTDC_ConfigLayer (&LtdcHandler, curLayerCfg, 0);
-
-  //DMA2D->AMTCR = 0x3F01;
 
   // set line interupt line number
   LTDC->LIPCR = 0;
