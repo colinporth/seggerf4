@@ -793,26 +793,6 @@ void displayThread (void* arg) {
   lcd->render();
   lcd->displayOn();
 
-  if (FATFS_LinkDriver (&SD_Driver, SDPath) != 0)
-    lcd->info (COL_RED, "sdCard - no driver");
-  else if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) != FR_OK)
-    lcd->info (COL_RED, "sdCard - not mounted");
-  else {
-    // get label
-    char label[20] = {0};
-    DWORD vsn = 0;
-    f_getlabel ("", label, &vsn);
-    lcd->info ("sdCard mounted label:" + std::string(label));
-
-    loadDirectory ("", ".jpg");
-    for (auto file : mFileVec) {
-      auto tile = loadFile (file, 4);
-      //xSemaphoreTake (xSemaphore, 0);
-      mTileVec.push_back (tile);
-      //xSemaphoreGive (xSemaphore);
-      }
-    }
-
   while (true) {
     lcd->start();
     lcd->clear (COL_BLACK);
@@ -838,6 +818,25 @@ void displayThread (void* arg) {
 //{{{
 void loadThread (void* arg) {
 
+  if (FATFS_LinkDriver (&SD_Driver, SDPath) != 0)
+    lcd->info (COL_RED, "sdCard - no driver");
+  else if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) != FR_OK)
+    lcd->info (COL_RED, "sdCard - not mounted");
+  else {
+    // get label
+    char label[20] = {0};
+    DWORD vsn = 0;
+    f_getlabel ("", label, &vsn);
+    lcd->info ("sdCard mounted label:" + std::string(label));
+
+    loadDirectory ("", ".jpg");
+    for (auto file : mFileVec) {
+      auto tile = loadFile (file, 4);
+      //xSemaphoreTake (xSemaphore, 0);
+      mTileVec.push_back (tile);
+      //xSemaphoreGive (xSemaphore);
+      }
+    }
   }
 //}}}
 //{{{
@@ -875,10 +874,10 @@ int main() {
   mTraceVec.addTrace (1024, 1, 3);
 
   TaskHandle_t displayHandle;
-  xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 1, &displayHandle);
+  xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 4, &displayHandle);
 
-  //TaskHandle_t loadHandle;
-  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
+  TaskHandle_t loadHandle;
+  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
 
   TaskHandle_t gyroHandle;
   xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
