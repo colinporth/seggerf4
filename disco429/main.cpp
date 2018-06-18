@@ -837,6 +837,9 @@ void loadThread (void* arg) {
       //xSemaphoreGive (xSemaphore);
       }
     }
+
+  while (true)
+    osDelay (1000);
   }
 //}}}
 //{{{
