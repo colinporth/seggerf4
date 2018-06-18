@@ -194,24 +194,16 @@ void cLcd::rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t
 //__IO uint32_t OMAR;          /*!< DMA2D Output Memory Address Register,           Address offset: 0x3C */
 //__IO uint32_t OOR;           /*!< DMA2D Output Offset Register,                   Address offset: 0x40 */
 //__IO uint32_t NLR;           /*!< DMA2D Number of Line Register,                  Address offset: 0x44 */
-
+  uint32_t regs[5];
+  regs[0] = kDstFormat;
+  regs[1] = colour;
+  regs[2] = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
+  regs[3] = getWidth() - width;
+  regs[4] = (width << 16) | height;
   ready();
-  DMA2D->OPFCCR  = kDstFormat;
-  DMA2D->OCOLR = colour;
-  DMA2D->OOR = getWidth() - width;
-  DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
-  DMA2D->NLR = (width << 16) | height;
+  memcpy ((void*)(&DMA2D->OPFCCR), regs, 5*4);
 
-  //uint32_t regs[5];
-  //regs[0] = kDstFormat;
-  //regs[1] = colour;
-  //regs[2] = mBuffer[mDrawBuffer] + y * getWidth()) + x;
-  //regs[3] = getWidth() - width;
-  //regs[4] = (width << 16) | height;
-  //ready();
-  //memcpy ((void*)(&DMA2D->OPFCCR), regs, 5*4);
-
-  DMA2D->CR = DMA2D_R2M | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+  DMA2D->CR = DMA2D_R2M | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
   mChanged = true;
   }
@@ -233,26 +225,25 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
 //__IO uint32_t OMAR;          /*!< DMA2D Output Memory Address Register,           Address offset: 0x3C */
 //__IO uint32_t OOR;           /*!< DMA2D Output Offset Register,                   Address offset: 0x40 */
 //__IO uint32_t NLR;           /*!< DMA2D Number of Line Register,                  Address offset: 0x44 */
-
-  //{{{  alternative code
-  //  uint32_t address = mBuffer[mDrawBuffer] + y * getWidth()) + x;
-  //  uint32_t col = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
-  //  uint32_t stride = getWidth() - width;
-  //  uint32_t nlr = (width << 16) | height;
-  //  ready();
-  //  DMA2D->FGMAR   = (uint32_t)src;  // fgnd start address
-  //  DMA2D->FGOR    = 0;              // fgnd stride
-  //  DMA2D->BGMAR   = address;        // - repeated to bgnd start addres
-  //  DMA2D->BGOR    = stride;         // - repeated to bgnd stride
-  //  DMA2D->FGPFCCR = DMA2D_INPUT_A8; // fgnd PFC
-  //  DMA2D->FGCOLR  = col;
-  //  DMA2D->BGPFCCR = kDstFormat;
-  //  DMA2D->OPFCCR  = kDstFormat;
-  //  DMA2D->OMAR    = address;        // output start address
-  //  DMA2D->OOR     = stride;         // output stride
-  //  DMA2D->NLR     = nlr;            //  width:height
-  //  DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
-  //}}}
+//{{{  alternative code
+//  uint32_t address = mBuffer[mDrawBuffer] + y * getWidth()) + x;
+//  uint32_t col = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
+//  uint32_t stride = getWidth() - width;
+//  uint32_t nlr = (width << 16) | height;
+//  ready();
+//  DMA2D->FGMAR   = (uint32_t)src;  // fgnd start address
+//  DMA2D->FGOR    = 0;              // fgnd stride
+//  DMA2D->BGMAR   = address;        // - repeated to bgnd start addres
+//  DMA2D->BGOR    = stride;         // - repeated to bgnd stride
+//  DMA2D->FGPFCCR = DMA2D_INPUT_A8; // fgnd PFC
+//  DMA2D->FGCOLR  = col;
+//  DMA2D->BGPFCCR = kDstFormat;
+//  DMA2D->OPFCCR  = kDstFormat;
+//  DMA2D->OMAR    = address;        // output start address
+//  DMA2D->OOR     = stride;         // output stride
+//  DMA2D->NLR     = nlr;            //  width:height
+//  DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+//}}}
 
   uint32_t regs[15];
   regs[0] = (uint32_t)src;
@@ -273,7 +264,7 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
 
   ready();
   memcpy ((void*)(&DMA2D->FGMAR), regs, 15*4);
-  DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+  DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
   mChanged = true;
   }
@@ -292,7 +283,7 @@ void cLcd::copy (cTile* srcTile, int16_t x, int16_t y) {
   DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
   DMA2D->OOR = getWidth() - srcTile->mWidth;
   DMA2D->NLR = (width << 16) | height;
-  DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+  DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
   mChanged = true;
   }
@@ -313,7 +304,7 @@ void cLcd::copy90 (cTile* srcTile, int16_t x, int16_t y) {
   for (int line = 0; line < srcTile->mHeight; line++) {
     DMA2D->FGMAR = src;
     DMA2D->OMAR = dst;
-    DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+    DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
     mDma2dWait = eWaitIrq;
 
     src += srcTile->mWidth * srcTile->mComponents;
@@ -353,7 +344,7 @@ void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     DMA2D->FGMAR = srcPtr1;
     DMA2D->BGMAR = srcPtr;
     DMA2D->OMAR = dstPtr;
-    DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+    DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
     mDma2dWait = eWaitIrq;
 
     blendIndex += blendCoeff;
@@ -387,7 +378,7 @@ void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     DMA2D->FGMAR = srcPtr1;
     DMA2D->BGMAR = srcPtr;
     DMA2D->OMAR = dstPtr;
-    DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+    DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
     mDma2dWait = eWaitIrq;
 
     blendIndex += blendCoeff;
