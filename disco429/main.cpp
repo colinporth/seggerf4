@@ -788,6 +788,17 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 //{{{
 void loadThread (void* arg) {
 
+  }
+//}}}
+//{{{
+void displayThread (void* arg) {
+
+  //cTraceVec mTraceVec;
+  //mTraceVec.addTrace (1024, 1, 3);
+
+  lcd->render();
+  lcd->displayOn();
+
   if (FATFS_LinkDriver (&SD_Driver, SDPath) == 0) {
     if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) == FR_OK) {
       // get label
@@ -809,16 +820,7 @@ void loadThread (void* arg) {
     mTileVec.push_back (tile);
     //xSemaphoreGive (xSemaphore);
     }
-  }
-//}}}
-//{{{
-void displayThread (void* arg) {
 
-  //cTraceVec mTraceVec;
-  //mTraceVec.addTrace (1024, 1, 3);
-
-  lcd->render();
-  lcd->displayOn();
 
   //auto id = gyroInit();
   //lcd->info ("read id " + dec (id));
@@ -834,17 +836,16 @@ void displayThread (void* arg) {
     lcd->start();
     lcd->clear (COL_BLACK);
 
+    //xSemaphoreTake (xSemaphore, 0);
     int items = mFileVec.size();
     int rows = int(sqrt (float(items))) + 1;
     int count = 0;
-
-    //xSemaphoreTake (xSemaphore, 0);
-    //for (auto tile : mTileVec) {
-    //  lcd->sizeCpu (tile,
-    //                (lcd->getWidth() / rows) * (count % rows),  (lcd->getHeight() / rows) * (count / rows),
-    //                lcd->getWidth() / rows, lcd->getHeight() / rows);
-    //  count++;
-    //  }
+    for (auto tile : mTileVec) {
+      lcd->sizeCpu (tile,
+                    (lcd->getWidth() / rows) * (count % rows),  (lcd->getHeight() / rows) * (count / rows),
+                    lcd->getWidth() / rows, lcd->getHeight() / rows);
+      count++;
+      }
     //xSemaphoreGive (xSemaphore);
 
     //lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
@@ -868,10 +869,10 @@ int main() {
   lcd->init ("Screen Test " + kHello);
 
   TaskHandle_t displayHandle;
-  xTaskCreate ((TaskFunction_t)displayThread, "app", 4096, 0, 3, &displayHandle);
+  xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 3, &displayHandle);
 
-  TaskHandle_t loadHandle;
-  xTaskCreate ((TaskFunction_t)loadThread, "load", 4096, 0, 3, &loadHandle);
+  //TaskHandle_t loadHandle;
+  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 3, &loadHandle);
 
   vTaskStartScheduler();
   }

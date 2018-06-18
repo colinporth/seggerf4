@@ -957,11 +957,11 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="30" y="808" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="1" top="789" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="171" useTextEdit="1" useBinaryEdit="0" left="0" path="LibJPEG/source/jdcolor.c" selected="0" top="154" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="172" useTextEdit="1" useBinaryEdit="0" left="0" path="LibJPEG/source/jdapistd.c" selected="0" top="155" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="366" useTextEdit="1" useBinaryEdit="0" left="0" path="LibJPEG/source/jdmainct.c" selected="0" top="349" codecName=""/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="255" useTextEdit="1" useBinaryEdit="0" left="0" path="FreeRTOS/portable/GCC/ARM_CM4F/port.c" selected="0" top="238" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="800" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="1" top="789" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="171" useTextEdit="1" useBinaryEdit="0" left="0" path="LibJPEG/source/jdcolor.c" selected="0" top="154" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="172" useTextEdit="1" useBinaryEdit="0" left="0" path="LibJPEG/source/jdapistd.c" selected="0" top="155" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="366" useTextEdit="1" useBinaryEdit="0" left="0" path="LibJPEG/source/jdmainct.c" selected="0" top="349" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="255" useTextEdit="1" useBinaryEdit="0" left="0" path="FreeRTOS/portable/GCC/ARM_CM4F/port.c" selected="0" top="238" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../common/cTraceVec.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>
