@@ -176,11 +176,14 @@ DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
   gReadStatus = 0;
   if (HAL_SD_ReadBlocks_DMA (&gSdHandle, buff, sector, count) == HAL_OK) {
     int wait = 0;
-    while (gReadStatus == 0)
+    while (gReadStatus == 0) {
+      osDelay(1);
       wait++;
-    while (getCardState() != MSD_OK)
+      }
+    while (getCardState() != MSD_OK) {
+      osDelay(1);
       wait++;
-
+      }
     gReadStatus = 0;
     return RES_OK;
     }
