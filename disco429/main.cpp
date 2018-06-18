@@ -837,8 +837,7 @@ void displayThread (void* arg) {
 //}}}
 //{{{
 void loadThread (void* arg) {
-  while (true)
-    osDelay (100);
+
   }
 //}}}
 //{{{
@@ -876,10 +875,10 @@ int main() {
   mTraceVec.addTrace (1024, 1, 3);
 
   TaskHandle_t displayHandle;
-  xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 3, &displayHandle);
+  xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 1, &displayHandle);
 
-  TaskHandle_t loadHandle;
-  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 3, &loadHandle);
+  //TaskHandle_t loadHandle;
+  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
 
   TaskHandle_t gyroHandle;
   xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
