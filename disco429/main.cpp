@@ -1,5 +1,6 @@
 // main.cpp
 //{{{  includes
+#include "cmsis_os.h"
 #include <vector>
 #include "cLcd.h"
 
@@ -10,7 +11,6 @@
 #include "sd.h"
 #include "../fatFs/ff.h"
 
-#include "heap.h"
 #include "jpeglib.h"
 
 //#include "cDecodePic.h"
@@ -616,8 +616,9 @@ void sdRamInit() {
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_CLK_ENABLE |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
-  HAL_Delay (100);
   //}}}
+  HAL_Delay (100);
+
   //{{{  send PALL prechargeAll command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_PALL |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
@@ -813,13 +814,8 @@ void loadDirectory (const std::string& dirPath, const std::string ext1, const st
   }
 //}}}
 
-int main() {
-
-  HAL_Init();
-  SystemClockConfig();
-  sdRamInit();
-  heapInit (kHeapRegions);
-  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
+//{{{
+void appThread (void* arg) {
 
   cTraceVec mTraceVec;
   mTraceVec.addTrace (1024, 1, 3);
@@ -875,5 +871,18 @@ int main() {
     //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
     lcd->present();
     }
+  }
+//}}}
 
+int main() {
+
+  HAL_Init();
+  SystemClockConfig();
+  sdRamInit();
+  vPortDefineHeapRegions (kHeapRegions);
+  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
+
+  TaskHandle_t handle;
+  xTaskCreate ((TaskFunction_t)appThread, "app", 2048, 0, 3, &handle);
+  vTaskStartScheduler();
   }
