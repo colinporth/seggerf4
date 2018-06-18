@@ -2,27 +2,30 @@
 #include "sd.h"
 #include "cLcd.h"
 
+#include "cmsis_os.h"
 //#define LCD_DEBUG
+#define QUEUE_SIZE      10
+#define READ_CPLT_MSG   1
+#define WRITE_CPLT_MSG  2
+#define SD_TIMEOUT 1000
 
 SD_HandleTypeDef gSdHandle;
 DMA_HandleTypeDef gDmaRxHandle;
 DMA_HandleTypeDef gDmaTxHandle;
 
-#define SD_TIMEOUT 1000
 #define SD_DEFAULT_BLOCK_SIZE 512
 
 static volatile DSTATUS gStat = STA_NOINIT;
-static volatile UINT gWriteStatus = 0;
-static volatile UINT gReadStatus = 0;
+osMessageQId gSdQueueId;
 
 //{{{
 void HAL_SD_TxCpltCallback (SD_HandleTypeDef* hsd) {
-  gWriteStatus = 1;
+  osMessagePut (gSdQueueId, WRITE_CPLT_MSG, osWaitForever);
   }
 //}}}
 //{{{
 void HAL_SD_RxCpltCallback (SD_HandleTypeDef* hsd) {
-  gReadStatus = 1;
+  osMessagePut (gSdQueueId, READ_CPLT_MSG, osWaitForever);
   }
 //}}}
 
@@ -156,6 +159,9 @@ DSTATUS SD_initialize (BYTE lun) {
   else if (HAL_SD_ConfigWideBusOperation (&gSdHandle, SDIO_BUS_WIDE_4B) != HAL_OK)
     cLcd::mLcd->debug (COL_RED, "HAL_SD_ConfigWideBusOperation failed");
 
+  osMessageQDef (sdQueue, QUEUE_SIZE, uint16_t);
+  gSdQueueId = osMessageCreate (osMessageQ (sdQueue), NULL);
+
   gStat = checkStatus (lun);
 
   return gStat;
@@ -173,42 +179,40 @@ DRESULT SD_read (BYTE lun, BYTE* buff, DWORD sector, UINT count) {
     cLcd::mLcd->debug (COL_GREEN, "readBlocks " + hex (uint32_t(buff)) + " " + dec (sector) + " " + dec(count));
   #endif
 
-  gReadStatus = 0;
   if (HAL_SD_ReadBlocks_DMA (&gSdHandle, buff, sector, count) == HAL_OK) {
-    int wait = 0;
-    while (gReadStatus == 0) {
-      osDelay(1);
-      wait++;
+    osEvent event = osMessageGet (gSdQueueId, SD_TIMEOUT);
+    if (event.status == osEventMessage) {
+      if (event.value.v == READ_CPLT_MSG) {
+        uint32_t timer = osKernelSysTick();
+        while (timer < osKernelSysTick() + SD_TIMEOUT) {
+          if (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
+            return RES_OK;
+          osDelay (1);
+          }
+        }
       }
-    while (getCardState() != MSD_OK) {
-      osDelay(1);
-      wait++;
-      }
-    gReadStatus = 0;
-    return RES_OK;
     }
 
-  gReadStatus = 0;
   return RES_ERROR;
   }
 //}}}
 //{{{
 DRESULT SD_write (BYTE lun, const BYTE* buff, DWORD sector, UINT count) {
 
-  gWriteStatus = 0;
-
   if (HAL_SD_WriteBlocks_DMA (&gSdHandle, (BYTE*)buff, sector, count) == HAL_OK) {
-    int wait = 0;
-    while (gWriteStatus == 0)
-      wait++;
-    while (getCardState() != MSD_OK)
-      wait++;
-
-    gWriteStatus = 0;
-    return RES_OK;
+    auto event = osMessageGet (gSdQueueId, SD_TIMEOUT);
+    if (event.status == osEventMessage) {
+      if (event.value.v == WRITE_CPLT_MSG) {
+        auto ticks2 = osKernelSysTick();
+        while (ticks2 < osKernelSysTick() + SD_TIMEOUT) {
+          if (HAL_SD_GetCardState (&gSdHandle) == HAL_SD_CARD_TRANSFER)
+            return  RES_OK;
+          osDelay (1);
+          }
+        }
+      }
     }
 
-  gWriteStatus = 0;
   return RES_ERROR;
   }
 //}}}
