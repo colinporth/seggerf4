@@ -27,7 +27,7 @@
       arm_target_device_name="STM32F429ZI"
       arm_target_interface_type="SWD"
       c_preprocessor_definitions="FT2_BUILD_LIBRARY"
-      c_user_include_directories=".;../CMSIS;../drivers/Inc;../freetype/Inc;../system;../common;../LibJPEG/include"
+      c_user_include_directories=".;../CMSIS;../drivers/Inc;../freetype/Inc;../system;../common;../LibJPEG/include;../FreeRTOS/include;../FreeRTOS/CMSIS_RTOS;../FreeRTOS/portable/GCC/ARM_CM4F"
       cpp_enable_rtti="Yes"
       debug_target_connection="J-Link"
       debug_type_file="$(StudioDir)/bin/STLport.xml"
@@ -75,23 +75,18 @@
     </folder>
     <folder Name="inc">
       <file file_name="FreeSansBold.h" />
-      <file file_name="heap.h" />
-      <file file_name="iPic.h" />
       <file file_name="stm32f4xx.h" />
       <file file_name="stm32f4xx_hal_conf.h" />
       <file file_name="stm32f429i_discovery.h" />
       <file file_name="utils.h" />
-      <file file_name="cDecodePic.h" />
-      <file file_name="cGifPic.h" />
-      <file file_name="cJpegPic.h" />
       <file file_name="cLcd.h" />
       <file file_name="cmsis_gcc.h" />
       <file file_name="core_cm4.h" />
-      <file file_name="cPngPic.h" />
       <file file_name="stm32f429xx.h" />
       <file file_name="gyro.h" />
-      <file file_name="stm32f429i_discovery_sd.h" />
       <file file_name="ffconf.h" />
+      <file file_name="FreeRTOSConfig.h" />
+      <file file_name="sd.h" />
     </folder>
     <folder Name="drivers">
       <folder Name="inc">
@@ -271,11 +266,9 @@
     </folder>
     <folder Name="common">
       <file file_name="../common/utils.cpp" />
-      <file file_name="../common/heap_5.c" />
       <folder Name="inc">
         <file file_name="../common/cTraceVec.h" />
         <file file_name="../common/cPointRect.h" />
-        <file file_name="../common/heap.h" />
         <file file_name="../common/utils.h" />
         <file file_name="../common/font.h" />
       </folder>
@@ -350,6 +343,31 @@
         <file file_name="../LibJPEG/include/jversion.h" />
         <file file_name="../LibJPEG/include/transupp.h" />
       </folder>
+    </folder>
+    <folder Name="FreeRTOS">
+      <file file_name="../FreeRTOS/list.c" />
+      <file file_name="../FreeRTOS/queue.c" />
+      <file file_name="../FreeRTOS/tasks.c" />
+      <file file_name="../FreeRTOS/timers.c" />
+      <folder Name="inc">
+        <file file_name="../FreeRTOS/portable/GCC/ARM_CM4F/portmacro.h" />
+        <file file_name="../FreeRTOS/include/event_groups.h" />
+        <file file_name="../FreeRTOS/include/FreeRTOS.h" />
+        <file file_name="../FreeRTOS/include/list.h" />
+        <file file_name="../FreeRTOS/include/mpu_prototypes.h" />
+        <file file_name="../FreeRTOS/include/mpu_wrappers.h" />
+        <file file_name="../FreeRTOS/include/portable.h" />
+        <file file_name="../FreeRTOS/include/projdefs.h" />
+        <file file_name="../FreeRTOS/include/queue.h" />
+        <file file_name="../FreeRTOS/include/semphr.h" />
+        <file file_name="../FreeRTOS/include/StackMacros.h" />
+        <file file_name="../FreeRTOS/include/task.h" />
+        <file file_name="../FreeRTOS/include/timers.h" />
+        <file file_name="../FreeRTOS/include/croutine.h" />
+      </folder>
+      <file file_name="../FreeRTOS/portable/GCC/ARM_CM4F/port.c" />
+      <file file_name="../FreeRTOS/portable/MemMang/heap_5.c" />
+      <file file_name="../FreeRTOS/CMSIS_RTOS/cmsis_os.c" />
     </folder>
   </project>
 </solution>

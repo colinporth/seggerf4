@@ -26,7 +26,7 @@
 
 
 #include <ft2build.h>
-#include "heap.h"
+#include "cmsis_os.h"
 #include FT_CONFIG_CONFIG_H
 #include FT_INTERNAL_DEBUG_H
 #include FT_INTERNAL_STREAM_H
