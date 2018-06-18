@@ -1,6 +1,8 @@
 // main.cpp
 //{{{  includes
 #include "cmsis_os.h"
+#include "semphr.h"
+
 #include <vector>
 #include "cLcd.h"
 
@@ -198,6 +200,7 @@ FATFS SDFatFs;
 char SDPath[4];
 std::vector<std::string> mFileVec;
 std::vector<cLcd::cTile*> mTileVec;
+SemaphoreHandle_t xSemaphore = NULL;
 
 //{{{  trace
 int globalCounter = 0;
@@ -617,7 +620,7 @@ void sdRamInit() {
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
-  HAL_Delay (100);
+  //HAL_Delay (100);
 
   //{{{  send PALL prechargeAll command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_PALL |
@@ -686,7 +689,7 @@ void sdRamTest (int iterations, uint16_t* addr, uint32_t len) {
 //}}}
 
 //{{{
-void readDirectory (const std::string& dirPath) {
+void loadDirectory (const std::string& dirPath, const std::string ext) {
 
   DIR dir;
   if (f_opendir (&dir, dirPath.c_str()) == FR_OK) {
@@ -699,9 +702,12 @@ void readDirectory (const std::string& dirPath) {
 
       std::string filePath = dirPath + "/" + filinfo.fname;
       if (filinfo.fattrib & AM_DIR)
-        readDirectory (filePath);
-      else
-        lcd->debug (filePath);
+        loadDirectory (filePath, ext);
+      else {
+        auto found = filePath.find (ext);
+        if (found == filePath.size() - 4)
+          mFileVec.push_back (filePath);
+        }
       }
 
     f_closedir (&dir);
@@ -713,24 +719,24 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 
   FILINFO filInfo;
   if (f_stat (fileName.c_str(), &filInfo)) {
-    lcd->debug (COL_RED, fileName + " not found");
+    lcd->info (COL_RED, fileName + " not found");
     return nullptr;
     }
 
-  lcd->debug ("loadFile " + fileName + " bytes:" + dec ((int)(filInfo.fsize)) + " " +
-              dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63) + " " +
-              dec (filInfo.fdate & 31) + ":" + dec ((filInfo.fdate >> 5) & 15) + ":" + dec ((filInfo.fdate >> 9) + 1980)
-              );
+  lcd->info ("loadFile " + fileName + " bytes:" + dec ((int)(filInfo.fsize)) + " " +
+             dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63) + " " +
+             dec (filInfo.fdate & 31) + ":" + dec ((filInfo.fdate >> 5) & 15) + ":" + dec ((filInfo.fdate >> 9) + 1980)
+             );
 
   FIL gFile = { 0 };
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
-    lcd->debug (COL_RED, fileName + " not opened");
+    lcd->info (COL_RED, fileName + " not opened");
     return nullptr;
     }
 
   auto buf = (uint8_t*)pvPortMalloc (filInfo.fsize);
   if (!buf)
-    lcd->debug (COL_RED, "buf fail");
+    lcd->info (COL_RED, "buf fail");
 
   UINT bytesRead = 0;
   f_read (&gFile, buf, (UINT)filInfo.fsize, &bytesRead);
@@ -745,14 +751,14 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 
     jpeg_mem_src (&mCinfo, buf, bytesRead);
     jpeg_read_header (&mCinfo, TRUE);
-    lcd->debug (COL_YELLOW, "- src " + dec(mCinfo.image_width) + " " + dec(mCinfo.image_height));
+    lcd->info (COL_YELLOW, "- src " + dec(mCinfo.image_width) + " " + dec(mCinfo.image_height));
 
     mCinfo.dct_method = JDCT_FLOAT;
     mCinfo.out_color_space = JCS_RGB;
     mCinfo.scale_num = 1;
     mCinfo.scale_denom = scale;
     jpeg_start_decompress (&mCinfo);
-    lcd->debug (COL_YELLOW, "- dst  " + dec(mCinfo.output_width) + " " + dec(mCinfo.output_height));
+    lcd->info (COL_YELLOW, "- dst  " + dec(mCinfo.output_width) + " " + dec(mCinfo.output_height));
 
     auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height * 2);
     auto tile = new cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
@@ -768,62 +774,19 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     jpeg_finish_decompress (&mCinfo);
     jpeg_destroy_decompress (&mCinfo);
 
-    lcd->debug (COL_YELLOW, "- loaded");
+    lcd->info (COL_YELLOW, "- loaded");
     return tile;
     }
   else {
-    lcd->debug (COL_RED, "loadFile read failed");
+    lcd->info (COL_RED, "loadFile read failed");
     vPortFree (buf);
     return nullptr;
     }
   }
 //}}}
-//{{{
-void loadDirectory (const std::string& dirPath, const std::string ext1, const std::string ext2) {
-
-  DIR dir;
-  if (f_opendir (&dir, dirPath.c_str()) == FR_OK) {
-    while (true) {
-      FILINFO filinfo;
-      if (f_readdir (&dir, &filinfo) != FR_OK || !filinfo.fname[0])
-        break;
-      if (filinfo.fname[0] == '.')
-        continue;
-
-      std::string filePath = dirPath + "/" + filinfo.fname;
-      if (filinfo.fattrib & AM_DIR)
-        loadDirectory (filePath, ext1, ext2);
-      else {
-        auto found = filePath.find (ext1);
-        if (found == filePath.size()-4) {
-          lcd->debug ("found ext1 " + filePath);
-          mFileVec.push_back (filePath);
-          }
-        else {
-          auto found = filePath.find (ext2);
-          if (found == filePath.size()-4) {
-            lcd->debug ("found ext2 " + filePath);
-            mFileVec.push_back (filePath);
-            }
-          }
-        }
-      }
-
-    f_closedir (&dir);
-    }
-  }
-//}}}
 
 //{{{
-void appThread (void* arg) {
-
-  cTraceVec mTraceVec;
-  mTraceVec.addTrace (1024, 1, 3);
-
-  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
-  lcd->init ("Screen Test " + kHello);
-  lcd->render();
-  lcd->displayOn();
+void loadThread (void* arg) {
 
   if (FATFS_LinkDriver (&SD_Driver, SDPath) == 0) {
     if (f_mount (&SDFatFs, (TCHAR const*)SDPath, 1) == FR_OK) {
@@ -834,17 +797,28 @@ void appThread (void* arg) {
       lcd->info ("sdCard mounted label:" + std::string(label));
       }
     else
-      lcd->debug (COL_RED, "sdCard - not mounted");
+      lcd->info (COL_RED, "sdCard - not mounted");
     }
   else
-    lcd->debug (COL_RED, "sdCard - no driver");
+    lcd->info (COL_RED, "sdCard - no driver");
 
-  loadDirectory ("", ".jpg", ".JPG");
-  int items = mFileVec.size();
-  int rows = int(sqrt (float(items))) + 1;
+  loadDirectory ("", ".jpg");
+  for (auto file : mFileVec) {
+    auto tile = loadFile (file, 3);
+    //xSemaphoreTake (xSemaphore, 0);
+    mTileVec.push_back (tile);
+    //xSemaphoreGive (xSemaphore);
+    }
+  }
+//}}}
+//{{{
+void displayThread (void* arg) {
 
-  for (auto file : mFileVec)
-    mTileVec.push_back (loadFile (file, 3));
+  //cTraceVec mTraceVec;
+  //mTraceVec.addTrace (1024, 1, 3);
+
+  lcd->render();
+  lcd->displayOn();
 
   //auto id = gyroInit();
   //lcd->info ("read id " + dec (id));
@@ -859,13 +833,20 @@ void appThread (void* arg) {
 
     lcd->start();
     lcd->clear (COL_BLACK);
+
+    int items = mFileVec.size();
+    int rows = int(sqrt (float(items))) + 1;
     int count = 0;
-    for (auto tile : mTileVec) {
-      lcd->sizeCpu (tile,
-                    (lcd->getWidth() / rows) * (count % rows),  (lcd->getHeight() / rows) * (count / rows),
-                    lcd->getWidth() / rows, lcd->getHeight() / rows);
-      count++;
-      }
+
+    //xSemaphoreTake (xSemaphore, 0);
+    //for (auto tile : mTileVec) {
+    //  lcd->sizeCpu (tile,
+    //                (lcd->getWidth() / rows) * (count % rows),  (lcd->getHeight() / rows) * (count / rows),
+    //                lcd->getWidth() / rows, lcd->getHeight() / rows);
+    //  count++;
+    //  }
+    //xSemaphoreGive (xSemaphore);
+
     //lcd->sizeCpu (mTile, 0,0, lcd->getWidth(), lcd->getHeight());
     lcd->showInfo (true);
     //mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
@@ -882,7 +863,15 @@ int main() {
   vPortDefineHeapRegions (kHeapRegions);
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
 
-  TaskHandle_t handle;
-  xTaskCreate ((TaskFunction_t)appThread, "app", 2048, 0, 3, &handle);
+  xSemaphore = xSemaphoreCreateMutex();
+  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
+  lcd->init ("Screen Test " + kHello);
+
+  TaskHandle_t displayHandle;
+  xTaskCreate ((TaskFunction_t)displayThread, "app", 4096, 0, 3, &displayHandle);
+
+  TaskHandle_t loadHandle;
+  xTaskCreate ((TaskFunction_t)loadThread, "load", 4096, 0, 3, &loadHandle);
+
   vTaskStartScheduler();
   }

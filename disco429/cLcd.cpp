@@ -125,7 +125,7 @@ void cLcd::info (uint16_t colour, std::string str) {
 
   if (tailing)
     mFirstLine = mLastLine - mNumDrawLines + 1;
-  }
+ }
 //}}}
 //{{{
 void cLcd::info (std::string str) {
@@ -722,7 +722,7 @@ void cLcd::present() {
   LTDC->SRCR = LTDC_SRCR_VBR | LTDC_SRCR_IMR;
   mFrameWait = true;
   while (mFrameWait) {
-    HAL_Delay (1);
+    osDelay (1);
     }
   mWaitTime = HAL_GetTick() - mWaitStartTime;
 

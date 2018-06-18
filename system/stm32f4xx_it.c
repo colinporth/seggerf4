@@ -12,5 +12,7 @@ void UsageFault_Handler() { while (1) { } }
 void DebugMon_Handler() { }
 //void PendSV_Handler() { }
 
-//void SysTick_Handler() { osSystickHandler(); }
-void SysTick_Handler() { HAL_IncTick(); }
+void SysTick_Handler() { 
+  osSystickHandler(); 
+  HAL_IncTick(); 
+  }

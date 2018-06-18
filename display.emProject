@@ -368,6 +368,7 @@
       <file file_name="../FreeRTOS/portable/GCC/ARM_CM4F/port.c" />
       <file file_name="../FreeRTOS/portable/MemMang/heap_5.c" />
       <file file_name="../FreeRTOS/CMSIS_RTOS/cmsis_os.c" />
+      <file file_name="../FreeRTOS/cpuUsage.c" />
     </folder>
   </project>
 </solution>
