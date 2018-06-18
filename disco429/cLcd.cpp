@@ -22,8 +22,12 @@ extern "C" {
     // line Interrupt
     if ((LTDC->ISR & LTDC_FLAG_LI) != RESET) {
       LTDC->ICR = LTDC_FLAG_LI;
-      if (cLcd::mFrameWait)
-        cLcd::mFrameWait = false;
+      if (cLcd::mFrameWait) {
+        portBASE_TYPE taskWoken = pdFALSE;
+        if (xSemaphoreGiveFromISR (cLcd::mFrameSem, &taskWoken) == pdTRUE)
+          portEND_SWITCHING_ISR (taskWoken);
+        }
+      cLcd::mFrameWait = false;
       }
 
     // register reload Interrupt
@@ -49,10 +53,25 @@ extern "C" {
       }
     }
   //}}}
+  //{{{
+  void DMA2D_IRQHandler() {
+
+    if (DMA2D->ISR & DMA2D_FLAG_TC) {
+      DMA2D->IFCR = DMA2D_FLAG_TC;
+
+      portBASE_TYPE taskWoken = pdFALSE;
+      if (xSemaphoreGiveFromISR (cLcd::mDma2dSem, &taskWoken) == pdTRUE)
+        portEND_SWITCHING_ISR (taskWoken);
+      }
+    }
+  //}}}
   }
 
 cLcd* cLcd::mLcd = nullptr;
 bool cLcd::mFrameWait = false;
+SemaphoreHandle_t cLcd::mFrameSem;
+cLcd::eDma2dWait cLcd::mDma2dWait = eWaitNone;
+SemaphoreHandle_t cLcd::mDma2dSem;
 
 //{{{
 class cFontChar {
@@ -80,6 +99,12 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
 void cLcd::init (std::string title) {
 
   ltdcInit (mBuffer[mDrawBuffer]);
+
+  vSemaphoreCreateBinary (mDma2dSem);
+  HAL_NVIC_SetPriority (DMA2D_IRQn, 0x0F, 0);
+  HAL_NVIC_EnableIRQ (DMA2D_IRQn);
+
+  vSemaphoreCreateBinary (mFrameSem);
   //DMA2D->AMTCR = 0x3F01;
 
   // font init
@@ -104,6 +129,14 @@ void cLcd::init (std::string title) {
 //}}}
 
 //{{{
+bool cLcd::changed() {
+  bool wasChanged = mChanged;
+  mChanged = false;
+  return wasChanged;
+  }
+//}}}
+
+//{{{
 void cLcd::setShowDebug (bool title, bool info, bool footer) {
 
   mShowTitle = title;
@@ -114,7 +147,7 @@ void cLcd::setShowDebug (bool title, bool info, bool footer) {
   }
 //}}}
 //{{{
-void cLcd::info (uint16_t colour, std::string str) {
+void cLcd::info (uint16_t colour, const std::string str) {
 
   bool tailing = mLastLine == (int)mFirstLine + mNumDrawLines - 1;
 
@@ -126,22 +159,24 @@ void cLcd::info (uint16_t colour, std::string str) {
 
   if (tailing)
     mFirstLine = mLastLine - mNumDrawLines + 1;
- }
+
+  mChanged = true;
+  }
 //}}}
 //{{{
-void cLcd::info (std::string str) {
+void cLcd::info (const std::string str) {
   info (COL_WHITE, str);
   }
 //}}}
 //{{{
-void cLcd::debug (uint16_t colour, std::string str) {
+void cLcd::debug (uint16_t colour, const std::string str) {
 
   info (colour, str);
   render();
   }
 //}}}
 //{{{
-void cLcd::debug (std::string str) {
+void cLcd::debug (const std::string str) {
   debug (COL_WHITE, str);
   }
 //}}}
@@ -149,6 +184,7 @@ void cLcd::debug (std::string str) {
 //{{{
 void cLcd::pixel (uint16_t colour, int16_t x, int16_t y) {
   *(mBuffer[mDrawBuffer] + y * getWidth() + x) = colour;
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -176,7 +212,8 @@ void cLcd::rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t
   //memcpy ((void*)(&DMA2D->OPFCCR), regs, 5*4);
 
   DMA2D->CR = DMA2D_R2M | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
-  mWait = true;
+  mDma2dWait = eWaitIrq;
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -237,7 +274,8 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
   ready();
   memcpy ((void*)(&DMA2D->FGMAR), regs, 15*4);
   DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
-  mWait = true;
+  mDma2dWait = eWaitIrq;
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -255,7 +293,8 @@ void cLcd::copy (cTile* srcTile, int16_t x, int16_t y) {
   DMA2D->OOR = getWidth() - srcTile->mWidth;
   DMA2D->NLR = (width << 16) | height;
   DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
-  mWait = true;
+  mDma2dWait = eWaitIrq;
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -275,10 +314,13 @@ void cLcd::copy90 (cTile* srcTile, int16_t x, int16_t y) {
     DMA2D->FGMAR = src;
     DMA2D->OMAR = dst;
     DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+    mDma2dWait = eWaitIrq;
+
     src += srcTile->mWidth * srcTile->mComponents;
     dst += kDstComponents;
     wait();
     }
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -312,6 +354,7 @@ void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     DMA2D->BGMAR = srcPtr;
     DMA2D->OMAR = dstPtr;
     DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+    mDma2dWait = eWaitIrq;
 
     blendIndex += blendCoeff;
     fccr = srcTile->mFormat | ((blendIndex >> 13) << 24);
@@ -345,6 +388,7 @@ void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     DMA2D->BGMAR = srcPtr;
     DMA2D->OMAR = dstPtr;
     DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
+    mDma2dWait = eWaitIrq;
 
     blendIndex += blendCoeff;
     fccr = kTempFormat | ((blendIndex >> 13) << 24);
@@ -357,6 +401,7 @@ void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t 
     //}}}
 
   vPortFree ((void*)tempBuf);
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -388,6 +433,7 @@ void cLcd::sizeCpu (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16
       dstPtr += getWidth() - width;
       }
     }
+  mChanged = true;
   }
 //}}}
 //{{{
@@ -420,6 +466,7 @@ void cLcd::sizeCpuBi (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint
                       (*srcy2x1 * xweight1 + *srcy2x2 * xweight2) * yweight2) >> 6) & 0xF800);
       }
     }
+  mChanged = true;
   }
 //}}}
 
@@ -618,10 +665,12 @@ void cLcd::line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2
     x += xinc2;                               /* Change the x as appropriate */
     y += yinc2;                               /* Change the y as appropriate */
     }
+
+  mChanged = true;
   }
 //}}}
 //{{{
-int cLcd::text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height) {
 
   auto xend = x + width;
   for (uint16_t i = 0; i < str.size(); i++) {
@@ -653,12 +702,6 @@ void cLcd::rgb888to565cpu (uint8_t* src, uint16_t* dst, uint16_t xsize, uint16_t
     uint8_t r = (*src++) & 0xF8;
     *dst++ = (r << 8) | (g << 3) | (b >> 3);
     }
-  }
-//}}}
-//{{{
-void cLcd::copy565cpu (uint16_t* src, uint16_t xsize, uint16_t ysize) {
-  ready();
-  memcpy (mBuffer[mDrawBuffer], src, xsize*ysize*2);
   }
 //}}}
 
@@ -724,10 +767,11 @@ void cLcd::present() {
   mWaitStartTime = HAL_GetTick();
   LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
   LTDC->SRCR = LTDC_SRCR_VBR | LTDC_SRCR_IMR;
+
   mFrameWait = true;
-  while (mFrameWait) {
-    osDelay (1);
-    }
+  xSemaphoreTake (mFrameSem, 100);
+  //while (mFrameWait)
+  //  osDelay (1);
   mWaitTime = HAL_GetTick() - mWaitStartTime;
 
   // flip
@@ -921,7 +965,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   }
 //}}}
 //{{{
-uint32_t cLcd::wait() {
+void cLcd::wait() {
 
   uint32_t took = 0;
   while (!(DMA2D->ISR & DMA2D_FLAG_TC))
@@ -929,19 +973,21 @@ uint32_t cLcd::wait() {
 
   DMA2D->IFCR |= DMA2D_IFSR_CTEIF | DMA2D_IFSR_CTCIF | DMA2D_IFSR_CTWIF |
                  DMA2D_IFSR_CCAEIF | DMA2D_IFSR_CCTCIF | DMA2D_IFSR_CCEIF;
-
-  return took;
   }
 //}}}
 //{{{
-uint32_t cLcd::ready() {
+void cLcd::ready() {
 
-  if (mWait) {
-    mWait = false;
-    return wait();
+
+  if (mDma2dWait == eWaitDone) {
+    while (!(DMA2D->ISR & DMA2D_FLAG_TC))
+      taskYIELD();
+    DMA2D->IFCR = DMA2D_FLAG_TC;
     }
+  else if (mDma2dWait == eWaitIrq)
+    xSemaphoreTake (mDma2dSem, 100);
 
-  return 0;
+  mDma2dWait = eWaitNone;
   }
 //}}}
 

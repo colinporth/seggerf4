@@ -1,5 +1,8 @@
 #pragma once
 //{{{  includes
+#include "cmsis_os.h"
+#include "semphr.h"
+
 #include "utils.h"
 #include "cPointRect.h"
 #include <map>
@@ -50,6 +53,7 @@ class cFontChar;
 
 class cLcd {
 public:
+  enum eDma2dWait { eWaitNone, eWaitDone, eWaitIrq };
   //{{{
   class cTile {
   public:
@@ -91,11 +95,12 @@ public:
   static uint16_t getFontHeight() { return FONT_HEIGHT; }
   static uint16_t getBigFontHeight() { return BIG_FONT_HEIGHT; }
 
+  bool changed();
   void setShowDebug (bool title, bool info, bool footer);
-  void info (uint16_t colour, std::string str);
-  void info (std::string str);
-  void debug (uint16_t colour, std::string str);
-  void debug (std::string str);
+  void info (uint16_t colour, const std::string str);
+  void info (const std::string str);
+  void debug (uint16_t colour, const std::string str);
+  void debug (const std::string str);
 
   void pixel (uint16_t colour, int16_t x, int16_t y);
   void rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height);
@@ -114,10 +119,9 @@ public:
   void ellipse (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius);
   void ellipseOutline (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius);
   void line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
-  int text (uint16_t colour, uint16_t fontHeight, std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height);
+  int text (uint16_t colour, uint16_t fontHeight, const std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height);
 
   void rgb888to565cpu (uint8_t* src, uint16_t* dst, uint16_t xsize, uint16_t ysize);
-  void copy565cpu (uint16_t* src, uint16_t xsize, uint16_t ysize);
 
   void start();
   void showInfo (bool force);
@@ -129,7 +133,12 @@ public:
   void press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc, int16_t yinc);
 
   static cLcd* mLcd;
+
   static bool mFrameWait;
+  static SemaphoreHandle_t mFrameSem;
+
+  static eDma2dWait mDma2dWait;
+  static SemaphoreHandle_t mDma2dSem;
 
 private:
   //{{{  const
@@ -145,8 +154,8 @@ private:
   void ltdcInit (uint16_t* frameBufferAddress);
   cFontChar* loadChar (uint16_t fontHeight, char ch);
 
-  uint32_t wait();
-  uint32_t ready();
+  void wait();
+  void ready();
 
   void reset();
   void displayTop();
@@ -155,6 +164,7 @@ private:
 
   //{{{  vars
   LTDC_HandleTypeDef LtdcHandler;
+  bool mChanged = true;
 
   int mStartTime = 0;
 
@@ -163,7 +173,7 @@ private:
   int mStringPos = 0;
 
   bool mShowTitle = true;
-  bool mShowInfo = true;
+  bool mShowInfo = false;
   bool mShowFooter = true;
 
   std::string mTitle;
@@ -200,7 +210,6 @@ private:
   uint32_t mDrawTime = 0;
   uint32_t mWaitStartTime = 0;
   uint32_t mWaitTime = 0;
-  bool mWait = false;
 
   cFontCharMap mFontCharMap;
 

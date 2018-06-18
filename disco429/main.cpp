@@ -794,24 +794,28 @@ void displayThread (void* arg) {
   lcd->displayOn();
 
   while (true) {
-    lcd->start();
-    lcd->clear (COL_BLACK);
+    if (lcd->changed()) {
+      lcd->start();
+      lcd->clear (COL_BLACK);
 
-    //xSemaphoreTake (xSemaphore, 0);
-    int items = mFileVec.size();
-    int rows = int(sqrt (float(items))) + 1;
-    int count = 0;
-    for (auto tile : mTileVec) {
-      lcd->copy (tile, (lcd->getWidth() / rows) * (count % rows),
-                          (lcd->getHeight() / rows) * (count / rows));
-                 //lcd->getWidth() / rows, lcd->getHeight() / rows);
-      count++;
+      //xSemaphoreTake (xSemaphore, 0);
+      int items = mFileVec.size();
+      int rows = int(sqrt (float(items))) + 1;
+      int count = 0;
+      for (auto tile : mTileVec) {
+        lcd->copy (tile, (lcd->getWidth() / rows) * (count % rows),
+                            (lcd->getHeight() / rows) * (count / rows));
+                   //lcd->getWidth() / rows, lcd->getHeight() / rows);
+        count++;
+        }
+      //xSemaphoreGive (xSemaphore);
+
+      lcd->showInfo (BSP_PB_GetState (BUTTON_KEY));
+      mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
+      lcd->present();
       }
-    //xSemaphoreGive (xSemaphore);
-
-    lcd->showInfo (true);
-    mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
-    lcd->present();
+    else
+      osDelay (1);
     }
   }
 //}}}
@@ -850,7 +854,7 @@ void gyroThread (void* arg) {
 
   while (true) {
     if (gyroGetFifoSrc() & 0x20)
-      osDelay (2);
+      osDelay (30);
     else {
       int16_t xyz[3];
       gyroGetXYZ (xyz);
