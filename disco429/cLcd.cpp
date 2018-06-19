@@ -635,6 +635,7 @@ void cLcd::drawInfo() {
   // draw footer
   text (COL_WHITE, getFontHeight(),
         "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
+        " p:" + dec(mPresents) +
         " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
         cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
   }
@@ -652,6 +653,8 @@ void cLcd::present() {
   //while (mFrameWait)
   //  osDelay (1);
   mWaitTime = HAL_GetTick() - mStartTime;
+
+  mPresents++;
 
   // flip
   mDrawBuffer = !mDrawBuffer;

@@ -201,6 +201,7 @@ private:
   uint32_t mStartTime = 0;
   uint32_t mDrawTime = 0;
   uint32_t mWaitTime = 0;
+  uint32_t mPresents = 0;
 
   cFontCharMap mFontCharMap;
 
