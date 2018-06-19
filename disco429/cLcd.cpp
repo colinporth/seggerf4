@@ -15,63 +15,66 @@
 #endif
 //}}}
 
-extern "C" {
-  //{{{
-  void LTDC_IRQHandler() {
-
-    // line Interrupt
-    if ((LTDC->ISR & LTDC_FLAG_LI) != RESET) {
-      LTDC->ICR = LTDC_FLAG_LI;
-      if (cLcd::mFrameWait) {
-        portBASE_TYPE taskWoken = pdFALSE;
-        if (xSemaphoreGiveFromISR (cLcd::mFrameSem, &taskWoken) == pdTRUE)
-          portEND_SWITCHING_ISR (taskWoken);
-        cLcd::mFrameWait = false;
-        }
-      }
-
-    // register reload Interrupt
-    if ((LTDC->ISR & LTDC_FLAG_RR) != RESET) {
-      LTDC->ICR = LTDC_FLAG_RR;
-      //cLcd::mLcd->debug (LCD_COLOR_YELLOW, "ltdc reload IRQ");
-      }
-    }
-  //}}}
-  //{{{
-  void LTDC_ER_IRQHandler() {
-
-    // transfer Error Interrupt
-    if ((LTDC->ISR &  LTDC_FLAG_TE) != RESET) {
-      LTDC->ICR = LTDC_IT_TE;
-      //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc te IRQ");
-      }
-
-    // FIFO underrun Interrupt
-    if ((LTDC->ISR &  LTDC_FLAG_FU) != RESET) {
-      LTDC->ICR = LTDC_FLAG_FU;
-      //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc fifoUnderrun IRQ");
-      }
-    }
-  //}}}
-  //{{{
-  void DMA2D_IRQHandler() {
-
-    if (DMA2D->ISR & DMA2D_FLAG_TC) {
-      DMA2D->IFCR = DMA2D_FLAG_TC;
-
-      portBASE_TYPE taskWoken = pdFALSE;
-      if (xSemaphoreGiveFromISR (cLcd::mDma2dSem, &taskWoken) == pdTRUE)
-        portEND_SWITCHING_ISR (taskWoken);
-      }
-    }
-  //}}}
-  }
-
+//{{{  static var inits
 cLcd* cLcd::mLcd = nullptr;
 bool cLcd::mFrameWait = false;
 SemaphoreHandle_t cLcd::mFrameSem;
 cLcd::eDma2dWait cLcd::mDma2dWait = eWaitNone;
 SemaphoreHandle_t cLcd::mDma2dSem;
+//}}}
+
+//{{{
+extern "C" {void LTDC_IRQHandler() {
+
+  // line Interrupt
+  if ((LTDC->ISR & LTDC_FLAG_LI) != RESET) {
+    LTDC->ICR = LTDC_FLAG_LI;
+    if (cLcd::mFrameWait) {
+      portBASE_TYPE taskWoken = pdFALSE;
+      if (xSemaphoreGiveFromISR (cLcd::mFrameSem, &taskWoken) == pdTRUE)
+        portEND_SWITCHING_ISR (taskWoken);
+      cLcd::mFrameWait = false;
+      }
+    }
+
+  // register reload Interrupt
+  if ((LTDC->ISR & LTDC_FLAG_RR) != RESET) {
+    LTDC->ICR = LTDC_FLAG_RR;
+    //cLcd::mLcd->debug (LCD_COLOR_YELLOW, "ltdc reload IRQ");
+    }
+  }
+}
+//}}}
+//{{{
+extern "C" {void LTDC_ER_IRQHandler() {
+
+  // transfer Error Interrupt
+  if ((LTDC->ISR &  LTDC_FLAG_TE) != RESET) {
+    LTDC->ICR = LTDC_IT_TE;
+    //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc te IRQ");
+    }
+
+  // FIFO underrun Interrupt
+  if ((LTDC->ISR &  LTDC_FLAG_FU) != RESET) {
+    LTDC->ICR = LTDC_FLAG_FU;
+    //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc fifoUnderrun IRQ");
+    }
+  }
+}
+//}}}
+//{{{
+extern "C" {void DMA2D_IRQHandler() {
+
+  if (DMA2D->ISR & DMA2D_FLAG_TC) {
+    DMA2D->IFCR = DMA2D_FLAG_TC;
+
+    portBASE_TYPE taskWoken = pdFALSE;
+    if (xSemaphoreGiveFromISR (cLcd::mDma2dSem, &taskWoken) == pdTRUE)
+      portEND_SWITCHING_ISR (taskWoken);
+    }
+  }
+}
+//}}}
 
 //{{{
 class cFontChar {
@@ -91,6 +94,17 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
   mBuffer[0] = buffer0;
   mBuffer[1] = buffer1;
   mLcd = this;
+
+  // consts
+  rectRegs[0] = kDstFormat;
+
+  stampRegs[1] = 0;
+  stampRegs[6] = kDstFormat;
+  stampRegs[7] = 0;
+  stampRegs[8] = 0;
+  stampRegs[9] = 0;
+  stampRegs[10] = kDstFormat;
+  stampRegs[11] = 0;
   }
 //}}}
 //{{{
@@ -168,19 +182,17 @@ void cLcd::debug (const std::string str) {
 
 //{{{
 void cLcd::rect (uint16_t colour, const cRect& r) {
-//__IO uint32_t OPFCCR;        /*!< DMA2D Output PFC Control Register,              Address offset: 0x34 */
-//__IO uint32_t OCOLR;         /*!< DMA2D Output Color Register,                    Address offset: 0x38 */
-//__IO uint32_t OMAR;          /*!< DMA2D Output Memory Address Register,           Address offset: 0x3C */
-//__IO uint32_t OOR;           /*!< DMA2D Output Offset Register,                   Address offset: 0x40 */
-//__IO uint32_t NLR;           /*!< DMA2D Number of Line Register,                  Address offset: 0x44 */
-  uint32_t regs[5];
-  regs[0] = kDstFormat;
-  regs[1] = colour;
-  regs[2] = uint32_t(mBuffer[mDrawBuffer] + r.top * getWidth() + r.left);
-  regs[3] = getWidth() - r.getWidth();
-  regs[4] = (r.getWidth() << 16) | r.getHeight();
+//__IO uint32_t OPFCCR  Output PFC Control Register,    Address offset: 0x34
+//__IO uint32_t OCOLR   Output Color Register,          Address offset: 0x38
+//__IO uint32_t OMAR    Output Memory Address Register, Address offset: 0x3C
+//__IO uint32_t OOR     Output Offset Register,         Address offset: 0x40
+//__IO uint32_t NLR     Number of Line Register,        Address offset: 0x44
+  rectRegs[1] = colour;
+  rectRegs[2] = uint32_t (mBuffer[mDrawBuffer] + r.top * getWidth() + r.left);
+  rectRegs[3] = getWidth() - r.getWidth();
+  rectRegs[4] = (r.getWidth() << 16) | r.getHeight();
   ready();
-  memcpy ((void*)(&DMA2D->OPFCCR), regs, 5*4);
+  memcpy ((void*)(&DMA2D->OPFCCR), rectRegs, 5*4);
 
   DMA2D->CR = DMA2D_R2M | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
@@ -188,21 +200,21 @@ void cLcd::rect (uint16_t colour, const cRect& r) {
 //}}}
 //{{{
 void cLcd::stamp (uint16_t colour, uint8_t* src, const cRect& r) {
-//__IO uint32_t FGMAR;         /*!< DMA2D Foreground Memory Address Register,       Address offset: 0x0C */
-//__IO uint32_t FGOR;          /*!< DMA2D Foreground Offset Register,               Address offset: 0x10 */
-//__IO uint32_t BGMAR;         /*!< DMA2D Background Memory Address Register,       Address offset: 0x14 */
-//__IO uint32_t BGOR;          /*!< DMA2D Background Offset Register,               Address offset: 0x18 */
-//__IO uint32_t FGPFCCR;       /*!< DMA2D Foreground PFC Control Register,          Address offset: 0x1C */
-//__IO uint32_t FGCOLR;        /*!< DMA2D Foreground Color Register,                Address offset: 0x20 */
-//__IO uint32_t BGPFCCR;       /*!< DMA2D Background PFC Control Register,          Address offset: 0x24 */
-//__IO uint32_t BGCOLR;        /*!< DMA2D Background Color Register,                Address offset: 0x28 */
-//__IO uint32_t FGCMAR;        /*!< DMA2D Foreground CLUT Memory Address Register,  Address offset: 0x2C */
-//__IO uint32_t BGCMAR;        /*!< DMA2D Background CLUT Memory Address Register,  Address offset: 0x30 */
-//__IO uint32_t OPFCCR;        /*!< DMA2D Output PFC Control Register,              Address offset: 0x34 */
-//__IO uint32_t OCOLR;         /*!< DMA2D Output Color Register,                    Address offset: 0x38 */
-//__IO uint32_t OMAR;          /*!< DMA2D Output Memory Address Register,           Address offset: 0x3C */
-//__IO uint32_t OOR;           /*!< DMA2D Output Offset Register,                   Address offset: 0x40 */
-//__IO uint32_t NLR;           /*!< DMA2D Number of Line Register,                  Address offset: 0x44 */
+//__IO uint32_t FGMAR;    Foreground Memory Address Register,       Address offset: 0x0C
+//__IO uint32_t FGOR;     Foreground Offset Register,               Address offset: 0x10
+//__IO uint32_t BGMAR;    Background Memory Address Register,       Address offset: 0x14
+//__IO uint32_t BGOR;     Background Offset Register,               Address offset: 0x18
+//__IO uint32_t FGPFCCR;  Foreground PFC Control Register,          Address offset: 0x1C
+//__IO uint32_t FGCOLR;   Foreground Color Register,                Address offset: 0x20
+//__IO uint32_t BGPFCCR;  Background PFC Control Register,          Address offset: 0x24
+//__IO uint32_t BGCOLR;   Background Color Register,                Address offset: 0x28
+//__IO uint32_t FGCMAR;   Foreground CLUT Memory Address Register,  Address offset: 0x2C
+//__IO uint32_t BGCMAR;   Background CLUT Memory Address Register,  Address offset: 0x30
+//__IO uint32_t OPFCCR;   Output PFC Control Register,              Address offset: 0x34
+//__IO uint32_t OCOLR;    Output Color Register,                    Address offset: 0x38
+//__IO uint32_t OMAR;     Output Memory Address Register,           Address offset: 0x3C
+//__IO uint32_t OOR;      Output Offset Register,                   Address offset: 0x40
+//__IO uint32_t NLR;      Number of Line Register,                  Address offset: 0x44
 //{{{  alternative code
 //  uint32_t address = mBuffer[mDrawBuffer] + y * getWidth()) + x;
 //  uint32_t col = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
@@ -223,25 +235,17 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, const cRect& r) {
 //  DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE | DMA2D_CR_START;
 //}}}
 
-  uint32_t regs[15];
-  regs[0] = (uint32_t)src;
-  regs[1] = 0;
-  regs[2] = uint32_t(mBuffer[mDrawBuffer] + r.top * getWidth() + r.left);
-  regs[3] = getWidth() - r.getWidth();
-  regs[4] = DMA2D_INPUT_A8;
-  regs[5] = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
-  regs[6] = kDstFormat;
-  regs[7] = 0;
-  regs[8] = 0;
-  regs[9] = 0;
-  regs[10] = kDstFormat;
-  regs[11] = 0;
-  regs[12] = regs[2];
-  regs[13] = regs[3];
-  regs[14] = (r.getWidth() << 16) | r.getHeight();
+  stampRegs[0] = (uint32_t)src;
+  stampRegs[2] = uint32_t(mBuffer[mDrawBuffer] + r.top * getWidth() + r.left);
+  stampRegs[3] = getWidth() - r.getWidth();
+  stampRegs[4] = DMA2D_INPUT_A8;
+  stampRegs[5] = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
+  stampRegs[12] = stampRegs[2];
+  stampRegs[13] = stampRegs[3];
+  stampRegs[14] = (r.getWidth() << 16) | r.getHeight();
 
   ready();
-  memcpy ((void*)(&DMA2D->FGMAR), regs, 15*4);
+  memcpy ((void*)(&DMA2D->FGMAR), stampRegs, 15*4);
   DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
   }
@@ -598,7 +602,7 @@ void cLcd::rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize) {
 
 //{{{
 void cLcd::start() {
-  mDrawStartTime = HAL_GetTick();
+  mStartTime = HAL_GetTick();
   }
 //}}}
 //{{{
@@ -616,8 +620,8 @@ void cLcd::drawInfo() {
       int lineIndex = line % kMaxLines;
       auto x = 0;
       auto xinc = text (COL_GREEN, getFontHeight(),
-                        dec ((mLines[lineIndex].mTime-mStartTime) / 1000) + "." +
-                        dec ((mLines[lineIndex].mTime-mStartTime) % 1000, 3, '0'),
+                        dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
+                        dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
                         cRect(x, y, getWidth(), getBoxHeight()));
       x += xinc + 3;
 
@@ -639,17 +643,15 @@ void cLcd::drawInfo() {
 void cLcd::present() {
 
   ready();
-  mDrawTime = HAL_GetTick() - mDrawStartTime;
-
-  mWaitStartTime = HAL_GetTick();
-  LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
-  LTDC->SRCR = LTDC_SRCR_VBR | LTDC_SRCR_IMR;
+  mDrawTime = HAL_GetTick() - mStartTime;
 
   mFrameWait = true;
-  xSemaphoreTake (mFrameSem, 100);
+  LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
+  LTDC->SRCR = LTDC_SRCR_VBR;
+  xSemaphoreTake (mFrameSem, 1000);
   //while (mFrameWait)
   //  osDelay (1);
-  mWaitTime = HAL_GetTick() - mDrawStartTime;
+  mWaitTime = HAL_GetTick() - mStartTime;
 
   // flip
   mDrawBuffer = !mDrawBuffer;
@@ -854,7 +856,7 @@ void cLcd::reset() {
 
   for (auto i = 0; i < kMaxLines; i++)
     mLines[i].clear();
-  mStartTime = HAL_GetTick();
+  mBaseTime = HAL_GetTick();
   mCurLine = 0;
   }
 //}}}

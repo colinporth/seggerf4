@@ -154,10 +154,11 @@ private:
   void reset();
 
   //{{{  vars
+  uint32_t rectRegs[5];
+  uint32_t stampRegs[15];
+
   LTDC_HandleTypeDef LtdcHandler;
   bool mChanged = true;
-
-  int mStartTime = 0;
 
   float mFirstLine = 0;
   int mNumDrawLines = 0;
@@ -196,9 +197,9 @@ private:
   uint16_t* mBuffer[2] = {nullptr, nullptr};
   uint16_t* mCurFrameBufferAddress = nullptr;
 
-  uint32_t mDrawStartTime = 0;
+  uint32_t mBaseTime = 0;
+  uint32_t mStartTime = 0;
   uint32_t mDrawTime = 0;
-  uint32_t mWaitStartTime = 0;
   uint32_t mWaitTime = 0;
 
   cFontCharMap mFontCharMap;
