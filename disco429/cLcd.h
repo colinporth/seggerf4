@@ -86,7 +86,7 @@ public:
   cLcd (uint16_t* buffer0, uint16_t* buffer1);
   ~cLcd() {}
 
-  void init (std::string title);
+  void init (const std::string& title);
   static uint16_t getWidth() { return LCD_WIDTH; }
   static uint16_t getHeight() { return LCD_HEIGHT; }
   static cPoint getSize() { return cPoint (LCD_WIDTH, LCD_HEIGHT); }

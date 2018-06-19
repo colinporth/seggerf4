@@ -94,7 +94,7 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
   }
 //}}}
 //{{{
-void cLcd::init (std::string title) {
+void cLcd::init (const std::string& title) {
 
   ltdcInit (mBuffer[mDrawBuffer]);
 
