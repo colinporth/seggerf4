@@ -399,8 +399,10 @@ void cLcd::rectClipped (uint16_t colour, cRect r) {
     return;
   if (r.top >= getHeight())
     return;
+
   if (r.right <= 0)
     return;
+
   if (r.bottom <= 0)
     return;
 
@@ -408,14 +410,15 @@ void cLcd::rectClipped (uint16_t colour, cRect r) {
     r.left = 0;
   if (r.right > getWidth())
     r.right = getWidth();
+
   if (r.top < 0)
     r.top = 0;
   if (r.bottom > getHeight())
     r.bottom = getHeight();
 
-  if (getWidth() <= 0)
+  if (!getWidth() <= 0)
     return;
-  if (getHeight() <= 0)
+  if (!getHeight() <= 0)
     return;
 
   rect (colour, r);
@@ -628,7 +631,7 @@ void cLcd::drawInfo() {
   // draw footer
   text (COL_WHITE, getFontHeight(),
         "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
-        " " + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms",
+        " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
         cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
   }
 //}}}
