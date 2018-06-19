@@ -347,7 +347,6 @@
     <folder Name="FreeRTOS">
       <file file_name="../FreeRTOS/list.c" />
       <file file_name="../FreeRTOS/queue.c" />
-      <file file_name="../FreeRTOS/tasks.c" />
       <file file_name="../FreeRTOS/timers.c" />
       <folder Name="inc">
         <file file_name="../FreeRTOS/portable/GCC/ARM_CM4F/portmacro.h" />
@@ -369,6 +368,7 @@
       <file file_name="../FreeRTOS/portable/MemMang/heap_5.c" />
       <file file_name="../FreeRTOS/CMSIS_RTOS/cmsis_os.c" />
       <file file_name="../FreeRTOS/cpuUsage.c" />
+      <file file_name="../FreeRTOS/tasksMalloc.c" />
     </folder>
   </project>
 </solution>
