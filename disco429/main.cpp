@@ -810,7 +810,7 @@ void displayThread (void* arg) {
         }
       //xSemaphoreGive (xSemaphore);
 
-      lcd->drawInfo(); 
+      lcd->drawInfo();
       mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
       lcd->present();
       }
@@ -883,11 +883,11 @@ int main() {
   TaskHandle_t displayHandle;
   xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 4, &displayHandle);
 
-  TaskHandle_t loadHandle;
-  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
+  //TaskHandle_t loadHandle;
+  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
 
-  //TaskHandle_t gyroHandle;
-  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
+  TaskHandle_t gyroHandle;
+  xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
 
   vTaskStartScheduler();
   }
