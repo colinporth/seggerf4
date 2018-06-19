@@ -416,9 +416,9 @@ void cLcd::rectClipped (uint16_t colour, cRect r) {
   if (r.bottom > getHeight())
     r.bottom = getHeight();
 
-  if (!getWidth() <= 0)
+  if (r.getWidth() <= 0)
     return;
-  if (!getHeight() <= 0)
+  if (r.getHeight() <= 0)
     return;
 
   rect (colour, r);

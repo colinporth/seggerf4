@@ -810,7 +810,7 @@ void displayThread (void* arg) {
         }
       //xSemaphoreGive (xSemaphore);
 
-      lcd->drawInfo(); 
+      lcd->drawInfo();
       mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
       lcd->present();
       }
@@ -861,6 +861,7 @@ void gyroThread (void* arg) {
       mTraceVec.addSample (0, xyz[0]);
       mTraceVec.addSample (1, xyz[1]);
       mTraceVec.addSample (2, xyz[2]);
+      lcd->info ("gyroId " + dec (xyz[0]) + " " + dec (xyz[1]) +" " + dec (xyz[2]));
       }
     }
   }
@@ -882,12 +883,10 @@ int main() {
 
   TaskHandle_t displayHandle;
   xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 4, &displayHandle);
-
   TaskHandle_t loadHandle;
   xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
-
   //TaskHandle_t gyroHandle;
-  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
+  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 4, &gyroHandle);
 
   vTaskStartScheduler();
   }
