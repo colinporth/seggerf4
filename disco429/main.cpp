@@ -882,11 +882,11 @@ int main() {
   mTraceVec.addTrace (1024, 1, 3);
 
   TaskHandle_t displayHandle;
-  xTaskCreate ((TaskFunction_t)displayThread, "app", 10000, 0, 4, &displayHandle);
+  xTaskCreate ((TaskFunction_t)displayThread, "app", 1000, 0, 4, &displayHandle);
   TaskHandle_t loadHandle;
   xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
   //TaskHandle_t gyroHandle;
-  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 4, &gyroHandle);
+  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 1000, 0, 4, &gyroHandle);
 
   vTaskStartScheduler();
   }

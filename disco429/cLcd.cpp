@@ -17,8 +17,11 @@
 
 //{{{  static var inits
 cLcd* cLcd::mLcd = nullptr;
-bool cLcd::mFrameWait = false;
+
+uint16_t* cLcd::mShowBuffer = nullptr;
+
 SemaphoreHandle_t cLcd::mFrameSem;
+
 cLcd::eDma2dWait cLcd::mDma2dWait = eWaitNone;
 SemaphoreHandle_t cLcd::mDma2dSem;
 //}}}
@@ -28,17 +31,20 @@ extern "C" {void LTDC_IRQHandler() {
 
   // line Interrupt
   if ((LTDC->ISR & LTDC_FLAG_LI) != RESET) {
+    LTDC->IER &= ~(LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI);
     LTDC->ICR = LTDC_FLAG_LI;
-    if (cLcd::mFrameWait) {
-      portBASE_TYPE taskWoken = pdFALSE;
-      if (xSemaphoreGiveFromISR (cLcd::mFrameSem, &taskWoken) == pdTRUE)
-        portEND_SWITCHING_ISR (taskWoken);
-      cLcd::mFrameWait = false;
-      }
+
+    LTDC_Layer1->CFBAR = (uint32_t)cLcd::mShowBuffer;
+    LTDC->SRCR = LTDC_SRCR_IMR;
+
+    portBASE_TYPE taskWoken = pdFALSE;
+    if (xSemaphoreGiveFromISR (cLcd::mFrameSem, &taskWoken) == pdTRUE)
+      portEND_SWITCHING_ISR (taskWoken);
     }
 
   // register reload Interrupt
   if ((LTDC->ISR & LTDC_FLAG_RR) != RESET) {
+    LTDC->IER &= ~LTDC_FLAG_RR;
     LTDC->ICR = LTDC_FLAG_RR;
     //cLcd::mLcd->debug (LCD_COLOR_YELLOW, "ltdc reload IRQ");
     }
@@ -50,14 +56,16 @@ extern "C" {void LTDC_ER_IRQHandler() {
 
   // transfer Error Interrupt
   if ((LTDC->ISR &  LTDC_FLAG_TE) != RESET) {
+    LTDC->IER &= ~(LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI);
     LTDC->ICR = LTDC_IT_TE;
-    //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc te IRQ");
+    cLcd::mLcd->info (COL_RED, "ltdc te IRQ");
     }
 
   // FIFO underrun Interrupt
   if ((LTDC->ISR &  LTDC_FLAG_FU) != RESET) {
+    LTDC->IER &= ~(LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI);
     LTDC->ICR = LTDC_FLAG_FU;
-    //cLcd::mLcd->debug (LCD_COLOR_RED, "ltdc fifoUnderrun IRQ");
+    cLcd::mLcd->info (COL_RED, "ltdc fifoUnderrun IRQ");
     }
   }
 }
@@ -646,12 +654,11 @@ void cLcd::present() {
   ready();
   mDrawTime = HAL_GetTick() - mStartTime;
 
-  mFrameWait = true;
-  LTDC_Layer1->CFBAR = (uint32_t)mBuffer[mDrawBuffer];
-  LTDC->SRCR = LTDC_SRCR_VBR;
+  // enable interrupts
+  mShowBuffer = mBuffer[mDrawBuffer];
+  LTDC->IER = LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI;
+
   xSemaphoreTake (mFrameSem, 1000);
-  //while (mFrameWait)
-  //  osDelay (1);
   mWaitTime = HAL_GetTick() - mStartTime;
 
   mPresents++;
@@ -660,6 +667,7 @@ void cLcd::present() {
   mDrawBuffer = !mDrawBuffer;
   }
 //}}}
+
 //{{{
 void cLcd::render() {
 
@@ -804,11 +812,8 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
 
   // set line interupt line number
   LTDC->LIPCR = 0;
+  LTDC->ICR = LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI;
 
-  // clear interrupts
-  LTDC->IER = LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI;
-
-  mFrameWait = false;
   HAL_NVIC_SetPriority (LTDC_IRQn, 0xE, 0);
   HAL_NVIC_EnableIRQ (LTDC_IRQn);
   }

@@ -129,8 +129,8 @@ public:
   void display (bool on);
 
   static cLcd* mLcd;
+  static uint16_t* mShowBuffer;
 
-  static bool mFrameWait;
   static SemaphoreHandle_t mFrameSem;
 
   static eDma2dWait mDma2dWait;
@@ -195,7 +195,6 @@ private:
 
   bool mDrawBuffer = false;
   uint16_t* mBuffer[2] = {nullptr, nullptr};
-  uint16_t* mCurFrameBufferAddress = nullptr;
 
   uint32_t mBaseTime = 0;
   uint32_t mStartTime = 0;
