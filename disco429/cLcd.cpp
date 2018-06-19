@@ -26,8 +26,8 @@ extern "C" {
         portBASE_TYPE taskWoken = pdFALSE;
         if (xSemaphoreGiveFromISR (cLcd::mFrameSem, &taskWoken) == pdTRUE)
           portEND_SWITCHING_ISR (taskWoken);
+        cLcd::mFrameWait = false;
         }
-      cLcd::mFrameWait = false;
       }
 
     // register reload Interrupt
@@ -90,8 +90,6 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
 
   mBuffer[0] = buffer0;
   mBuffer[1] = buffer1;
-  updateNumDrawLines();
-
   mLcd = this;
   }
 //}}}
@@ -124,7 +122,6 @@ void cLcd::init (std::string title) {
   FT_Done_FreeType (FTlibrary);
 
   mTitle = title;
-  updateNumDrawLines();
   }
 //}}}
 
@@ -142,42 +139,25 @@ bool cLcd::changed() {
 //}}}
 
 //{{{
-void cLcd::setShowDebug (bool title, bool info, bool footer) {
-
-  mShowTitle = title;
-  mShowInfo = info;
-  mShowFooter = footer;
-
-  updateNumDrawLines();
-  }
-//}}}
-//{{{
 void cLcd::info (uint16_t colour, const std::string str) {
 
-  bool tailing = mLastLine == (int)mFirstLine + mNumDrawLines - 1;
-
-  auto line = (mLastLine < mMaxLine-1) ? mLastLine+1 : mLastLine;
+  uint16_t line = mCurLine++ % kMaxLines;
   mLines[line].mTime = HAL_GetTick();
   mLines[line].mColour = colour;
   mLines[line].mString = str;
-  mLastLine = line;
-
-  if (tailing)
-    mFirstLine = mLastLine - mNumDrawLines + 1;
 
   mChanged = true;
   }
 //}}}
 //{{{
-void cLcd::info (const std::string str) {
-  info (COL_WHITE, str);
+void cLcd::debug (uint16_t colour, const std::string str) {
+  info (colour, str);
+  render();
   }
 //}}}
 //{{{
-void cLcd::debug (uint16_t colour, const std::string str) {
-
-  info (colour, str);
-  render();
+void cLcd::info (const std::string str) {
+  info (COL_WHITE, str);
   }
 //}}}
 //{{{
@@ -305,7 +285,9 @@ void cLcd::copy90 (cTile* srcTile, cPoint p) {
 
     src += srcTile->mWidth * srcTile->mComponents;
     dst += kDstComponents;
-    wait();
+
+    mDma2dWait = eWaitDone;
+    ready();
     }
   }
 //}}}
@@ -616,28 +598,22 @@ void cLcd::rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize) {
 
 //{{{
 void cLcd::start() {
-
   mDrawStartTime = HAL_GetTick();
   }
 //}}}
 //{{{
-void cLcd::showInfo (bool force) {
+void cLcd::drawInfo() {
 
   auto y = 0;
 
-  if ((mShowTitle || force) && !mTitle.empty()) {
-    // draw title
-    text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, y, getWidth(), y+getBoxHeight()));
-    y += getBoxHeight();
-    }
+  // draw title
+  text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, y, getWidth(), y+getBoxHeight()));
+  y += getBoxHeight();
 
-  if (mShowInfo || force) {
-    // draw info lines
-    auto lastLine = (int)mFirstLine + mNumDrawLines - 1;
-    if (lastLine > mLastLine)
-      lastLine = mLastLine;
-
-    for (auto lineIndex = (int)mFirstLine; lineIndex <= lastLine; lineIndex++) {
+  //if (BSP_PB_GetState (BUTTON_KEY)) {
+  for (auto displayLine = 0, line = mCurLine - kMaxLines; displayLine < kMaxLines; displayLine++, line++) {
+    if (line > 0) {
+      int lineIndex = line % kMaxLines;
       auto x = 0;
       auto xinc = text (COL_GREEN, getFontHeight(),
                         dec ((mLines[lineIndex].mTime-mStartTime) / 1000) + "." +
@@ -648,16 +624,15 @@ void cLcd::showInfo (bool force) {
       text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
             cRect(x, y, getWidth(), getHeight()));
 
-      y += getBoxHeight();
       }
+    y += getBoxHeight();
     }
 
-  if (mShowFooter || force)
-    // draw footer
-    text (COL_WHITE, getFontHeight(),
-          "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
-          " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
-          cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
+  // draw footer
+  text (COL_WHITE, getFontHeight(),
+        "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
+        " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
+        cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
   }
 //}}}
 //{{{
@@ -674,7 +649,7 @@ void cLcd::present() {
   xSemaphoreTake (mFrameSem, 100);
   //while (mFrameWait)
   //  osDelay (1);
-  mWaitTime = HAL_GetTick() - mWaitStartTime;
+  mWaitTime = HAL_GetTick() - mDrawStartTime;
 
   // flip
   mDrawBuffer = !mDrawBuffer;
@@ -685,23 +660,19 @@ void cLcd::render() {
 
   start();
   clear (COL_BLACK);
-  showInfo (true);
+  drawInfo();
   present();
   }
 //}}}
-
 //{{{
-void cLcd::displayOn() {
+void cLcd::display (bool on) {
 
-  // ADJ hi
-  GPIOD->BSRR = GPIO_PIN_13;
-  }
-//}}}
-//{{{
-void cLcd::displayOff() {
-
-  // ADJ lo
-  GPIOD->BSRR = GPIO_PIN_13 << 16;
+  if (on)
+    // ADJ hi
+    GPIOD->BSRR = GPIO_PIN_13;
+  else
+    // ADJ lo
+    GPIOD->BSRR = GPIO_PIN_13 << 16;
   }
 //}}}
 
@@ -838,19 +809,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   }
 //}}}
 //{{{
-void cLcd::wait() {
-
-  uint32_t took = 0;
-  while (!(DMA2D->ISR & DMA2D_FLAG_TC))
-    took++;
-
-  DMA2D->IFCR |= DMA2D_IFSR_CTEIF | DMA2D_IFSR_CTCIF | DMA2D_IFSR_CTWIF |
-                 DMA2D_IFSR_CCAEIF | DMA2D_IFSR_CCTCIF | DMA2D_IFSR_CCEIF;
-  }
-//}}}
-//{{{
 void cLcd::ready() {
-
 
   if (mDma2dWait == eWaitDone) {
     while (!(DMA2D->ISR & DMA2D_FLAG_TC))
@@ -893,35 +852,9 @@ cFontChar* cLcd::loadChar (uint16_t fontHeight, char ch) {
 //{{{
 void cLcd::reset() {
 
-  for (auto i = 0; i < mMaxLine; i++)
+  for (auto i = 0; i < kMaxLines; i++)
     mLines[i].clear();
-
   mStartTime = HAL_GetTick();
-  mLastLine = -1;
-  mFirstLine = 0;
-  }
-//}}}
-//{{{
-void cLcd::displayTop() {
-  mFirstLine = 0;
-  }
-//}}}
-//{{{
-void cLcd::displayTail() {
-  mFirstLine = (mLastLine > (int)mNumDrawLines-1) ? mLastLine - mNumDrawLines + 1 : 0;
-  }
-//}}}
-//{{{
-void cLcd::updateNumDrawLines() {
-
-  mStringPos = getBoxHeight()*3;
-
-  auto numDrawLines = getHeight() / getBoxHeight();
-  if (mShowTitle && !mTitle.empty())
-    numDrawLines--;
-  if (mShowFooter)
-    numDrawLines--;
-
-  mNumDrawLines = numDrawLines;
+  mCurLine = 0;
   }
 //}}}

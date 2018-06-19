@@ -791,7 +791,7 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 void displayThread (void* arg) {
 
   lcd->render();
-  lcd->displayOn();
+  lcd->display (true);
 
   while (true) {
     if (lcd->changed()) {
@@ -810,7 +810,7 @@ void displayThread (void* arg) {
         }
       //xSemaphoreGive (xSemaphore);
 
-      lcd->showInfo (true); //BSP_PB_GetState (BUTTON_KEY));
+      lcd->drawInfo(); 
       mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
       lcd->present();
       }

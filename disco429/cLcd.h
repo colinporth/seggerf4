@@ -98,10 +98,9 @@ public:
 
   void change();
   bool changed();
-  void setShowDebug (bool title, bool info, bool footer);
   void info (uint16_t colour, const std::string str);
-  void info (const std::string str);
   void debug (uint16_t colour, const std::string str);
+  void info (const std::string str);
   void debug (const std::string str);
 
   void rect (uint16_t colour, const cRect& r);
@@ -124,12 +123,10 @@ public:
   void rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize);
 
   void start();
-  void showInfo (bool force);
+  void drawInfo();
   void present();
   void render();
-
-  void displayOn();
-  void displayOff();
+  void display (bool on);
 
   static cLcd* mLcd;
 
@@ -153,13 +150,8 @@ private:
   void ltdcInit (uint16_t* frameBufferAddress);
   cFontChar* loadChar (uint16_t fontHeight, char ch);
 
-  void wait();
   void ready();
-
   void reset();
-  void displayTop();
-  void displayTail();
-  void updateNumDrawLines();
 
   //{{{  vars
   LTDC_HandleTypeDef LtdcHandler;
@@ -177,9 +169,8 @@ private:
 
   std::string mTitle;
 
-  int mLastLine = -1;
-  int mMaxLine = 256;
-
+  static const int kMaxLines = 28;
+  int mCurLine = 0;
   //{{{
   class cLine {
   public:
@@ -199,7 +190,7 @@ private:
     std::string mString;
     };
   //}}}
-  cLine mLines[256];
+  cLine mLines[kMaxLines];
 
   bool mDrawBuffer = false;
   uint16_t* mBuffer[2] = {nullptr, nullptr};
