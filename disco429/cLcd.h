@@ -89,12 +89,14 @@ public:
   void init (std::string title);
   static uint16_t getWidth() { return LCD_WIDTH; }
   static uint16_t getHeight() { return LCD_HEIGHT; }
+  static cPoint getSize() { return cPoint (LCD_WIDTH, LCD_HEIGHT); }
 
   static uint16_t getBoxHeight() { return BOX_HEIGHT; }
   static uint16_t getSmallFontHeight() { return SMALL_FONT_HEIGHT; }
   static uint16_t getFontHeight() { return FONT_HEIGHT; }
   static uint16_t getBigFontHeight() { return BIG_FONT_HEIGHT; }
 
+  void change();
   bool changed();
   void setShowDebug (bool title, bool info, bool footer);
   void info (uint16_t colour, const std::string str);
@@ -102,26 +104,24 @@ public:
   void debug (uint16_t colour, const std::string str);
   void debug (const std::string str);
 
-  void pixel (uint16_t colour, int16_t x, int16_t y);
-  void rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void copy (cTile* srcTile, int16_t x, int16_t y);
-  void copy90 (cTile* srcTile, int16_t x, int16_t y);
-  void size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void sizeCpu (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void sizeCpuBi (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height);
+  void rect (uint16_t colour, const cRect& r);
+  void stamp (uint16_t colour, uint8_t* src, const cRect& r);
+  void copy (cTile* srcTile, cPoint p);
+  void copy90 (cTile* srcTile, cPoint p);
+  void size (cTile* srcTile, const cRect& r);
+  void sizeBi (cTile* srcTile, const cRect& r);
+  void pixel (uint16_t colour, cPoint p);
 
   void clear (uint16_t colour);
-  void pixelClipped (uint16_t colour, int16_t x, int16_t y);
-  void stampClipped (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void rectClipped (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height);
-  void rectOutline (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height, uint8_t thickness);
-  void ellipse (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius);
-  void ellipseOutline (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius);
-  void line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
-  int text (uint16_t colour, uint16_t fontHeight, const std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height);
+  void stampClipped (uint16_t colour, uint8_t* src, cRect r);
+  void rectClipped (uint16_t colour, cRect r);
+  void rectOutline (uint16_t colour, const cRect& r, uint8_t thickness);
+  void ellipse (uint16_t colour, cPoint centre, cPoint radius);
+  void ellipseOutline (uint16_t colour, cPoint centre, cPoint radius);
+  void line (uint16_t colour, cPoint p1, cPoint p2);
+  int text (uint16_t colour, uint16_t fontHeight, const std::string str, cRect r);
 
-  void rgb888to565cpu (uint8_t* src, uint16_t* dst, uint16_t xsize, uint16_t ysize);
+  void rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize);
 
   void start();
   void showInfo (bool force);
@@ -130,7 +130,6 @@ public:
 
   void displayOn();
   void displayOff();
-  void press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc, int16_t yinc);
 
   static cLcd* mLcd;
 

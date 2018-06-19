@@ -957,9 +957,10 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="87" useTextEdit="1" useBinaryEdit="0" left="0" path="common/cTraceVec.h" selected="0" top="65" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="715" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="0" top="703" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="5" y="136" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/cLcd.cpp" selected="1" top="119" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="87" useTextEdit="1" useBinaryEdit="0" left="0" path="common/cTraceVec.h" selected="0" top="65" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="6" y="856" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/main.cpp" selected="0" top="827" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="197" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/cLcd.cpp" selected="0" top="187" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="10" y="189" useTextEdit="1" useBinaryEdit="0" left="0" path="disco429/sd.cpp" selected="1" top="189" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../common/cTraceVec.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="disco429" fileDialogDefaultFilter="*.h" autoConnectTarget="J-Link" buildConfiguration="Release" debugSearchFileMap="../CMSIS/core_cm4.h&#xa;&#xa;../common/cTraceVec.h&#xa;&#xa;../freetype/Inc/internal/ftcalc.h&#xa;&#xa;C:/projects/seggerf4/HardFaultHandler.S&#xa;&#xa;C:/projects/seggerf4/SEGGER_HardFaultHandler.c&#xa;&#xa;C:/projects/seggerf4/thumb_crt0.s&#xa;" fileDialogInitialDirectory="C:/Users/colin/Desktop" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

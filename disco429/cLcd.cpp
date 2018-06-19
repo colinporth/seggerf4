@@ -129,6 +129,11 @@ void cLcd::init (std::string title) {
 //}}}
 
 //{{{
+void cLcd::change() {
+  mChanged = true;
+  }
+//}}}
+//{{{
 bool cLcd::changed() {
   bool wasChanged = mChanged;
   mChanged = false;
@@ -182,13 +187,7 @@ void cLcd::debug (const std::string str) {
 //}}}
 
 //{{{
-void cLcd::pixel (uint16_t colour, int16_t x, int16_t y) {
-  *(mBuffer[mDrawBuffer] + y * getWidth() + x) = colour;
-  mChanged = true;
-  }
-//}}}
-//{{{
-void cLcd::rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::rect (uint16_t colour, const cRect& r) {
 //__IO uint32_t OPFCCR;        /*!< DMA2D Output PFC Control Register,              Address offset: 0x34 */
 //__IO uint32_t OCOLR;         /*!< DMA2D Output Color Register,                    Address offset: 0x38 */
 //__IO uint32_t OMAR;          /*!< DMA2D Output Memory Address Register,           Address offset: 0x3C */
@@ -197,19 +196,18 @@ void cLcd::rect (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t
   uint32_t regs[5];
   regs[0] = kDstFormat;
   regs[1] = colour;
-  regs[2] = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
-  regs[3] = getWidth() - width;
-  regs[4] = (width << 16) | height;
+  regs[2] = uint32_t(mBuffer[mDrawBuffer] + r.top * getWidth() + r.left);
+  regs[3] = getWidth() - r.getWidth();
+  regs[4] = (r.getWidth() << 16) | r.getHeight();
   ready();
   memcpy ((void*)(&DMA2D->OPFCCR), regs, 5*4);
 
   DMA2D->CR = DMA2D_R2M | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
-  mChanged = true;
   }
 //}}}
 //{{{
-void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::stamp (uint16_t colour, uint8_t* src, const cRect& r) {
 //__IO uint32_t FGMAR;         /*!< DMA2D Foreground Memory Address Register,       Address offset: 0x0C */
 //__IO uint32_t FGOR;          /*!< DMA2D Foreground Offset Register,               Address offset: 0x10 */
 //__IO uint32_t BGMAR;         /*!< DMA2D Background Memory Address Register,       Address offset: 0x14 */
@@ -248,8 +246,8 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
   uint32_t regs[15];
   regs[0] = (uint32_t)src;
   regs[1] = 0;
-  regs[2] = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
-  regs[3] = getWidth() - width;
+  regs[2] = uint32_t(mBuffer[mDrawBuffer] + r.top * getWidth() + r.left);
+  regs[3] = getWidth() - r.getWidth();
   regs[4] = DMA2D_INPUT_A8;
   regs[5] = ((colour & 0xF800) << 8) | ((colour & 0x07E0) << 5) | ((colour & 0x001F) << 3);
   regs[6] = kDstFormat;
@@ -260,36 +258,34 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t 
   regs[11] = 0;
   regs[12] = regs[2];
   regs[13] = regs[3];
-  regs[14] = (width << 16) | height;
+  regs[14] = (r.getWidth() << 16) | r.getHeight();
 
   ready();
   memcpy ((void*)(&DMA2D->FGMAR), regs, 15*4);
   DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
-  mChanged = true;
   }
 //}}}
 //{{{
-void cLcd::copy (cTile* srcTile, int16_t x, int16_t y) {
+void cLcd::copy (cTile* srcTile, cPoint p) {
 
-  uint16_t width = x + srcTile->mWidth > getWidth() ? getWidth() - x : srcTile->mWidth;
-  uint16_t height = y + srcTile->mHeight > getHeight() ? getHeight() - y : srcTile->mHeight;
+  uint16_t width = p.x + srcTile->mWidth > getWidth() ? getWidth() - p.x : srcTile->mWidth;
+  uint16_t height = p.y + srcTile->mHeight > getHeight() ? getHeight() - p.y : srcTile->mHeight;
 
   ready();
   DMA2D->FGPFCCR = srcTile->mFormat;
   DMA2D->FGMAR = (uint32_t)srcTile->mPiccy;
   DMA2D->FGOR = srcTile->mPitch - width;
   DMA2D->OPFCCR = kDstFormat;
-  DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
+  DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + p.y * getWidth() + p.x);
   DMA2D->OOR = getWidth() - srcTile->mWidth;
   DMA2D->NLR = (width << 16) | height;
   DMA2D->CR = DMA2D_M2M_PFC | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
-  mChanged = true;
   }
 //}}}
 //{{{
-void cLcd::copy90 (cTile* srcTile, int16_t x, int16_t y) {
+void cLcd::copy90 (cTile* srcTile, cPoint p) {
 
   uint32_t src = (uint32_t)srcTile->mPiccy;
   uint32_t dst = (uint32_t)mBuffer[mDrawBuffer];
@@ -311,137 +307,54 @@ void cLcd::copy90 (cTile* srcTile, int16_t x, int16_t y) {
     dst += kDstComponents;
     wait();
     }
-  mChanged = true;
   }
 //}}}
 //{{{
-void cLcd::size (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
-// 2 passs size with rotates, bilinear blend but broken
+void cLcd::size (cTile* srcTile, const cRect& r) {
 
-  auto tempBuf = (uint32_t)pvPortMalloc (srcTile->mWidth * height * kTempComponents);
+  uint32_t xStep16 = ((srcTile->mWidth - 1) << 16) / (r.getWidth() - 1);
+  uint32_t yStep16 = ((srcTile->mHeight - 1) << 16) / (r.getHeight() - 1);
 
-  // first pass
-  uint32_t srcBase = srcTile->mPiccy + ((srcTile->mY * srcTile->mPitch) + srcTile->mX) * srcTile->mComponents;
-  uint32_t blendCoeff = ((srcTile->mHeight-1) << 21) / height;
-  uint32_t blendIndex = blendCoeff >> 1;
-  uint16_t srcPitch = srcTile->mPitch * srcTile->mComponents;
-  uint32_t srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
-  uint32_t srcPtr1 = srcPtr + srcPitch;
-  uint32_t dstPtr = tempBuf;
-  uint32_t fccr = srcTile->mFormat | ((blendIndex >> 13) << 24);
-  uint16_t dstPitch = kTempComponents;
-
-  ready();
-  DMA2D->FGOR = 0;
-  DMA2D->BGPFCCR = 0xff000000 | srcTile->mFormat;
-  DMA2D->BGOR = 0;
-  DMA2D->OPFCCR = kTempFormat;
-  DMA2D->OOR = height - 1;
-  DMA2D->NLR = 0x10000 | srcTile->mWidth;
-  for (int i = 0; i < height; i++) {
-    //{{{  loop lines, src -> temp
-    DMA2D->FGPFCCR = fccr;
-    DMA2D->FGMAR = srcPtr1;
-    DMA2D->BGMAR = srcPtr;
-    DMA2D->OMAR = dstPtr;
-    DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
-    mDma2dWait = eWaitIrq;
-
-    blendIndex += blendCoeff;
-    fccr = srcTile->mFormat | ((blendIndex >> 13) << 24);
-    srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
-    srcPtr1 = srcPtr + srcPitch;
-    dstPtr += dstPitch;
-
-    wait();
-    }
-    //}}}
-
-  // second pass
-  srcBase = tempBuf;
-  blendCoeff = ((srcTile->mWidth-1) << 21) / width;
-  blendIndex = blendCoeff >> 1;
-  srcPitch = height * kTempComponents;
-  srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
-  srcPtr1 = srcPtr + srcPitch;
-  dstPtr = uint32_t(mBuffer[mDrawBuffer] + y * getWidth() + x);
-  fccr = kTempFormat | ((blendIndex >> 13) << 24);
-  dstPitch = kDstComponents;
-
-  DMA2D->BGPFCCR = 0xff000000 | kTempFormat;
-  DMA2D->OPFCCR  = kDstFormat;
-  DMA2D->OOR = width - 1;
-  DMA2D->NLR = 0x10000 | height;
-  for (int i = 0; i < width; i++) {
-    //{{{  loop columns, temp -> dst
-    DMA2D->FGPFCCR = fccr;
-    DMA2D->FGMAR = srcPtr1;
-    DMA2D->BGMAR = srcPtr;
-    DMA2D->OMAR = dstPtr;
-    DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
-    mDma2dWait = eWaitIrq;
-
-    blendIndex += blendCoeff;
-    fccr = kTempFormat | ((blendIndex >> 13) << 24);
-    srcPtr = srcBase + (blendIndex >> 21) * srcPitch;
-    srcPtr1 = srcPtr + srcPitch;
-    dstPtr += dstPitch;
-
-    wait();
-    }
-    //}}}
-
-  vPortFree ((void*)tempBuf);
-  mChanged = true;
-  }
-//}}}
-//{{{
-void cLcd::sizeCpu (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
-
-  uint32_t xStep16 = ((srcTile->mWidth - 1) << 16) / (width - 1);
-  uint32_t yStep16 = ((srcTile->mHeight - 1) << 16) / (height - 1);
-
-  auto dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
+  auto dstPtr = mBuffer[mDrawBuffer] + r.top * getWidth() + r.left;
 
   if (srcTile->mComponents == 2) {
     auto srcBase = (uint16_t*)(srcTile->mPiccy) + (srcTile->mY * srcTile->mPitch) + srcTile->mX;
-    for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + height) * yStep16); y16 += yStep16) {
+    for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + r.getHeight()) * yStep16); y16 += yStep16) {
       auto srcy1x1 = srcBase + (y16 >> 16) * srcTile->mPitch;
-      for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + width) * xStep16; x16 += xStep16)
+      for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + r.getWidth()) * xStep16; x16 += xStep16)
         *dstPtr++ = *(srcy1x1 + (x16 >> 16));
-      dstPtr += getWidth() - width;
+      dstPtr += getWidth() - r.getWidth();
       }
     }
 
   else {
     auto srcBase = (uint8_t*)(srcTile->mPiccy + ((srcTile->mY * srcTile->mPitch) + srcTile->mX) * srcTile->mComponents);
-    for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + height) * yStep16); y16 += yStep16) {
+    for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + r.getHeight()) * yStep16); y16 += yStep16) {
       auto srcy = srcBase + ((y16 >> 16) * srcTile->mPitch) * srcTile->mComponents;
-      for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + width) * xStep16; x16 += xStep16) {
+      for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + r.getWidth()) * xStep16; x16 += xStep16) {
         auto srcy1x1 = srcy + (x16 >> 16) * srcTile->mComponents;
         *dstPtr++ = ((*srcy1x1++) >> 3) | (((*srcy1x1++) & 0xFC) << 3) | (((*srcy1x1) & 0xF8) << 8);
         }
-      dstPtr += getWidth() - width;
+      dstPtr += getWidth() - r.getWidth();
       }
     }
-  mChanged = true;
   }
 //}}}
 //{{{
-void cLcd::sizeCpuBi (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::sizeBi (cTile* srcTile, const cRect& r) {
 // only for src->components = 3,4
 
-  uint32_t xStep16 = ((srcTile->mWidth - 1) << 16) / (width - 1);
-  uint32_t yStep16 = ((srcTile->mHeight - 1) << 16) / (height - 1);
+  uint32_t xStep16 = ((srcTile->mWidth - 1) << 16) / (r.getWidth() - 1);
+  uint32_t yStep16 = ((srcTile->mHeight - 1) << 16) / (r.getHeight() - 1);
 
-  uint16_t* dstPtr = mBuffer[mDrawBuffer] + y * getWidth() + x;
+  uint16_t* dstPtr = mBuffer[mDrawBuffer] + r.top * getWidth() + r.left;
 
   uint32_t ySrcOffset = srcTile->mPitch * srcTile->mComponents;
-  for (uint32_t y16 = (srcTile->mY << 16); y16 < (srcTile->mY + height) * yStep16; y16 += yStep16) {
+  for (uint32_t y16 = (srcTile->mY << 16); y16 < (srcTile->mY + r.getHeight()) * yStep16; y16 += yStep16) {
     uint8_t yweight2 = (y16 >> 9) & 0x7F;
     uint8_t yweight1 = 0x80 - yweight2;
     const uint8_t* srcy = (uint8_t*)srcTile->mPiccy + ((y16 >> 16) * ySrcOffset) + (srcTile->mX * srcTile->mComponents);
-    for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + width) * xStep16; x16 += xStep16) {
+    for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + r.getWidth()) * xStep16; x16 += xStep16) {
       uint8_t xweight2 = (x16 >> 9) & 0x7F;
       uint8_t xweight1 = 0x80 - xweight2;
       const uint8_t* srcy1x1 = srcy + (x16 >> 16) * srcTile->mComponents;
@@ -457,109 +370,110 @@ void cLcd::sizeCpuBi (cTile* srcTile, int16_t x, int16_t y, uint16_t width, uint
                       (*srcy2x1 * xweight1 + *srcy2x2 * xweight2) * yweight2) >> 6) & 0xF800);
       }
     }
-  mChanged = true;
+  }
+//}}}
+//{{{
+void cLcd::pixel (uint16_t colour, cPoint p) {
+  *(mBuffer[mDrawBuffer] + p.y * getWidth() + p.x) = colour;
   }
 //}}}
 
 //{{{
 void cLcd::clear (uint16_t colour) {
-  rect (colour, 0, 0, getWidth(), getHeight());
+  cRect r (getSize());
+  rect (colour, r);
   }
 //}}}
 //{{{
-void cLcd::pixelClipped (uint16_t colour, int16_t x, int16_t y) {
-  rectClipped (colour, x, y, 1, 1);
-  }
-//}}}
-//{{{
-void cLcd::stampClipped (uint16_t colour, uint8_t* src, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::stampClipped (uint16_t colour, uint8_t* src, cRect r) {
 
-  if (!width || !height || x < 0)
+  if (!r.getWidth() || !r.getHeight() || r.left < 0)
     return;
 
-  if (y < 0) {
+  if (r.top < 0) {
     // top clip
-    if (y + height <= 0)
+    if (r.bottom <= 0)
       return;
-    height += y;
-    src += -y * width;
-    y = 0;
+
+    r.bottom = getHeight();
+    src += -r.top * r.getWidth();
+    r.top = 0;
     }
 
-  if (y + height > getHeight()) {
+  if (r.bottom > getHeight()) {
     // bottom yclip
-    if (y >= getHeight())
+    if (r.top >= getHeight())
       return;
-    height = getHeight() - y;
+    r.bottom = getHeight();
     }
 
-  stamp (colour, src, x, y, width, height);
+  stamp (colour, src, r);
   }
 //}}}
 //{{{
-void cLcd::rectClipped (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+void cLcd::rectClipped (uint16_t colour, cRect r) {
 
-  if (x >= getWidth())
+  if (r.left >= getWidth())
     return;
-  if (y >= getHeight())
-    return;
-
-  int xend = x + width;
-  if (xend <= 0)
+  if (r.top >= getHeight())
     return;
 
-  int yend = y + height;
-  if (yend <= 0)
+  if (r.right <= 0)
     return;
 
-  if (x < 0)
-    x = 0;
-  if (xend > getWidth())
-    xend = getWidth();
-
-  if (y < 0)
-    y = 0;
-  if (yend > getHeight())
-    yend = getHeight();
-
-  if (!width)
-    return;
-  if (!height)
+  if (r.bottom <= 0)
     return;
 
-  rect (colour, x, y, xend - x, yend - y);
+  if (r.left < 0)
+    r.left = 0;
+  if (r.right > getWidth())
+    r.right = getWidth();
+
+  if (r.top < 0)
+    r.top = 0;
+  if (r.bottom > getHeight())
+    r.bottom = getHeight();
+
+  if (!getWidth() <= 0)
+    return;
+  if (!getHeight() <= 0)
+    return;
+
+  rect (colour, r);
   }
 //}}}
 //{{{
-void cLcd::rectOutline (uint16_t colour, int16_t x, int16_t y, uint16_t width, uint16_t height, uint8_t thickness) {
+void cLcd::rectOutline (uint16_t colour, const cRect& r, uint8_t thickness) {
 
-  rectClipped (colour, x, y, width, thickness);
-  rectClipped (colour, x + width-thickness, y, thickness, height);
-  rectClipped (colour, x, y + height-thickness, width, thickness);
-  rectClipped (colour, x, y, thickness, height);
+  rectClipped (colour, cRect (r.left, r.top, r.right, r.top+thickness));
+  rectClipped (colour, cRect (r.right-thickness, r.top, r.right, r.bottom));
+  rectClipped (colour, cRect (r.left, r.bottom-thickness, r.right, r.bottom));
+  rectClipped (colour, cRect (r.left, r.top, r.left+thickness, r.bottom));
   }
 //}}}
 //{{{
-void cLcd::ellipse (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius) {
+void cLcd::ellipse (uint16_t colour, cPoint centre, cPoint radius) {
 
-  if (!xradius)
+  if (!radius.x)
     return;
-  if (!yradius)
+  if (!radius.y)
     return;
 
   int x1 = 0;
-  int y1 = -yradius;
-  int err = 2 - 2*xradius;
-  float k = (float)yradius / xradius;
+  int y1 = -radius.x;
+  int err = 2 - 2*radius.x;
+  float k = (float)radius.y / radius.x;
 
   do {
-    rectClipped (colour, (x-(uint16_t)(x1 / k)), y + y1, (2*(uint16_t)(x1 / k) + 1), 1);
-    rectClipped (colour, (x-(uint16_t)(x1 / k)), y - y1, (2*(uint16_t)(x1 / k) + 1), 1);
+    rectClipped (colour, cRect (centre.x-(uint16_t)(x1 / k), centre.y + y1,
+                                centre.x-(uint16_t)(x1 / k) + 2*(uint16_t)(x1 / k) + 1, centre.y  + y1 + 1));
+    rectClipped (colour, cRect (centre.x-(uint16_t)(x1 / k), centre.y  - y1,
+                                centre.x-(uint16_t)(x1 / k) + 2*(uint16_t)(x1 / k) + 1, centre.y  - y1 + 1));
 
     int e2 = err;
     if (e2 <= x1) {
       err += ++x1 * 2 + 1;
-      if (-y1 == x && e2 <= y1)
+      if (-y1 == centre.x && e2 <= y1)
         e2 = 0;
       }
     if (e2 > y1)
@@ -568,19 +482,23 @@ void cLcd::ellipse (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uin
   }
 //}}}
 //{{{
-void cLcd::ellipseOutline (uint16_t colour, int16_t x, int16_t y, uint16_t xradius, uint16_t yradius) {
+void cLcd::ellipseOutline (uint16_t colour, cPoint centre, cPoint radius) {
 
-  if (xradius && yradius) {
+  if (radius.x && radius.y) {
     int x1 = 0;
-    int y1 = -yradius;
-    int err = 2 - 2*xradius;
-    float k = (float)yradius / xradius;
+    int y1 = -radius.y;
+    int err = 2 - 2*radius.x;
+    float k = (float)radius.y / radius.x;
 
     do {
-      rectClipped (colour, x - (uint16_t)(x1 / k), y + y1, 1, 1);
-      rectClipped (colour, x + (uint16_t)(x1 / k), y + y1, 1, 1);
-      rectClipped (colour, x + (uint16_t)(x1 / k), y - y1, 1, 1);
-      rectClipped (colour, x - (uint16_t)(x1 / k), y - y1, 1, 1);
+      rectClipped (colour, cRect (centre.x - (uint16_t)(x1 / k), centre.x - (uint16_t)(x1 / k) + centre.y  + y1,
+                                  1, centre.y  + y1 + 1));
+      rectClipped (colour, cRect (centre.x + (uint16_t)(x1 / k), centre.x + (uint16_t)(x1 / k) + centre.y  + y1,
+                                  1, centre.y  + y1 + 1));
+      rectClipped (colour, cRect (centre.x + (uint16_t)(x1 / k), centre.x + (uint16_t)(x1 / k) + centre.y  - y1,
+                                  1, centre.y  - y1 + 1));
+      rectClipped (colour, cRect (centre.x - (uint16_t)(x1 / k), centre.x - (uint16_t)(x1 / k) + centre.y  - y1,
+                                  1, centre.y  - y1 + 1));
 
       int e2 = err;
       if (e2 <= x1) {
@@ -595,16 +513,16 @@ void cLcd::ellipseOutline (uint16_t colour, int16_t x, int16_t y, uint16_t xradi
   }
 //}}}
 //{{{
-void cLcd::line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2) {
+void cLcd::line (uint16_t colour, cPoint p1, cPoint p2) {
 
-  int16_t deltax = (x2 - x1) > 0 ? (x2 - x1) : -(x2 - x1);        /* The difference between the x's */
-  int16_t deltay = (y2 - y1) > 0 ? (y2 - y1) : -(y2 - y1);        /* The difference between the y's */
-  int16_t x = x1;                       /* Start x off at the first pixel */
-  int16_t y = y1;                       /* Start y off at the first pixel */
+  int16_t deltax = (p2.x - p1.x) > 0 ? (p2.x - p1.x) : -(p2.x - p1.x);        /* The difference between the x's */
+  int16_t deltay = (p2.y - p1.y) > 0 ? (p2.y - p1.y) : -(p2.y - p1.y);        /* The difference between the y's */
+  int16_t x = p1.x;                       /* Start x off at the first pixel */
+  int16_t y = p1.y;                       /* Start y off at the first pixel */
 
   int16_t xinc1;
   int16_t xinc2;
-  if (x2 >= x1) {               /* The x-values are increasing */
+  if (p2.x >= p1.x) {               /* The x-values are increasing */
     xinc1 = 1;
     xinc2 = 1;
     }
@@ -615,7 +533,7 @@ void cLcd::line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2
 
   int yinc1;
   int yinc2;
-  if (y2 >= y1) {                 /* The y-values are increasing */
+  if (p2.y >= p1.y) {                 /* The y-values are increasing */
     yinc1 = 1;
     yinc2 = 1;
     }
@@ -643,10 +561,10 @@ void cLcd::line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2
     num = deltay / 2;
     num_add = deltax;
     num_pixels = deltay;         /* There are more y-values than x-values */
-  }
+    }
 
   for (int curpixel = 0; curpixel <= num_pixels; curpixel++) {
-    rectClipped (colour, x, y, 1, 1);   /* Draw the current pixel */
+    rectClipped (colour, cRect(x, y, x+1, y+1));   /* Draw the current pixel */
     num += num_add;                            /* Increase the numerator by the top of the fraction */
     if (num >= den) {                          /* Check if numerator >= denominator */
       num -= den;                             /* Calculate the new numerator value */
@@ -656,35 +574,35 @@ void cLcd::line (uint16_t colour, int16_t x1, int16_t y1, int16_t x2, int16_t y2
     x += xinc2;                               /* Change the x as appropriate */
     y += yinc2;                               /* Change the y as appropriate */
     }
-
-  mChanged = true;
   }
 //}}}
 //{{{
-int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, int16_t x, int16_t y, uint16_t width, uint16_t height) {
+int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, cRect r) {
 
-  auto xend = x + width;
   for (uint16_t i = 0; i < str.size(); i++) {
     if ((str[i] >= 0x20) && (str[i] <= 0x7F)) {
       auto fontCharIt = mFontCharMap.find (fontHeight<<8 | str[i]);
       if (fontCharIt != mFontCharMap.end()) {
         auto fontChar = fontCharIt->second;
-        if (x + fontChar->left + fontChar->pitch >= xend)
+        if (r.left + fontChar->left + fontChar->pitch >= r.right)
           break;
         else if (fontChar->bitmap)
-          stampClipped (colour, fontChar->bitmap, x + fontChar->left, y + fontHeight - fontChar->top, fontChar->pitch, fontChar->rows);
+          stampClipped (colour, fontChar->bitmap,
+                         cRect (r.left + fontChar->left, r.top + fontHeight - fontChar->top,
+                                r.left + fontChar->left + fontChar->pitch,
+                                r.top + fontHeight - fontChar->top + fontChar->rows));
 
-        x += fontChar->advance;
+        r.left += fontChar->advance;
         }
       }
     }
 
-  return x;
+  return r.left;
   }
 //}}}
 
 //{{{
-void cLcd::rgb888to565cpu (uint8_t* src, uint16_t* dst, uint16_t xsize, uint16_t ysize) {
+void cLcd::rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize) {
 
   ready();
   for (uint16_t x = 0; x < xsize; x++) {
@@ -709,19 +627,12 @@ void cLcd::showInfo (bool force) {
 
   if ((mShowTitle || force) && !mTitle.empty()) {
     // draw title
-    text (COL_YELLOW, getFontHeight(), mTitle, 0, y, getWidth(), getBoxHeight());
+    text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, y, getWidth(), y+getBoxHeight()));
     y += getBoxHeight();
     }
 
   if (mShowInfo || force) {
     // draw info lines
-    if (mLastLine >= 0) {
-      // draw scroll bar
-      auto yorg = getBoxHeight() + ((int)mFirstLine * mNumDrawLines * getBoxHeight() / (mLastLine + 1));
-      auto height = mNumDrawLines * mNumDrawLines * getBoxHeight() / (mLastLine + 1);
-      rectClipped (COL_YELLOW, 0, yorg, 8, height);
-      }
-
     auto lastLine = (int)mFirstLine + mNumDrawLines - 1;
     if (lastLine > mLastLine)
       lastLine = mLastLine;
@@ -731,11 +642,11 @@ void cLcd::showInfo (bool force) {
       auto xinc = text (COL_GREEN, getFontHeight(),
                         dec ((mLines[lineIndex].mTime-mStartTime) / 1000) + "." +
                         dec ((mLines[lineIndex].mTime-mStartTime) % 1000, 3, '0'),
-                        x, y, getWidth(), getBoxHeight());
+                        cRect(x, y, getWidth(), getBoxHeight()));
       x += xinc + 3;
 
       text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
-            x, y, getWidth()-x, getHeight());
+            cRect(x, y, getWidth(), getHeight()));
 
       y += getBoxHeight();
       }
@@ -746,7 +657,7 @@ void cLcd::showInfo (bool force) {
     text (COL_WHITE, getFontHeight(),
           "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
           " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
-          0, -getFontHeight() + getHeight(), getWidth(), getFontHeight());
+          cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
   }
 //}}}
 //{{{
@@ -791,35 +702,6 @@ void cLcd::displayOff() {
 
   // ADJ lo
   GPIOD->BSRR = GPIO_PIN_13 << 16;
-  }
-//}}}
-//{{{
-void cLcd::press (int pressCount, int16_t x, int16_t y, uint16_t z, int16_t xinc, int16_t yinc) {
-
-  if ((pressCount > 30) && (x <= mStringPos) && (y <= getBoxHeight()))
-    reset();
-  else if (pressCount == 0) {
-    if (x <= mStringPos) {
-      // set displayFirstLine
-      if (y < 2 * getBoxHeight())
-        displayTop();
-      else if (y > getHeight() - 2 * getBoxHeight())
-        displayTail();
-      }
-    }
-  else {
-    // inc firstLine
-    float value = mFirstLine - ((2.0f * yinc) / getBoxHeight());
-
-    if (value < 0)
-      mFirstLine = 0;
-    else if (mLastLine <= (int)mNumDrawLines-1)
-      mFirstLine = 0;
-    else if (value > mLastLine - mNumDrawLines + 1)
-      mFirstLine = mLastLine - mNumDrawLines + 1;
-    else
-      mFirstLine = value;
-    }
   }
 //}}}
 

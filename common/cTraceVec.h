@@ -69,13 +69,13 @@ private:
       int32_t range = mMax > -mMin ? mMax : -mMin;
       int16_t height = bottom - top;
 
-      lcd->rectClipped (COL_GREY, 0, top + height/2, lcd->getWidth(), 1);
+      lcd->rectClipped (COL_GREY, cRect(0, top + height/2, lcd->getWidth(), (top + height/2) + 1));
       for (int i = 1000; i < mMax; i += 1000)
-        lcd->rectClipped (COL_GREY,
-                          0, top + height/2 - ((i * height) / (range * 2)), lcd->getWidth(), 1);
+        lcd->rectClipped (COL_GREY, cRect(0, top + height/2 - ((i * height) / (range * 2)),
+                                          lcd->getWidth(), (top + height/2 - ((i * height) / (range * 2))) + 1));
       for (int i = -1000; i > mMin; i -= 1000)
-        lcd->rectClipped (COL_GREY,
-                          0, top + height/2 - ((i * height) / (range * 2)), lcd->getWidth(), 1);
+        lcd->rectClipped (COL_GREY, cRect(0, top + height/2 - ((i * height) / (range * 2)),
+                                          lcd->getWidth(), (top + height/2 - ((i * height) / (range * 2))) + 1));
 
       int32_t sample = mCurSample - (lcd->getWidth() * mAverageSamples);
       for (int i = 0; i < lcd->getWidth(); i++) {
@@ -84,18 +84,21 @@ private:
           value += sample+j > 0 ? mSamples[(sample+j) % mNumSamples] : 0;
         value = (value * height) / (range * 2 * mAverageSamples);
         if (value > 0)
-          lcd->rectClipped (COL_WHITE, i, top + height/2 - value, 1, value);
+          lcd->rectClipped (COL_WHITE, cRect(i, top + height/2 - value, i+1, top + height/2));
         else
-          lcd->rectClipped (COL_WHITE, i, top + height/2, 1, -value);
+          lcd->rectClipped (COL_WHITE, cRect(i, top + height/2, i+1, (top + height/2) + value));
         sample += mAverageSamples;
         }
 
-      lcd->text (COL_GREEN, cLcd::getFontHeight(), dec(mMax),  
-                 lcd->getWidth() - 60, top + height/2 - cLcd::getFontHeight()*3/2, 60, cLcd::getFontHeight());
+      lcd->text (COL_GREEN, cLcd::getFontHeight(), dec(mMax),
+                 cRect (lcd->getWidth() - 60, top + height/2 - cLcd::getFontHeight()*3/2, 
+                        lcd->getWidth(), top + height/2 - cLcd::getFontHeight()*3/2 + cLcd::getFontHeight()));
       lcd->text (COL_YELLOW, cLcd::getFontHeight(), dec(mSamples[(mCurSample-1) % mNumSamples]),
-                 lcd->getWidth() - 60, top + height/2 - cLcd::getFontHeight()/2, 60, cLcd::getFontHeight());
+                 cRect (lcd->getWidth() - 60, top + height/2 - cLcd::getFontHeight()/2, 
+                        lcd->getWidth(), top + height/2 - cLcd::getFontHeight()/2 + cLcd::getFontHeight()));
       lcd->text (COL_RED, cLcd::getFontHeight(), dec(mMin),
-                 lcd->getWidth() - 60, top + height/2 + cLcd::getFontHeight()/2, 60, cLcd::getFontHeight());
+                 cRect (lcd->getWidth() - 60, top + height/2 + cLcd::getFontHeight()/2,
+                        lcd->getWidth(), top + height/2 + cLcd::getFontHeight()/2 + cLcd::getFontHeight()));
       }
     //}}}
 

@@ -691,7 +691,7 @@ void sdRamTest (int iterations, uint16_t* addr, uint32_t len) {
 //}}}
 
 //{{{
-void loadDirectory (const std::string& dirPath, const std::string ext) {
+void findFiles (const std::string& dirPath, const std::string ext) {
 
   DIR dir;
   if (f_opendir (&dir, dirPath.c_str()) == FR_OK) {
@@ -704,7 +704,7 @@ void loadDirectory (const std::string& dirPath, const std::string ext) {
 
       std::string filePath = dirPath + "/" + filinfo.fname;
       if (filinfo.fattrib & AM_DIR)
-        loadDirectory (filePath, ext);
+        findFiles (filePath, ext);
       else {
         auto found = filePath.find (ext);
         if (found == filePath.size() - 4)
@@ -753,14 +753,12 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
 
     jpeg_mem_src (&mCinfo, buf, bytesRead);
     jpeg_read_header (&mCinfo, TRUE);
-    lcd->info (COL_YELLOW, "- src " + dec(mCinfo.image_width) + " " + dec(mCinfo.image_height));
 
     mCinfo.dct_method = JDCT_FLOAT;
     mCinfo.out_color_space = JCS_RGB;
     mCinfo.scale_num = 1;
     mCinfo.scale_denom = scale;
     jpeg_start_decompress (&mCinfo);
-    lcd->info (COL_YELLOW, "- dst  " + dec(mCinfo.output_width) + " " + dec(mCinfo.output_height));
 
     auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height * 2);
     auto tile = new cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
@@ -768,15 +766,17 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     auto rgbLine = (uint8_t*)malloc (mCinfo.output_width * 3);
     while (mCinfo.output_scanline < mCinfo.output_height) {
       jpeg_read_scanlines (&mCinfo, &rgbLine, 1);
-      lcd->rgb888to565cpu (rgbLine, rgb565pic + ((mCinfo.output_scanline-1) * mCinfo.output_width), mCinfo.output_width,1);
+      lcd->rgb888to565 (rgbLine, rgb565pic + ((mCinfo.output_scanline-1) * mCinfo.output_width), mCinfo.output_width);
       }
     free (rgbLine);
 
     vPortFree (buf);
     jpeg_finish_decompress (&mCinfo);
+
+    lcd->info (COL_YELLOW, "loaded " + dec(mCinfo.image_width) + "x" + dec(mCinfo.image_height) + " " +
+                                        dec(mCinfo.output_width) + "x" + dec(mCinfo.output_height));
     jpeg_destroy_decompress (&mCinfo);
 
-    lcd->info (COL_YELLOW, "- loaded");
     return tile;
     }
   else {
@@ -803,14 +803,14 @@ void displayThread (void* arg) {
       int rows = int(sqrt (float(items))) + 1;
       int count = 0;
       for (auto tile : mTileVec) {
-        lcd->copy (tile, (lcd->getWidth() / rows) * (count % rows),
-                            (lcd->getHeight() / rows) * (count / rows));
+        lcd->copy (tile, cPoint((lcd->getWidth() / rows) * (count % rows),
+                                (lcd->getHeight() / rows) * (count / rows)));
                    //lcd->getWidth() / rows, lcd->getHeight() / rows);
         count++;
         }
       //xSemaphoreGive (xSemaphore);
 
-      lcd->showInfo (BSP_PB_GetState (BUTTON_KEY));
+      lcd->showInfo (true); //BSP_PB_GetState (BUTTON_KEY));
       mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
       lcd->present();
       }
@@ -833,11 +833,11 @@ void loadThread (void* arg) {
     f_getlabel ("", label, &vsn);
     lcd->info ("sdCard mounted label:" + std::string(label));
 
-    loadDirectory ("", ".jpg");
+    findFiles ("", ".jpg");
     for (auto file : mFileVec) {
-      auto tile = loadFile (file, 4);
       //xSemaphoreTake (xSemaphore, 0);
-      mTileVec.push_back (tile);
+      mTileVec.push_back (loadFile (file, 4));
+      lcd->change();
       //xSemaphoreGive (xSemaphore);
       }
     }
@@ -886,8 +886,8 @@ int main() {
   TaskHandle_t loadHandle;
   xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
 
-  TaskHandle_t gyroHandle;
-  xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
+  //TaskHandle_t gyroHandle;
+  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 10000, 0, 3, &gyroHandle);
 
   vTaskStartScheduler();
   }
