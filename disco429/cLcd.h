@@ -89,15 +89,16 @@ public:
   void init (const std::string& title);
   static uint16_t getWidth() { return LCD_WIDTH; }
   static uint16_t getHeight() { return LCD_HEIGHT; }
-  static cPoint getSize() { return cPoint (LCD_WIDTH, LCD_HEIGHT); }
+  static cPoint getSize() { return cPoint (getWidth(), getHeight()); }
 
   static uint16_t getBoxHeight() { return BOX_HEIGHT; }
   static uint16_t getSmallFontHeight() { return SMALL_FONT_HEIGHT; }
   static uint16_t getFontHeight() { return FONT_HEIGHT; }
   static uint16_t getBigFontHeight() { return BIG_FONT_HEIGHT; }
 
-  void change();
   bool changed();
+  void change() { mChanged = true; }
+
   void info (uint16_t colour, const std::string str);
   void debug (uint16_t colour, const std::string str);
   void info (const std::string str);
@@ -109,6 +110,7 @@ public:
   void copy90 (cTile* srcTile, cPoint p);
   void size (cTile* srcTile, const cRect& r);
   void sizeBi (cTile* srcTile, const cRect& r);
+  void rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize);
   void pixel (uint16_t colour, cPoint p);
 
   void clear (uint16_t colour);
@@ -120,8 +122,6 @@ public:
   void line (uint16_t colour, cPoint p1, cPoint p2);
   int text (uint16_t colour, uint16_t fontHeight, const std::string str, cRect r);
 
-  void rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize);
-
   void start();
   void drawInfo();
   void present();
@@ -129,7 +129,7 @@ public:
   void display (bool on);
 
   static cLcd* mLcd;
-  static uint16_t* mShowBuffer;
+  static uint32_t mShowBuffer;
 
   static SemaphoreHandle_t mFrameSem;
 

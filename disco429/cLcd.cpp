@@ -18,7 +18,7 @@
 //{{{  static var inits
 cLcd* cLcd::mLcd = nullptr;
 
-uint16_t* cLcd::mShowBuffer = nullptr;
+uint32_t cLcd::mShowBuffer = 0;
 
 SemaphoreHandle_t cLcd::mFrameSem;
 
@@ -34,7 +34,7 @@ extern "C" {void LTDC_IRQHandler() {
     LTDC->IER &= ~(LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI);
     LTDC->ICR = LTDC_FLAG_LI;
 
-    LTDC_Layer1->CFBAR = (uint32_t)cLcd::mShowBuffer;
+    LTDC_Layer1->CFBAR = cLcd::mShowBuffer;
     LTDC->SRCR = LTDC_SRCR_IMR;
 
     portBASE_TYPE taskWoken = pdFALSE;
@@ -147,11 +147,6 @@ void cLcd::init (const std::string& title) {
   }
 //}}}
 
-//{{{
-void cLcd::change() {
-  mChanged = true;
-  }
-//}}}
 //{{{
 bool cLcd::changed() {
   bool wasChanged = mChanged;
@@ -363,6 +358,18 @@ void cLcd::sizeBi (cTile* srcTile, const cRect& r) {
                   (((((*srcy1x1 * xweight1 + *srcy1x2 * xweight2) * yweight1) +
                       (*srcy2x1 * xweight1 + *srcy2x2 * xweight2) * yweight2) >> 6) & 0xF800);
       }
+    }
+  }
+//}}}
+//{{{
+void cLcd::rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize) {
+
+  ready();
+  for (uint16_t x = 0; x < xsize; x++) {
+    uint8_t b = (*src++) & 0xF8;
+    uint8_t g = (*src++) & 0xFC;
+    uint8_t r = (*src++) & 0xF8;
+    *dst++ = (r << 8) | (g << 3) | (b >> 3);
     }
   }
 //}}}
@@ -596,19 +603,6 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, cRe
 //}}}
 
 //{{{
-void cLcd::rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize) {
-
-  ready();
-  for (uint16_t x = 0; x < xsize; x++) {
-    uint8_t b = (*src++) & 0xF8;
-    uint8_t g = (*src++) & 0xFC;
-    uint8_t r = (*src++) & 0xF8;
-    *dst++ = (r << 8) | (g << 3) | (b >> 3);
-    }
-  }
-//}}}
-
-//{{{
 void cLcd::start() {
   mStartTime = HAL_GetTick();
   }
@@ -655,7 +649,7 @@ void cLcd::present() {
   mDrawTime = HAL_GetTick() - mStartTime;
 
   // enable interrupts
-  mShowBuffer = mBuffer[mDrawBuffer];
+  mShowBuffer = (uint32_t)mBuffer[mDrawBuffer];
   LTDC->IER = LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI;
 
   xSemaphoreTake (mFrameSem, 1000);
@@ -864,6 +858,7 @@ void cLcd::reset() {
 
   for (auto i = 0; i < kMaxLines; i++)
     mLines[i].clear();
+
   mBaseTime = HAL_GetTick();
   mCurLine = 0;
   }
