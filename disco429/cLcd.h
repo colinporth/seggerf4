@@ -170,7 +170,7 @@ private:
   bool mShowInfo = true;
   std::string mTitle;
 
-  static const int kMaxLines = 28;
+  static const int kMaxLines = 40;
   //{{{
   class cLine {
   public:

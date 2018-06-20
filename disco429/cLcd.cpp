@@ -615,30 +615,35 @@ void cLcd::start() {
 //{{{
 void cLcd::drawInfo() {
 
-  // draw title
-  text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, 0, getWidth(), getBoxHeight()));
+  int infoHeight = 12;
+  int titleHeight = 20;
+  int gap = 4;
 
-  if (mShowInfo) {
-    auto line = mCurLine - 1;
-    auto y = getHeight() - getBoxHeight() - getFontHeight();
-    while ((y > getFontHeight()) && (line >= 0)) {
-      int lineIndex = line-- % kMaxLines;
-      auto x = text (COL_GREEN, getFontHeight(),
-                     dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
-                     dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
-                     cRect(0, y, getWidth(), getBoxHeight()));
-      text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
-            cRect (x, y, getWidth(), getHeight()));
-      y -= getBoxHeight();
-      }
-    }
+  // draw title
+  text (COL_YELLOW, titleHeight, mTitle, cRect(0, 0, getWidth(), titleHeight+gap));
 
   // draw footer
-  text (COL_WHITE, getFontHeight(),
+  auto y = getHeight() - titleHeight-4;
+  text (COL_WHITE, titleHeight,
         dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
         " p:" + dec(mPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms " +
-        dec (osGetCPUUsage()),
-        cRect(0, getHeight() - getBoxHeight(), getWidth(), getFontHeight()));
+        dec (osGetCPUUsage()) + "%",
+        cRect(0, y, getWidth(), titleHeight+gap));
+
+  if (mShowInfo) {
+    y -= titleHeight - gap;
+    auto line = mCurLine - 1;
+    while ((y > titleHeight) && (line >= 0)) {
+      int lineIndex = line-- % kMaxLines;
+      auto x = text (COL_GREEN, infoHeight,
+                     dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
+                     dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
+                     cRect(0, y, getWidth(), 20));
+      text (mLines[lineIndex].mColour, infoHeight, mLines[lineIndex].mString, 
+            cRect (x + gap, y, getWidth(), 20));
+      y -= infoHeight + gap;
+      }
+    }
   }
 //}}}
 //{{{
