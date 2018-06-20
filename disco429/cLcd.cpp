@@ -588,9 +588,9 @@ void cLcd::line (uint16_t colour, cPoint p1, cPoint p2) {
 //{{{
 int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, cRect r) {
 
-  for (uint16_t i = 0; i < str.size(); i++) {
-    if ((str[i] >= 0x20) && (str[i] <= 0x7F)) {
-      auto fontCharIt = mFontCharMap.find (fontHeight<<8 | str[i]);
+  for (auto ch : str) {
+    if ((ch >= 0x20) && (ch <= 0x7F)) {
+      auto fontCharIt = mFontCharMap.find ((fontHeight << 8) | ch);
       if (fontCharIt != mFontCharMap.end()) {
         auto fontChar = fontCharIt->second;
         if (r.left + fontChar->left + fontChar->pitch >= r.right)
@@ -600,7 +600,6 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, cRe
                          cRect (r.left + fontChar->left, r.top + fontHeight - fontChar->top,
                                 r.left + fontChar->left + fontChar->pitch,
                                 r.top + fontHeight - fontChar->top + fontChar->rows));
-
         r.left += fontChar->advance;
         }
       }
