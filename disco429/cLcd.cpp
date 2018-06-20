@@ -1,6 +1,9 @@
 // cLcd.cpp
+//{{{  includes
 #include "cLcd.h"
 #include "../freetype/FreeSansBold.h"
+#include "cpuUsage.h"
+//}}}
 //{{{  screen resolution defines
 #ifdef NEXXY_SCREEN
   // NEXXY 7 inch
@@ -612,36 +615,29 @@ void cLcd::start() {
 //{{{
 void cLcd::drawInfo() {
 
-  auto y = 0;
-
   // draw title
-  text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, y, getWidth(), y+getBoxHeight()));
-  y += getBoxHeight();
+  text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, 0, getWidth(), getBoxHeight()));
 
-  if (mShowInfo)
-    //{{{
-    for (auto displayLine = 0, line = mCurLine - kMaxLines; displayLine < kMaxLines; displayLine++, line++) {
-      if (line > 0) {
-        int lineIndex = line % kMaxLines;
-        auto x = 0;
-        auto xinc = text (COL_GREEN, getFontHeight(),
-                          dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
-                          dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
-                          cRect(x, y, getWidth(), getBoxHeight()));
-        x += xinc + 3;
-
-        text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
-              cRect(x, y, getWidth(), getHeight()));
-
-        }
-      y += getBoxHeight();
+  if (mShowInfo) {
+    auto line = mCurLine - 1;
+    auto y = getHeight() - getBoxHeight() - getFontHeight();
+    while ((y > getFontHeight()) && (line >= 0)) {
+      int lineIndex = line-- % kMaxLines;
+      auto x = text (COL_GREEN, getFontHeight(),
+                     dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
+                     dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
+                     cRect(0, y, getWidth(), getBoxHeight()));
+      text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
+            cRect (x, y, getWidth(), getHeight()));
+      y -= getBoxHeight();
       }
-    //}}}
+    }
 
   // draw footer
   text (COL_WHITE, getFontHeight(),
-        "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
-        " p:" + dec(mPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms",
+        dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
+        " p:" + dec(mPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms " +
+        dec (osGetCPUUsage()),
         cRect(0, getHeight() - getBoxHeight(), getWidth(), getFontHeight()));
   }
 //}}}

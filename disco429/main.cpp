@@ -1,6 +1,7 @@
 // main.cpp
 //{{{  includes
 #include "cmsis_os.h"
+#include "cpuUsage.h"
 
 #include <vector>
 #include "cLcd.h"
@@ -414,8 +415,10 @@ void displayThread (void* arg) {
   lcd->render();
   lcd->display (true);
 
+  auto lastUsage = osGetCPUUsage();
   while (true) {
-    if (lcd->changed()) {
+    if (lcd->changed() || (osGetCPUUsage() != lastUsage)) {
+      lastUsage = osGetCPUUsage();
       lcd->start();
       lcd->clear (COL_BLACK);
 
