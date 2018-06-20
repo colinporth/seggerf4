@@ -717,23 +717,22 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   __HAL_RCC_DMA2D_CLK_ENABLE();
   __HAL_RCC_LTDC_CLK_ENABLE();
   //}}}
-
   //{{{  int gpio
-  //  HS <-> PC.06 - unused
   //  VS <-> PA.04 - unused
+  //  HS <-> PC.06 - unused
   //  R2 <-> PC.10 - unused
   //
-  //  CK <-> PG.07
-  //  DE <-> PF.10
-  //  G2 <-> PA.06   B2 <-> PD.06
+  //                 G2 <-> PA.06   B2 <-> PD.06
   //  R3 <-> PB.00   G3 <-> PG.10   B3 <-> PG.11
   //  R4 <-> PA.11   G4 <-> PB.10   B4 <-> PG.12
   //  R5 <-> PA.12   G5 <-> PB.11   B5 <-> PA.03
   //  R6 <-> PB.01   G6 <-> PC.07   B6 <-> PB.08
   //  R7 <-> PG.06   G7 <-> PD.03   B7 <-> PB.09
-  //  ADJ <-> PD.13
+  //  CK <-> PG.07
+  //  DE <-> PF.10
+  // ADJ <-> PD.13
 
-  // adj
+  // adj  - PD13
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
