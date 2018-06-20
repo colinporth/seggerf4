@@ -19,22 +19,7 @@
 #include "../FatFs/ff.h"
 #include "../FatFs/diskio.h"
 //}}}
-//{{{  sdram defines
-#define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
-#define SDRAM_BANK1_LEN    ((uint32_t)0x00800000)
-
-#define SDRAM_BANK2_ADDR  ((uint16_t*)0xD0000000)
-#define SDRAM_BANK2_LEN    ((uint32_t)0x01000000)
-
-#define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
-#define SDRAM_MODEREG_BURST_LENGTH_2             ((uint16_t)0x0001)
-#define SDRAM_MODEREG_BURST_LENGTH_4             ((uint16_t)0x0002)
-#define SDRAM_MODEREG_BURST_LENGTH_8             ((uint16_t)0x0004)
-#define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED     ((uint16_t)0x0008)
-#define SDRAM_MODEREG_CAS_LATENCY_2              ((uint16_t)0x0020)
-#define SDRAM_MODEREG_CAS_LATENCY_3              ((uint16_t)0x0030)
-#define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
-//}}}
+//{{{  trace
 //{{{  trace defines
 #define ITM_LAR_KEY   0xC5ACCE55
 //{{{  ETM_Type       0xE0041000
@@ -181,30 +166,6 @@ typedef struct {
 #define ETM_SetupMode() ETM->CR |= ETM_CR_PROGRAMMING
 //}}}
 //}}}
-//{{{  fatfs defines
-#define QUEUE_SIZE      10
-#define READ_CPLT_MSG   1
-#define WRITE_CPLT_MSG  2
-
-#define SD_TIMEOUT      2*1000
-//}}}
-
-const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
-const HeapRegion_t kHeapRegions[] = {
-  {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 },
-  { nullptr, 0 } };
-
-cLcd* lcd = nullptr;
-
-FATFS SDFatFs;
-char SDPath[4];
-std::vector<std::string> mFileVec;
-std::vector<cLcd::cTile*> mTileVec;
-SemaphoreHandle_t xSemaphore = NULL;
-
-cTraceVec mTraceVec;
-
-//{{{  trace
 int globalCounter = 0;
 
 //{{{
@@ -430,6 +391,7 @@ void configureWatchpoint() {
   DWT->FUNCTION1 = (3 << DWT_FUNCTION_FUNCTION_Pos); // Report data and PC on watchpoint hit
   }
 //}}}
+
 //{{{
 uint32_t my_ITM_SendChar (uint32_t port, uint32_t ch) {
 
@@ -444,6 +406,45 @@ uint32_t my_ITM_SendChar (uint32_t port, uint32_t ch) {
   }
 //}}}
 //}}}
+//{{{  sdram defines
+#define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
+#define SDRAM_BANK1_LEN    ((uint32_t)0x00800000)
+
+#define SDRAM_BANK2_ADDR  ((uint16_t*)0xD0000000)
+#define SDRAM_BANK2_LEN    ((uint32_t)0x01000000)
+
+#define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
+#define SDRAM_MODEREG_BURST_LENGTH_2             ((uint16_t)0x0001)
+#define SDRAM_MODEREG_BURST_LENGTH_4             ((uint16_t)0x0002)
+#define SDRAM_MODEREG_BURST_LENGTH_8             ((uint16_t)0x0004)
+#define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED     ((uint16_t)0x0008)
+#define SDRAM_MODEREG_CAS_LATENCY_2              ((uint16_t)0x0020)
+#define SDRAM_MODEREG_CAS_LATENCY_3              ((uint16_t)0x0030)
+#define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
+//}}}
+//{{{  fatfs defines
+#define QUEUE_SIZE      10
+#define READ_CPLT_MSG   1
+#define WRITE_CPLT_MSG  2
+
+#define SD_TIMEOUT      2*1000
+//}}}
+
+const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
+const HeapRegion_t kHeapRegions[] = {
+  {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 },
+  { nullptr, 0 } };
+
+cLcd* lcd = nullptr;
+
+FATFS SDFatFs;
+char SDPath[4];
+std::vector<std::string> mFileVec;
+std::vector<cLcd::cTile*> mTileVec;
+SemaphoreHandle_t xSemaphore = NULL;
+
+cTraceVec mTraceVec;
+
 //{{{
 void SystemClockConfig() {
 //  System Clock source            = PLL (HSE)
@@ -815,7 +816,7 @@ void displayThread (void* arg) {
       lcd->present();
       }
     else
-      osDelay (1);
+      vTaskDelay (1);
     }
   }
 //}}}
@@ -843,7 +844,7 @@ void loadThread (void* arg) {
     }
 
   while (true)
-    osDelay (1000);
+    vTaskDelay (1000);
   }
 //}}}
 //{{{
@@ -854,7 +855,7 @@ void gyroThread (void* arg) {
 
   while (true) {
     if (gyroGetFifoSrc() & 0x20)
-      osDelay (10);
+      vTaskDelay (10);
     else {
       int16_t xyz[3];
       gyroGetXYZ (xyz);
@@ -883,10 +884,10 @@ int main() {
 
   TaskHandle_t displayHandle;
   xTaskCreate ((TaskFunction_t)displayThread, "app", 1000, 0, 4, &displayHandle);
-  //TaskHandle_t loadHandle;
-  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
-  TaskHandle_t gyroHandle;
-  xTaskCreate ((TaskFunction_t)gyroThread, "load", 1000, 0, 4, &gyroHandle);
+  TaskHandle_t loadHandle;
+  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
+  //TaskHandle_t gyroHandle;
+  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 1000, 0, 4, &gyroHandle);
 
   vTaskStartScheduler();
   }
