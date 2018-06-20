@@ -854,14 +854,14 @@ void gyroThread (void* arg) {
 
   while (true) {
     if (gyroGetFifoSrc() & 0x20)
-      osDelay (30);
+      osDelay (10);
     else {
       int16_t xyz[3];
       gyroGetXYZ (xyz);
       mTraceVec.addSample (0, xyz[0]);
       mTraceVec.addSample (1, xyz[1]);
       mTraceVec.addSample (2, xyz[2]);
-      lcd->info ("gyroId " + dec (xyz[0]) + " " + dec (xyz[1]) +" " + dec (xyz[2]));
+      lcd->change();
       }
     }
   }
@@ -883,10 +883,10 @@ int main() {
 
   TaskHandle_t displayHandle;
   xTaskCreate ((TaskFunction_t)displayThread, "app", 1000, 0, 4, &displayHandle);
-  TaskHandle_t loadHandle;
-  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
-  //TaskHandle_t gyroHandle;
-  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 1000, 0, 4, &gyroHandle);
+  //TaskHandle_t loadHandle;
+  //xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
+  TaskHandle_t gyroHandle;
+  xTaskCreate ((TaskFunction_t)gyroThread, "load", 1000, 0, 4, &gyroHandle);
 
   vTaskStartScheduler();
   }
