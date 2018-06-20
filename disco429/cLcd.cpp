@@ -637,8 +637,7 @@ void cLcd::drawInfo() {
   // draw footer
   text (COL_WHITE, getFontHeight(),
         "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
-        " p:" + dec(mPresents) +
-        " draw:" + dec (mDrawTime) + "ms wait:" + dec (mWaitTime) + "ms ",
+        " p:" + dec(mPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms",
         cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
   }
 //}}}

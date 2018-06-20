@@ -70,12 +70,7 @@ private:
       int16_t height = bottom - top;
       auto midy = top + height/2;
 
-      lcd->rectClipped (COL_GREY, cRect(0, midy, lcd->getWidth(), midy + 1));
-      for (int i = 1000; i < mMax; i += 1000)  {
-        auto gridy = (i * height) / (range * 2);
-        lcd->rectClipped (COL_GREY, cRect(0, midy - gridy, lcd->getWidth(), midy - gridy + 1));
-        }
-      for (int i = -1000; i > mMin; i -= 1000) {
+      for (int i = (mMax/1000) * 1000; i > mMin; i -= 1000)  {
         auto gridy = (i * height) / (range * 2);
         lcd->rectClipped (COL_GREY, cRect(0, midy - gridy, lcd->getWidth(), midy - gridy + 1));
         }
@@ -88,20 +83,19 @@ private:
           sample++;
           }
         value = (value * height) / (range * 2 * mAverageSamples);
-
         if (value > 0)
-          lcd->rectClipped (COL_WHITE, cRect(i, (top + height/2) - value, i+1, top + height/2));
+          lcd->rectClipped (COL_WHITE, cRect (i, midy - value, i+1, midy));
         else
-          lcd->rectClipped (COL_WHITE, cRect(i, top + height/2, i+1, (top + height/2) - value));
+          lcd->rectClipped (COL_WHITE, cRect (i, midy, i+1, midy - value));
         }
 
-      lcd->text (COL_GREEN, cLcd::getFontHeight(), dec(mMax),
+      lcd->text (COL_GREEN, cLcd::getFontHeight(), dec (mMax),
                  cRect (lcd->getWidth() - 60, midy - cLcd::getFontHeight()*3/2,
                         lcd->getWidth(), midy - cLcd::getFontHeight()*3/2 + cLcd::getFontHeight()));
-      lcd->text (COL_YELLOW, cLcd::getFontHeight(), dec(mSamples[(mCurSample-1) % mNumSamples]),
+      lcd->text (COL_YELLOW, cLcd::getFontHeight(), dec (mSamples[(mCurSample-1) % mNumSamples]),
                  cRect (lcd->getWidth() - 60, midy - cLcd::getFontHeight()/2,
                         lcd->getWidth(), midy - cLcd::getFontHeight()/2 + cLcd::getFontHeight()));
-      lcd->text (COL_RED, cLcd::getFontHeight(), dec(mMin),
+      lcd->text (COL_RED, cLcd::getFontHeight(), dec (mMin),
                  cRect (lcd->getWidth() - 60, midy + cLcd::getFontHeight()/2,
                         lcd->getWidth(), midy + cLcd::getFontHeight()/2 + cLcd::getFontHeight()));
       }
