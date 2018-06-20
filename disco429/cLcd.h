@@ -79,7 +79,7 @@ public:
   uint16_t mFormat;
   };
 //}}}
-
+ 
 class cLcd {
 public:
   enum eDma2dWait { eWaitNone, eWaitDone, eWaitIrq };

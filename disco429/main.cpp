@@ -441,7 +441,6 @@ FATFS SDFatFs;
 char SDPath[4];
 std::vector<std::string> mFileVec;
 std::vector<cTile*> mTileVec;
-SemaphoreHandle_t xSemaphore = NULL;
 
 cTraceVec mTraceVec;
 
@@ -651,7 +650,7 @@ void sdRamInit() {
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
   //{{{  send loadMode command
-  FMC_SDRAM_DEVICE->SDCMR = 
+  FMC_SDRAM_DEVICE->SDCMR =
     FMC_SDRAM_CMD_LOAD_MODE |
     FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
     ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_BURST_LENGTH_2) << 9);
@@ -811,17 +810,15 @@ void displayThread (void* arg) {
       lcd->start();
       lcd->clear (COL_BLACK);
 
-      //xSemaphoreTake (xSemaphore, 0);
       int items = mFileVec.size();
       int rows = int(sqrt (float(items))) + 1;
       int count = 0;
       for (auto tile : mTileVec) {
-        lcd->copy (tile, cPoint((lcd->getWidth() / rows) * (count % rows),
-                                (lcd->getHeight() / rows) * (count / rows)));
-                   //lcd->getWidth() / rows, lcd->getHeight() / rows);
+        cPoint p ((lcd->getWidth() / rows) * (count % rows) + (lcd->getWidth() / rows - tile->mWidth) / 2,
+                  (lcd->getHeight() / rows) * (count / rows) + (lcd->getHeight() / rows - tile->mHeight) / 2);
+        lcd->copy (tile, p);
         count++;
         }
-      //xSemaphoreGive (xSemaphore);
 
       lcd->drawInfo();
       mTraceVec.draw (lcd, 20, lcd->getHeight()-40);
@@ -848,10 +845,8 @@ void loadThread (void* arg) {
 
     findFiles ("", ".jpg");
     for (auto file : mFileVec) {
-      //xSemaphoreTake (xSemaphore, 0);
       mTileVec.push_back (loadFile (file, 4));
       lcd->change();
-      //xSemaphoreGive (xSemaphore);
       }
     }
 
@@ -888,7 +883,6 @@ int main() {
   vPortDefineHeapRegions (kHeapRegions);
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI);
 
-  xSemaphore = xSemaphoreCreateMutex();
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
   lcd->init (kHello);
 

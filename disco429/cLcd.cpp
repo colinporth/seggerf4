@@ -118,15 +118,6 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
 //{{{
 void cLcd::init (const std::string& title) {
 
-  ltdcInit (mBuffer[mDrawBuffer]);
-
-  vSemaphoreCreateBinary (mDma2dSem);
-  HAL_NVIC_SetPriority (DMA2D_IRQn, 0x0F, 0);
-  HAL_NVIC_EnableIRQ (DMA2D_IRQn);
-
-  vSemaphoreCreateBinary (mFrameSem);
-  //DMA2D->AMTCR = 0x3F01;
-
   // font init
   FT_Init_FreeType (&FTlibrary);
   FT_New_Memory_Face (FTlibrary, (FT_Byte*)freeSansBold, sizeof (freeSansBold), 0, &FTface);
@@ -144,6 +135,15 @@ void cLcd::init (const std::string& title) {
   FT_Done_FreeType (FTlibrary);
 
   mTitle = title;
+
+  ltdcInit (mBuffer[mDrawBuffer]);
+
+  vSemaphoreCreateBinary (mDma2dSem);
+  HAL_NVIC_SetPriority (DMA2D_IRQn, 0x0F, 0);
+  HAL_NVIC_EnableIRQ (DMA2D_IRQn);
+
+  vSemaphoreCreateBinary (mFrameSem);
+  //DMA2D->AMTCR = 0x3F01;
   }
 //}}}
 
