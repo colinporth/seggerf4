@@ -422,7 +422,7 @@ void displayThread (void* arg) {
       lcd->start();
       lcd->clear (COL_BLACK);
 
-      int items = mFileVec.size();
+      int items = mTileVec.size();
       int rows = int(sqrt (float(items))) + 1;
       int count = 0;
       for (auto tile : mTileVec) {
