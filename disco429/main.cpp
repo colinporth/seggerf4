@@ -432,6 +432,7 @@ uint32_t my_ITM_SendChar (uint32_t port, uint32_t ch) {
 
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 const HeapRegion_t kHeapRegions[] = {
+  {(uint8_t*)SDRAM_BANK1_ADDR + (LCD_WIDTH*LCD_HEIGHT*2), SDRAM_BANK1_LEN - (LCD_WIDTH*LCD_HEIGHT*2) },
   {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*2) },
   { nullptr, 0 } };
 
