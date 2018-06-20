@@ -446,6 +446,20 @@ SemaphoreHandle_t xSemaphore = NULL;
 cTraceVec mTraceVec;
 
 //{{{
+extern "C" { void EXTI0_IRQHandler() {
+  HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_0);
+  }
+}
+//}}}
+//{{{
+void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin) {
+
+  if (GPIO_Pin == GPIO_PIN_0)
+    lcd->toggle();
+  }
+//}}}
+
+//{{{
 void SystemClockConfig() {
 //  System Clock source            = PLL (HSE)
 //    SYSCLK(Hz)                     = 180000000
@@ -830,8 +844,8 @@ void loadThread (void* arg) {
   else {
     // get label
     char label[20] = {0};
-    DWORD vsn = 0;
-    f_getlabel ("", label, &vsn);
+    DWORD volumeSerialNumber = 0;
+    f_getlabel ("", label, &volumeSerialNumber);
     lcd->info ("sdCard mounted label:" + std::string(label));
 
     findFiles ("", ".jpg");
@@ -868,13 +882,14 @@ void gyroThread (void* arg) {
   }
 //}}}
 
+
 int main() {
 
   HAL_Init();
   SystemClockConfig();
   sdRamInit();
   vPortDefineHeapRegions (kHeapRegions);
-  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_GPIO);
+  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI); //BUTTON_MODE_GPIO);
 
   xSemaphore = xSemaphoreCreateMutex();
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);

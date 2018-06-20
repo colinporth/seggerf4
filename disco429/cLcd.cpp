@@ -154,6 +154,12 @@ bool cLcd::changed() {
   return wasChanged;
   }
 //}}}
+//{{{
+void cLcd::toggle() {
+  mToggle = !mToggle;
+  change();
+  }
+//}}}
 
 //{{{
 void cLcd::info (uint16_t colour, const std::string str) {
@@ -199,6 +205,35 @@ void cLcd::rect (uint16_t colour, const cRect& r) {
 
   DMA2D->CR = DMA2D_R2M | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
+  }
+//}}}
+//{{{
+void cLcd::rectClipped (uint16_t colour, cRect r) {
+
+  if (r.right <= 0)
+    return;
+  if (r.bottom <= 0)
+    return;
+
+  if (r.left >= getWidth())
+    return;
+  if (r.left < 0)
+    r.left = 0;
+  if (r.right > getWidth())
+    r.right = getWidth();
+  if (r.right <= r.left)
+    return;
+
+  if (r.top >= getHeight())
+    return;
+  if (r.top < 0)
+    r.top = 0;
+  if (r.bottom > getHeight())
+    r.bottom = getHeight();
+  if (r.bottom <= r.top)
+    return;
+
+  rect (colour, r);
   }
 //}}}
 //{{{
@@ -251,6 +286,37 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, const cRect& r) {
   memcpy ((void*)(&DMA2D->FGMAR), stampRegs, 15*4);
   DMA2D->CR = DMA2D_M2M_BLEND | DMA2D_CR_START | DMA2D_CR_TCIE | DMA2D_CR_TEIE | DMA2D_CR_CEIE;
   mDma2dWait = eWaitIrq;
+  }
+//}}}
+//{{{
+void cLcd::stampClipped (uint16_t colour, uint8_t* src, cRect r) {
+
+  if (!r.getWidth())
+    return;
+  if (!r.getHeight())
+    return;
+
+  if (r.left < 0)
+    return;
+
+  if (r.top < 0) {
+    // top clip
+    if (r.bottom <= 0)
+      return;
+
+    r.bottom = getHeight();
+    src += -r.top * r.getWidth();
+    r.top = 0;
+    }
+
+  if (r.bottom > getHeight()) {
+    // bottom yclip
+    if (r.top >= getHeight())
+      return;
+    r.bottom = getHeight();
+    }
+
+  stamp (colour, src, r);
   }
 //}}}
 //{{{
@@ -382,64 +448,6 @@ void cLcd::pixel (uint16_t colour, cPoint p) {
 //{{{
 void cLcd::clear (uint16_t colour) {
   cRect r (getSize());
-  rect (colour, r);
-  }
-//}}}
-//{{{
-void cLcd::stampClipped (uint16_t colour, uint8_t* src, cRect r) {
-
-  if (!r.getWidth() || !r.getHeight() || r.left < 0)
-    return;
-
-  if (r.top < 0) {
-    // top clip
-    if (r.bottom <= 0)
-      return;
-
-    r.bottom = getHeight();
-    src += -r.top * r.getWidth();
-    r.top = 0;
-    }
-
-  if (r.bottom > getHeight()) {
-    // bottom yclip
-    if (r.top >= getHeight())
-      return;
-    r.bottom = getHeight();
-    }
-
-  stamp (colour, src, r);
-  }
-//}}}
-//{{{
-void cLcd::rectClipped (uint16_t colour, cRect r) {
-
-  if (r.left >= getWidth())
-    return;
-  if (r.top >= getHeight())
-    return;
-
-  if (r.right <= 0)
-    return;
-
-  if (r.bottom <= 0)
-    return;
-
-  if (r.left < 0)
-    r.left = 0;
-  if (r.right > getWidth())
-    r.right = getWidth();
-
-  if (r.top < 0)
-    r.top = 0;
-  if (r.bottom > getHeight())
-    r.bottom = getHeight();
-
-  if (r.getWidth() <= 0)
-    return;
-  if (r.getHeight() <= 0)
-    return;
-
   rect (colour, r);
   }
 //}}}
@@ -616,23 +624,25 @@ void cLcd::drawInfo() {
   text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, y, getWidth(), y+getBoxHeight()));
   y += getBoxHeight();
 
-  //if (BSP_PB_GetState (BUTTON_KEY)) {
-  for (auto displayLine = 0, line = mCurLine - kMaxLines; displayLine < kMaxLines; displayLine++, line++) {
-    if (line > 0) {
-      int lineIndex = line % kMaxLines;
-      auto x = 0;
-      auto xinc = text (COL_GREEN, getFontHeight(),
-                        dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
-                        dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
-                        cRect(x, y, getWidth(), getBoxHeight()));
-      x += xinc + 3;
+  if (!mToggle) 
+    //{{{
+    for (auto displayLine = 0, line = mCurLine - kMaxLines; displayLine < kMaxLines; displayLine++, line++) {
+      if (line > 0) {
+        int lineIndex = line % kMaxLines;
+        auto x = 0;
+        auto xinc = text (COL_GREEN, getFontHeight(),
+                          dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
+                          dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
+                          cRect(x, y, getWidth(), getBoxHeight()));
+        x += xinc + 3;
 
-      text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
-            cRect(x, y, getWidth(), getHeight()));
+        text (mLines[lineIndex].mColour, getFontHeight(), mLines[lineIndex].mString,
+              cRect(x, y, getWidth(), getHeight()));
 
+        }
+      y += getBoxHeight();
       }
-    y += getBoxHeight();
-    }
+    //}}}
 
   // draw footer
   text (COL_WHITE, getFontHeight(),

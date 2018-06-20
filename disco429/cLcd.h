@@ -98,6 +98,7 @@ public:
 
   bool changed();
   void change() { mChanged = true; }
+  void toggle();
 
   void info (uint16_t colour, const std::string str);
   void debug (uint16_t colour, const std::string str);
@@ -159,6 +160,7 @@ private:
 
   LTDC_HandleTypeDef LtdcHandler;
   bool mChanged = true;
+  bool mToggle = false;
 
   float mFirstLine = 0;
   int mNumDrawLines = 0;
