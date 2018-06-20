@@ -159,21 +159,27 @@ private:
   uint32_t stampRegs[15];
 
   LTDC_HandleTypeDef LtdcHandler;
+
   bool mChanged = true;
-  bool mToggle = false;
+  bool mDrawBuffer = false;
+  uint16_t* mBuffer[2] = {nullptr, nullptr};
 
-  float mFirstLine = 0;
-  int mNumDrawLines = 0;
-  int mStringPos = 0;
+  uint32_t mBaseTime = 0;
+  uint32_t mStartTime = 0;
+  uint32_t mDrawTime = 0;
+  uint32_t mWaitTime = 0;
+  uint32_t mPresents = 0;
 
-  bool mShowTitle = true;
-  bool mShowInfo = false;
-  bool mShowFooter = true;
+  cFontCharMap mFontCharMap;
 
+  FT_Library FTlibrary;
+  FT_Face FTface;
+  FT_GlyphSlot FTglyphSlot;
+
+  bool mShowInfo = true;
   std::string mTitle;
 
   static const int kMaxLines = 28;
-  int mCurLine = 0;
   //{{{
   class cLine {
   public:
@@ -194,20 +200,6 @@ private:
     };
   //}}}
   cLine mLines[kMaxLines];
-
-  bool mDrawBuffer = false;
-  uint16_t* mBuffer[2] = {nullptr, nullptr};
-
-  uint32_t mBaseTime = 0;
-  uint32_t mStartTime = 0;
-  uint32_t mDrawTime = 0;
-  uint32_t mWaitTime = 0;
-  uint32_t mPresents = 0;
-
-  cFontCharMap mFontCharMap;
-
-  FT_Library FTlibrary;
-  FT_Face FTface;
-  FT_GlyphSlot FTglyphSlot;
+  int mCurLine = 0;
   //}}}
   };

@@ -156,7 +156,7 @@ bool cLcd::changed() {
 //}}}
 //{{{
 void cLcd::toggle() {
-  mToggle = !mToggle;
+  mShowInfo = !mShowInfo;
   change();
   }
 //}}}
@@ -169,7 +169,8 @@ void cLcd::info (uint16_t colour, const std::string str) {
   mLines[line].mColour = colour;
   mLines[line].mString = str;
 
-  mChanged = true;
+  if (mShowInfo)
+    mChanged = true;
   }
 //}}}
 //{{{
@@ -624,7 +625,7 @@ void cLcd::drawInfo() {
   text (COL_YELLOW, getFontHeight(), mTitle, cRect(0, y, getWidth(), y+getBoxHeight()));
   y += getBoxHeight();
 
-  if (!mToggle) 
+  if (mShowInfo)
     //{{{
     for (auto displayLine = 0, line = mCurLine - kMaxLines; displayLine < kMaxLines; displayLine++, line++) {
       if (line > 0) {
