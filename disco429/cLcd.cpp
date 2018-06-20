@@ -391,9 +391,9 @@ void cLcd::size (cTile* srcTile, const cRect& r) {
   if (srcTile->mComponents == 2) {
     auto srcBase = (uint16_t*)(srcTile->mPiccy) + (srcTile->mY * srcTile->mPitch) + srcTile->mX;
     for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + r.getHeight()) * yStep16); y16 += yStep16) {
-      auto srcy1x1 = srcBase + (y16 >> 16) * srcTile->mPitch;
+      auto src11 = srcBase + (y16 >> 16) * srcTile->mPitch;
       for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + r.getWidth()) * xStep16; x16 += xStep16)
-        *dstPtr++ = *(srcy1x1 + (x16 >> 16));
+        *dstPtr++ = *(src11 + (x16 >> 16));
       dstPtr += getWidth() - r.getWidth();
       }
     }
@@ -403,8 +403,8 @@ void cLcd::size (cTile* srcTile, const cRect& r) {
     for (uint32_t y16 = (srcTile->mY << 16); y16 < ((srcTile->mY + r.getHeight()) * yStep16); y16 += yStep16) {
       auto srcy = srcBase + ((y16 >> 16) * srcTile->mPitch) * srcTile->mComponents;
       for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + r.getWidth()) * xStep16; x16 += xStep16) {
-        auto srcy1x1 = srcy + (x16 >> 16) * srcTile->mComponents;
-        *dstPtr++ = ((*srcy1x1++) >> 3) | (((*srcy1x1++) & 0xFC) << 3) | (((*srcy1x1) & 0xF8) << 8);
+        auto src11 = srcy + (x16 >> 16) * srcTile->mComponents;
+        *dstPtr++ = ((*src11++) >> 3) | (((*src11++) & 0xFC) << 3) | (((*src11) & 0xF8) << 8);
         }
       dstPtr += getWidth() - r.getWidth();
       }
