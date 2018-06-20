@@ -648,7 +648,7 @@ void cLcd::drawInfo() {
   text (COL_WHITE, getFontHeight(),
         "heap:" + dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
         " p:" + dec(mPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms",
-        cRect(0, -getFontHeight() + getHeight(), getWidth(), getFontHeight()));
+        cRect(0, getHeight() - getBoxHeight(), getWidth(), getFontHeight()));
   }
 //}}}
 //{{{
