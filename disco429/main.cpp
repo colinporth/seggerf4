@@ -432,7 +432,7 @@ uint32_t my_ITM_SendChar (uint32_t port, uint32_t ch) {
 
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 const HeapRegion_t kHeapRegions[] = {
-  {(uint8_t*)SDRAM_BANK2_ADDR + LCD_WIDTH*LCD_HEIGHT*2, SDRAM_BANK2_LEN - LCD_WIDTH*LCD_HEIGHT*2 },
+  {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*2) },
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
@@ -440,7 +440,7 @@ cLcd* lcd = nullptr;
 FATFS SDFatFs;
 char SDPath[4];
 std::vector<std::string> mFileVec;
-std::vector<cLcd::cTile*> mTileVec;
+std::vector<cTile*> mTileVec;
 SemaphoreHandle_t xSemaphore = NULL;
 
 cTraceVec mTraceVec;
@@ -486,7 +486,7 @@ void SystemClockConfig() {
   rccOscInitStruct.PLL.PLLState = RCC_PLL_ON;
   rccOscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   rccOscInitStruct.PLL.PLLM = 8;
-  rccOscInitStruct.PLL.PLLN = 360;
+  rccOscInitStruct.PLL.PLLN = 384;
   rccOscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   rccOscInitStruct.PLL.PLLQ = 7;
   HAL_RCC_OscConfig (&rccOscInitStruct);
@@ -585,6 +585,7 @@ void sdRamInit() {
     FMC_SDRAM_CLOCK_PERIOD_2 |
     FMC_SDRAM_RBURST_ENABLE |
     FMC_SDRAM_RPIPE_DELAY_1 |
+
     FMC_SDRAM_COLUMN_BITS_NUM_8 |
     FMC_SDRAM_ROW_BITS_NUM_12 |
     FMC_SDRAM_INTERN_BANKS_NUM_4 |
@@ -613,21 +614,19 @@ void sdRamInit() {
   const uint32_t kWriteRecoveryTime    = 2; // tWR:  2 Clock cycles
   const uint32_t kRCDDelay             = 2; // tRCD: 15ns => 2 x 11.90ns
 
-  const uint32_t kBank1Timing =
-    (kLoadToActiveDelay-1)          |
-   ((kExitSelfRefreshDelay-1) << 4) |
-   ((kSelfRefreshTime-1) << 8)      |
-   ((kRowCycleDelay-1) << 12)       |
-   ((kWriteRecoveryTime-1) <<16)    |
-   ((kRPDelay-1) << 20)             |
-   ((kRCDDelay-1) << 24);
+  const uint32_t kBank1Timing = (kLoadToActiveDelay-1)          |
+                               ((kExitSelfRefreshDelay-1) << 4) |
+                               ((kSelfRefreshTime-1) << 8)      |
+                               ((kRowCycleDelay-1) << 12)       |
+                               ((kWriteRecoveryTime-1) <<16)    |
+                               ((kRPDelay-1) << 20)             |
+                               ((kRCDDelay-1) << 24);
 
-  const uint32_t kBank2Timing =
-    (kLoadToActiveDelay-1)          |
-   ((kExitSelfRefreshDelay-1) << 4) |
-   ((kSelfRefreshTime-1) << 8)      |
-   ((kWriteRecoveryTime-1) <<16)    |
-   ((kRCDDelay-1) << 24);
+  const uint32_t kBank2Timing = (kLoadToActiveDelay-1)          |
+                               ((kExitSelfRefreshDelay-1) << 4) |
+                               ((kSelfRefreshTime-1) << 8)      |
+                               ((kWriteRecoveryTime-1) <<16)    |
+                               ((kRCDDelay-1) << 24);
   //}}}
   FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK1] = kBank1Timing;
   FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK2] = kBank2Timing;
@@ -732,7 +731,7 @@ void findFiles (const std::string& dirPath, const std::string ext) {
   }
 //}}}
 //{{{
-cLcd::cTile* loadFile (const std::string& fileName, int scale) {
+cTile* loadFile (const std::string& fileName, int scale) {
 
   FILINFO filInfo;
   if (f_stat (fileName.c_str(), &filInfo)) {
@@ -776,7 +775,7 @@ cLcd::cTile* loadFile (const std::string& fileName, int scale) {
     jpeg_start_decompress (&mCinfo);
 
     auto rgb565pic = (uint16_t*)pvPortMalloc (mCinfo.output_width * mCinfo.output_height * 2);
-    auto tile = new cLcd::cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
+    auto tile = new cTile ((uint8_t*)rgb565pic, 2, mCinfo.output_width, 0,0, mCinfo.output_width, mCinfo.output_height);
 
     auto rgbLine = (uint8_t*)malloc (mCinfo.output_width * 3);
     while (mCinfo.output_scanline < mCinfo.output_height) {
@@ -882,18 +881,17 @@ void gyroThread (void* arg) {
   }
 //}}}
 
-
 int main() {
 
   HAL_Init();
   SystemClockConfig();
   sdRamInit();
   vPortDefineHeapRegions (kHeapRegions);
-  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI); //BUTTON_MODE_GPIO);
+  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI); 
 
   xSemaphore = xSemaphoreCreateMutex();
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
-  lcd->init ("Screen Test " + kHello);
+  lcd->init (kHello);
 
   mTraceVec.addTrace (1024, 1, 3);
 

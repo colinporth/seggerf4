@@ -50,39 +50,39 @@
 //}}}
 
 class cFontChar;
+//{{{
+class cTile {
+public:
+  cTile() {};
+  cTile (uint8_t* piccy, uint16_t components, uint16_t pitch,
+         uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+     :  mPiccy((uint32_t)piccy), mComponents(components), mPitch(pitch), mX(x), mY(y), mWidth(width), mHeight(height) {
+   if (components == 2)
+     mFormat = DMA2D_RGB565;
+   else if (components == 3)
+     mFormat = DMA2D_RGB888;
+   else
+     mFormat = DMA2D_ARGB8888;
+    };
+
+  void free() {
+    vPortFree ((void*)mPiccy);
+    }
+
+  uint32_t mPiccy;
+  uint16_t mComponents;
+  uint16_t mPitch;
+  uint16_t mX;
+  uint16_t mY;
+  uint16_t mWidth;
+  uint16_t mHeight;
+  uint16_t mFormat;
+  };
+//}}}
 
 class cLcd {
 public:
   enum eDma2dWait { eWaitNone, eWaitDone, eWaitIrq };
-  //{{{
-  class cTile {
-  public:
-    cTile() {};
-    cTile (uint8_t* piccy, uint16_t components, uint16_t pitch,
-           uint16_t x, uint16_t y, uint16_t width, uint16_t height)
-       :  mPiccy((uint32_t)piccy), mComponents(components), mPitch(pitch), mX(x), mY(y), mWidth(width), mHeight(height) {
-     if (components == 2)
-       mFormat = DMA2D_RGB565;
-     else if (components == 3)
-       mFormat = DMA2D_RGB888;
-     else
-       mFormat = DMA2D_ARGB8888;
-      };
-
-    void free() {
-      vPortFree ((void*)mPiccy);
-      }
-
-    uint32_t mPiccy;
-    uint16_t mComponents;
-    uint16_t mPitch;
-    uint16_t mX;
-    uint16_t mY;
-    uint16_t mWidth;
-    uint16_t mHeight;
-    uint16_t mFormat;
-    };
-  //}}}
   cLcd (uint16_t* buffer0, uint16_t* buffer1);
   ~cLcd() {}
 
