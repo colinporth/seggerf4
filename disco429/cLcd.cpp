@@ -428,17 +428,17 @@ void cLcd::sizeBi (cTile* srcTile, const cRect& r) {
     for (uint32_t x16 = srcTile->mX << 16; x16 < (srcTile->mX + r.getWidth()) * xStep16; x16 += xStep16) {
       uint8_t xweight2 = (x16 >> 9) & 0x7F;
       uint8_t xweight1 = 0x80 - xweight2;
-      const uint8_t* srcy1x1 = srcy + (x16 >> 16) * srcTile->mComponents;
-      const uint8_t* srcy1x2 = srcy1x1 + srcTile->mComponents;
-      const uint8_t* srcy2x1 = srcy1x1 + ySrcOffset;
-      const uint8_t* srcy2x2 = srcy2x1 + srcTile->mComponents;
+      const uint8_t* src11 = srcy + (x16 >> 16) * srcTile->mComponents;
+      const uint8_t* src12 = src11 + srcTile->mComponents;
+      const uint8_t* src21 = src11 + ySrcOffset;
+      const uint8_t* src22 = src21 + srcTile->mComponents;
 
-      *dstPtr++ = ((((*srcy1x1++ * xweight1 + *srcy1x2++ * xweight2) * yweight1) +
-                     (*srcy2x1++ * xweight1 + *srcy2x2++ * xweight2) * yweight2) >> 17) |
-                  (((((*srcy1x1++ * xweight1 + *srcy1x2++ * xweight2) * yweight1) +
-                      (*srcy2x1++ * xweight1 + *srcy2x2++ * xweight2) * yweight2) >> 11) & 0x07E0) |
-                  (((((*srcy1x1 * xweight1 + *srcy1x2 * xweight2) * yweight1) +
-                      (*srcy2x1 * xweight1 + *srcy2x2 * xweight2) * yweight2) >> 6) & 0xF800);
+      *dstPtr++ = ((((*src11++ * xweight1 + *src12++ * xweight2) * yweight1) +
+                     (*src21++ * xweight1 + *src22++ * xweight2) * yweight2) >> 17) |
+                  (((((*src11++ * xweight1 + *src12++ * xweight2) * yweight1) +
+                      (*src21++ * xweight1 + *src22++ * xweight2) * yweight2) >> 11) & 0x07E0) |
+                  (((((*src11 * xweight1 + *src12 * xweight2) * yweight1) +
+                      (*src21 * xweight1 + *src22 * xweight2) * yweight2) >> 6) & 0xF800);
       }
     }
   }
