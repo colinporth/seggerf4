@@ -651,11 +651,10 @@ void sdRamInit() {
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
   //{{{  send loadMode command
-  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_LOAD_MODE |
-                            FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
-                            ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE |
-                              SDRAM_MODEREG_CAS_LATENCY_3 |
-                              SDRAM_MODEREG_BURST_LENGTH_4) << 9);
+  FMC_SDRAM_DEVICE->SDCMR = 
+    FMC_SDRAM_CMD_LOAD_MODE |
+    FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
+    ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_BURST_LENGTH_2) << 9);
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
   FMC_SDRAM_DEVICE->SDRTR |= 0x0569 << 1;
@@ -887,7 +886,7 @@ int main() {
   SystemClockConfig();
   sdRamInit();
   vPortDefineHeapRegions (kHeapRegions);
-  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI); 
+  BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI);
 
   xSemaphore = xSemaphoreCreateMutex();
   lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
