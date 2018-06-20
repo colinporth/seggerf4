@@ -79,12 +79,12 @@ public:
   uint16_t mFormat;
   };
 //}}}
- 
+
 class cLcd {
 public:
   enum eDma2dWait { eWaitNone, eWaitDone, eWaitIrq };
   cLcd (uint16_t* buffer0, uint16_t* buffer1);
-  ~cLcd() {}
+  ~cLcd();
 
   void init (const std::string& title);
   static uint16_t getWidth() { return LCD_WIDTH; }

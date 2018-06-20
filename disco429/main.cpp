@@ -41,8 +41,8 @@
 
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 const HeapRegion_t kHeapRegions[] = {
-  {(uint8_t*)SDRAM_BANK1_ADDR + (LCD_WIDTH*LCD_HEIGHT*2), SDRAM_BANK1_LEN - (LCD_WIDTH*LCD_HEIGHT*2) },
-  {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*2) },
+  {(uint8_t*)SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN },
+  {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*4), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*4) },
   { nullptr, 0 } };
 
 cLcd* lcd = nullptr;
@@ -346,13 +346,12 @@ cTile* loadFile (const std::string& fileName, int scale) {
     lcd->info (COL_RED, fileName + " not found");
     return nullptr;
     }
-
   lcd->info ("loadFile " + fileName + " bytes:" + dec ((int)(filInfo.fsize)) + " " +
              dec (filInfo.ftime >> 11) + ":" + dec ((filInfo.ftime >> 5) & 63) + " " +
              dec (filInfo.fdate & 31) + ":" + dec ((filInfo.fdate >> 5) & 15) + ":" + dec ((filInfo.fdate >> 9) + 1980)
              );
 
-  FIL gFile = { 0 };
+  FIL gFile;
   if (f_open (&gFile, fileName.c_str(), FA_READ)) {
     lcd->info (COL_RED, fileName + " not opened");
     return nullptr;
@@ -493,17 +492,17 @@ int main() {
   vPortDefineHeapRegions (kHeapRegions);
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI);
 
-  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK2_ADDR);
+  lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR+ (LCD_WIDTH*LCD_HEIGHT*2));
   lcd->init (kHello);
 
   mTraceVec.addTrace (1024, 1, 3);
 
   TaskHandle_t displayHandle;
-  xTaskCreate ((TaskFunction_t)displayThread, "app", 1000, 0, 4, &displayHandle);
+  xTaskCreate ((TaskFunction_t)displayThread, "app", 1024, 0, 4, &displayHandle);
   TaskHandle_t loadHandle;
-  xTaskCreate ((TaskFunction_t)loadThread, "load", 10000, 0, 2, &loadHandle);
+  xTaskCreate ((TaskFunction_t)loadThread, "load", 8192, 0, 2, &loadHandle);
   //TaskHandle_t gyroHandle;
-  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 1000, 0, 4, &gyroHandle);
+  //xTaskCreate ((TaskFunction_t)gyroThread, "load", 1024, 0, 4, &gyroHandle);
 
   vTaskStartScheduler();
   }

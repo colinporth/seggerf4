@@ -116,6 +116,12 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
   }
 //}}}
 //{{{
+cLcd::~cLcd() {
+  FT_Done_Face (FTface);
+  FT_Done_FreeType (FTlibrary);
+  }
+//}}}
+//{{{
 void cLcd::init (const std::string& title) {
 
   // font init
@@ -123,27 +129,14 @@ void cLcd::init (const std::string& title) {
   FT_New_Memory_Face (FTlibrary, (FT_Byte*)freeSansBold, sizeof (freeSansBold), 0, &FTface);
   FTglyphSlot = FTface->glyph;
 
-  // preload fontChars
-  for (char ch = 0x20; ch <= 0x7F; ch++)
-    loadChar (getFontHeight(), ch);
-  //for (char ch = 0x21; ch <= 0x3F; ch++)
-  //  loadChar (getBigFontHeight(), ch);
-  //for (char ch = 0x21; ch <= 0x3F; ch++)
-  //  loadChar (getSmallFontHeight(), ch);
-
-  FT_Done_Face (FTface);
-  FT_Done_FreeType (FTlibrary);
-
   mTitle = title;
 
+  vSemaphoreCreateBinary (mFrameSem);
   ltdcInit (mBuffer[mDrawBuffer]);
 
   vSemaphoreCreateBinary (mDma2dSem);
   HAL_NVIC_SetPriority (DMA2D_IRQn, 0x0F, 0);
   HAL_NVIC_EnableIRQ (DMA2D_IRQn);
-
-  vSemaphoreCreateBinary (mFrameSem);
-  //DMA2D->AMTCR = 0x3F01;
   }
 //}}}
 
@@ -591,8 +584,10 @@ int cLcd::text (uint16_t colour, uint16_t fontHeight, const std::string str, cRe
   for (auto ch : str) {
     if ((ch >= 0x20) && (ch <= 0x7F)) {
       auto fontCharIt = mFontCharMap.find ((fontHeight << 8) | ch);
-      if (fontCharIt != mFontCharMap.end()) {
-        auto fontChar = fontCharIt->second;
+      cFontChar* fontChar = fontCharIt != mFontCharMap.end() ? fontCharIt->second : nullptr;
+      if (!fontChar)
+        fontChar = loadChar (fontHeight, ch);
+      if (fontChar) {
         if (r.left + fontChar->left + fontChar->pitch >= r.right)
           break;
         else if (fontChar->bitmap)
@@ -855,7 +850,6 @@ cFontChar* cLcd::loadChar (uint16_t fontHeight, char ch) {
 
   auto insertPair = mFontCharMap.insert (cFontCharMap::value_type (fontHeight<<8 | ch, fontChar));
   auto fontCharIt = insertPair.first;
-
   return fontCharIt->second;
   }
 //}}}
