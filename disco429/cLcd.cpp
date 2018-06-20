@@ -20,10 +20,10 @@ cLcd* cLcd::mLcd = nullptr;
 
 uint32_t cLcd::mShowBuffer = 0;
 
-SemaphoreHandle_t cLcd::mFrameSem;
-
 cLcd::eDma2dWait cLcd::mDma2dWait = eWaitNone;
 SemaphoreHandle_t cLcd::mDma2dSem;
+
+SemaphoreHandle_t cLcd::mFrameSem;
 //}}}
 
 //{{{
@@ -104,14 +104,14 @@ cLcd::cLcd (uint16_t* buffer0, uint16_t* buffer1)  {
   mLcd = this;
 
   // consts
-  rectRegs[0] = kDstFormat;
+  rectRegs[0] = DMA2D_RGB565;
 
   stampRegs[1] = 0;
-  stampRegs[6] = kDstFormat;
+  stampRegs[6] = DMA2D_RGB565;
   stampRegs[7] = 0;
   stampRegs[8] = 0;
   stampRegs[9] = 0;
-  stampRegs[10] = kDstFormat;
+  stampRegs[10] = DMA2D_RGB565;
   stampRegs[11] = 0;
   }
 //}}}
@@ -191,6 +191,12 @@ void cLcd::debug (const std::string str) {
 //}}}
 
 //{{{
+void cLcd::clear (uint16_t colour) {
+  cRect r (getSize());
+  rect (colour, r);
+  }
+//}}}
+//{{{
 void cLcd::rect (uint16_t colour, const cRect& r) {
 //__IO uint32_t OPFCCR  Output PFC Control Register,    Address offset: 0x34
 //__IO uint32_t OCOLR   Output Color Register,          Address offset: 0x38
@@ -238,6 +244,15 @@ void cLcd::rectClipped (uint16_t colour, cRect r) {
   }
 //}}}
 //{{{
+void cLcd::rectOutline (uint16_t colour, const cRect& r, uint8_t thickness) {
+
+  rectClipped (colour, cRect (r.left, r.top, r.right, r.top+thickness));
+  rectClipped (colour, cRect (r.right-thickness, r.top, r.right, r.bottom));
+  rectClipped (colour, cRect (r.left, r.bottom-thickness, r.right, r.bottom));
+  rectClipped (colour, cRect (r.left, r.top, r.left+thickness, r.bottom));
+  }
+//}}}
+//{{{
 void cLcd::stamp (uint16_t colour, uint8_t* src, const cRect& r) {
 //__IO uint32_t FGMAR;    Foreground Memory Address Register,       Address offset: 0x0C
 //__IO uint32_t FGOR;     Foreground Offset Register,               Address offset: 0x10
@@ -266,8 +281,8 @@ void cLcd::stamp (uint16_t colour, uint8_t* src, const cRect& r) {
 //  DMA2D->BGOR    = stride;         // - repeated to bgnd stride
 //  DMA2D->FGPFCCR = DMA2D_INPUT_A8; // fgnd PFC
 //  DMA2D->FGCOLR  = col;
-//  DMA2D->BGPFCCR = kDstFormat;
-//  DMA2D->OPFCCR  = kDstFormat;
+//  DMA2D->BGPFCCR = DMA2D_RGB565;
+//  DMA2D->OPFCCR  = DMA2D_RGB565;
 //  DMA2D->OMAR    = address;        // output start address
 //  DMA2D->OOR     = stride;         // output stride
 //  DMA2D->NLR     = nlr;            //  width:height
@@ -330,7 +345,7 @@ void cLcd::copy (cTile* srcTile, cPoint p) {
   DMA2D->FGPFCCR = srcTile->mFormat;
   DMA2D->FGMAR = (uint32_t)srcTile->mPiccy;
   DMA2D->FGOR = srcTile->mPitch - width;
-  DMA2D->OPFCCR = kDstFormat;
+  DMA2D->OPFCCR = DMA2D_RGB565;
   DMA2D->OMAR = uint32_t(mBuffer[mDrawBuffer] + p.y * getWidth() + p.x);
   DMA2D->OOR = getWidth() - srcTile->mWidth;
   DMA2D->NLR = (width << 16) | height;
@@ -347,7 +362,7 @@ void cLcd::copy90 (cTile* srcTile, cPoint p) {
   ready();
   DMA2D->FGPFCCR = srcTile->mFormat;
   DMA2D->FGOR = 0;
-  DMA2D->OPFCCR = kDstFormat;
+  DMA2D->OPFCCR = DMA2D_RGB565;
   DMA2D->OOR = getWidth() - 1;
   DMA2D->NLR = 0x10000 | (srcTile->mWidth);
 
@@ -358,7 +373,7 @@ void cLcd::copy90 (cTile* srcTile, cPoint p) {
     mDma2dWait = eWaitIrq;
 
     src += srcTile->mWidth * srcTile->mComponents;
-    dst += kDstComponents;
+    dst += 2;
 
     mDma2dWait = eWaitDone;
     ready();
@@ -443,22 +458,6 @@ void cLcd::rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize) {
 //{{{
 void cLcd::pixel (uint16_t colour, cPoint p) {
   *(mBuffer[mDrawBuffer] + p.y * getWidth() + p.x) = colour;
-  }
-//}}}
-
-//{{{
-void cLcd::clear (uint16_t colour) {
-  cRect r (getSize());
-  rect (colour, r);
-  }
-//}}}
-//{{{
-void cLcd::rectOutline (uint16_t colour, const cRect& r, uint8_t thickness) {
-
-  rectClipped (colour, cRect (r.left, r.top, r.right, r.top+thickness));
-  rectClipped (colour, cRect (r.right-thickness, r.top, r.right, r.bottom));
-  rectClipped (colour, cRect (r.left, r.bottom-thickness, r.right, r.bottom));
-  rectClipped (colour, cRect (r.left, r.top, r.left+thickness, r.bottom));
   }
 //}}}
 //{{{
@@ -801,7 +800,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   curLayerCfg->WindowY0 = 0;
   curLayerCfg->WindowX1 = getWidth();
   curLayerCfg->WindowY1 = getHeight();
-  curLayerCfg->PixelFormat = kLtdcFormat;
+  curLayerCfg->PixelFormat = LTDC_PIXEL_FORMAT_RGB565;
   curLayerCfg->FBStartAdress = (uint32_t)frameBufferAddress;
   curLayerCfg->Alpha = 255;
   curLayerCfg->Alpha0 = 0;

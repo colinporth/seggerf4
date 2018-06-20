@@ -105,19 +105,18 @@ public:
   void info (const std::string str);
   void debug (const std::string str);
 
+  void clear (uint16_t colour);
   void rect (uint16_t colour, const cRect& r);
+  void rectClipped (uint16_t colour, cRect r);
+  void rectOutline (uint16_t colour, const cRect& r, uint8_t thickness);
   void stamp (uint16_t colour, uint8_t* src, const cRect& r);
+  void stampClipped (uint16_t colour, uint8_t* src, cRect r);
   void copy (cTile* srcTile, cPoint p);
   void copy90 (cTile* srcTile, cPoint p);
   void size (cTile* srcTile, const cRect& r);
   void sizeBi (cTile* srcTile, const cRect& r);
   void rgb888to565 (uint8_t* src, uint16_t* dst, uint16_t xsize);
   void pixel (uint16_t colour, cPoint p);
-
-  void clear (uint16_t colour);
-  void stampClipped (uint16_t colour, uint8_t* src, cRect r);
-  void rectClipped (uint16_t colour, cRect r);
-  void rectOutline (uint16_t colour, const cRect& r, uint8_t thickness);
   void ellipse (uint16_t colour, cPoint centre, cPoint radius);
   void ellipseOutline (uint16_t colour, cPoint centre, cPoint radius);
   void line (uint16_t colour, cPoint p1, cPoint p2);
@@ -126,26 +125,18 @@ public:
   void start();
   void drawInfo();
   void present();
+
   void render();
   void display (bool on);
 
   static cLcd* mLcd;
   static uint32_t mShowBuffer;
 
-  static SemaphoreHandle_t mFrameSem;
-
   static eDma2dWait mDma2dWait;
   static SemaphoreHandle_t mDma2dSem;
+  static SemaphoreHandle_t mFrameSem;
 
 private:
-  //{{{  const
-  const uint32_t kLtdcFormat = LTDC_PIXEL_FORMAT_RGB565;
-  const uint32_t kDstFormat = DMA2D_RGB565;
-  const uint16_t kDstComponents = 2;
-
-  const uint32_t kTempFormat = DMA2D_RGB565;
-  const uint16_t kTempComponents = 2;
-  //}}}
   typedef std::map<uint16_t, cFontChar*> cFontCharMap;
 
   void ltdcInit (uint16_t* frameBufferAddress);
