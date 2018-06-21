@@ -426,9 +426,9 @@ void displayThread (void* arg) {
       int rows = int(sqrt (float(items))) + 1;
       int count = 0;
       for (auto tile : mTileVec) {
-        cPoint p ((lcd->getWidth() / rows) * (count % rows) + (lcd->getWidth() / rows - tile->mWidth) / 2,
-                  (lcd->getHeight() / rows) * (count / rows) + (lcd->getHeight() / rows - tile->mHeight) / 2);
-        lcd->copy (tile, p);
+        lcd->copy (tile, cPoint  (
+                    (lcd->getWidth() / rows) * (count % rows) + (lcd->getWidth() / rows - tile->mWidth) / 2,
+                    (lcd->getHeight() / rows) * (count / rows) + (lcd->getHeight() / rows - tile->mHeight) / 2));
         count++;
         }
 
