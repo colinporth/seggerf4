@@ -36,12 +36,11 @@
 #define QUEUE_SIZE      10
 #define READ_CPLT_MSG   1
 #define WRITE_CPLT_MSG  2
-
-#define SD_TIMEOUT      2*1000
 //}}}
 
 //{{{  const
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
+
 const HeapRegion_t kHeapRegions[] = {
   {(uint8_t*)SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN },
   {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*4), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*4) },

@@ -175,16 +175,6 @@ void cLcd::debug (uint16_t colour, const std::string str) {
   render();
   }
 //}}}
-//{{{
-void cLcd::info (const std::string str) {
-  info (COL_WHITE, str);
-  }
-//}}}
-//{{{
-void cLcd::debug (const std::string str) {
-  debug (COL_WHITE, str);
-  }
-//}}}
 
 //{{{
 void cLcd::clear (uint16_t colour) {
@@ -615,9 +605,10 @@ void cLcd::start() {
 //{{{
 void cLcd::drawInfo() {
 
-  int infoHeight = 12;
   int titleHeight = 20;
   int gap = 4;
+  int infoHeight = 12;
+  int smallGap = 2;
 
   // draw title
   text (COL_YELLOW, titleHeight, mTitle, cRect(0, 0, getWidth(), titleHeight+gap));
@@ -640,8 +631,8 @@ void cLcd::drawInfo() {
                      dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
                      cRect(0, y, getWidth(), 20));
       text (mLines[lineIndex].mColour, infoHeight, mLines[lineIndex].mString,
-            cRect (x + gap, y, getWidth(), 20));
-      y -= infoHeight + gap;
+            cRect (x + smallGap, y, getWidth(), 20));
+      y -= infoHeight + smallGap;
       }
     }
   }
@@ -696,7 +687,8 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   rccPeriphClkInit.PLLSAI.PLLSAIR = 2;
   rccPeriphClkInit.PLLSAIDivR = RCC_PLLSAIDIVR_2;
   HAL_RCCEx_PeriphCLKConfig (&rccPeriphClkInit);
-  //{{{  init clocks
+
+  //{{{  config clocks
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -707,7 +699,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   __HAL_RCC_DMA2D_CLK_ENABLE();
   __HAL_RCC_LTDC_CLK_ENABLE();
   //}}}
-  //{{{  int gpio
+  //{{{  config gpio
   //  VS <-> PA.04 - unused
   //  HS <-> PC.06 - unused
   //  R2 <-> PC.10 - unused
@@ -760,7 +752,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   GPIO_InitStructure.Pin = GPIO_PIN_10 | GPIO_PIN_12;
   HAL_GPIO_Init (GPIOG, &GPIO_InitStructure);
   //}}}
-  //{{{  init tim4 pwm to PD13
+  //{{{  config TIM4 chan2 PWM to PD13
   // adj  - PD13
   GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStructure.Pull = GPIO_NOPULL;
@@ -782,7 +774,6 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
 
   // init timOcInit
   TIM_OC_InitTypeDef timOcInit = {0};
-
   timOcInit.OCMode       = TIM_OCMODE_PWM1;
   timOcInit.OCPolarity   = TIM_OCPOLARITY_HIGH;
   timOcInit.OCFastMode   = TIM_OCFAST_DISABLE;
@@ -834,7 +825,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   curLayerCfg->ImageHeight = getHeight();
   HAL_LTDC_ConfigLayer (&mLtdcHandle, curLayerCfg, 0);
 
-  // set line interupt line number
+  // set line interupt lineNumber
   LTDC->LIPCR = 0;
   LTDC->ICR = LTDC_IT_TE | LTDC_IT_FU | LTDC_IT_LI;
 
