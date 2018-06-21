@@ -127,7 +127,7 @@ public:
   void present();
 
   void render();
-  void display (bool on);
+  void display (int brightness);
 
   static cLcd* mLcd;
   static uint32_t mShowBuffer;
@@ -149,7 +149,8 @@ private:
   uint32_t rectRegs[5];
   uint32_t stampRegs[15];
 
-  LTDC_HandleTypeDef LtdcHandler;
+  LTDC_HandleTypeDef mLtdcHandle;
+  TIM_HandleTypeDef mTimHandle;
 
   bool mChanged = true;
   bool mDrawBuffer = false;

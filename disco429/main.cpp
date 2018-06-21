@@ -79,7 +79,7 @@ void SystemClockConfig() {
 //    APB2 Prescaler                 = 2
 //    HSE Frequency(Hz)              = 8000000
 //    PLL_M                          = 8
-//    PLL_N                          = 360
+//    PLL_N                          = 384
 //    PLL_P                          = 2
 //    PLL_Q                          = 7
 //    VDD(V)                         = 3.3
@@ -90,16 +90,16 @@ void SystemClockConfig() {
   __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
 
   // Enable HSE Oscillator and activate PLL with HSE as source
-  RCC_OscInitTypeDef rccOscInitStruct;
-  rccOscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  rccOscInitStruct.HSEState = RCC_HSE_ON;
-  rccOscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  rccOscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  rccOscInitStruct.PLL.PLLM = 8;
-  rccOscInitStruct.PLL.PLLN = 384;
-  rccOscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  rccOscInitStruct.PLL.PLLQ = 7;
-  HAL_RCC_OscConfig (&rccOscInitStruct);
+  RCC_OscInitTypeDef rccOscConfig;
+  rccOscConfig.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  rccOscConfig.HSEState = RCC_HSE_ON;
+  rccOscConfig.PLL.PLLState = RCC_PLL_ON;
+  rccOscConfig.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  rccOscConfig.PLL.PLLM = 8;
+  rccOscConfig.PLL.PLLN = 384;               // 192Mhz
+  rccOscConfig.PLL.PLLP = RCC_PLLP_DIV2;
+  rccOscConfig.PLL.PLLQ = 7;
+  HAL_RCC_OscConfig (&rccOscConfig);
 
   HAL_PWREx_EnableOverDrive();
 
@@ -111,14 +111,14 @@ void SystemClockConfig() {
   //HAL_RCCEx_PeriphCLKConfig (&rccPeriphClkInit);
 
   // Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers
-  RCC_ClkInitTypeDef rccClkInitStruct;
-  rccClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
-                               RCC_CLOCKTYPE_PCLK1  | RCC_CLOCKTYPE_PCLK2;
-  rccClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  rccClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  rccClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  rccClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-  HAL_RCC_ClockConfig (&rccClkInitStruct, FLASH_LATENCY_5);
+  RCC_ClkInitTypeDef rccClkConfig;
+  rccClkConfig.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
+                           RCC_CLOCKTYPE_PCLK1  | RCC_CLOCKTYPE_PCLK2;
+  rccClkConfig.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  rccClkConfig.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  rccClkConfig.APB1CLKDivider = RCC_HCLK_DIV4;
+  rccClkConfig.APB2CLKDivider = RCC_HCLK_DIV2;
+  HAL_RCC_ClockConfig (&rccClkConfig, FLASH_LATENCY_5);
   }
 //}}}
 //{{{
@@ -413,7 +413,7 @@ cTile* loadFile (const std::string& fileName, int scale) {
 void displayThread (void* arg) {
 
   lcd->render();
-  lcd->display (true);
+  lcd->display (50);
 
   auto lastUsage = osGetCPUUsage();
   while (true) {

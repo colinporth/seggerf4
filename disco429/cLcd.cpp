@@ -639,7 +639,7 @@ void cLcd::drawInfo() {
                      dec ((mLines[lineIndex].mTime-mBaseTime) / 1000) + "." +
                      dec ((mLines[lineIndex].mTime-mBaseTime) % 1000, 3, '0'),
                      cRect(0, y, getWidth(), 20));
-      text (mLines[lineIndex].mColour, infoHeight, mLines[lineIndex].mString, 
+      text (mLines[lineIndex].mColour, infoHeight, mLines[lineIndex].mString,
             cRect (x + gap, y, getWidth(), 20));
       y -= infoHeight + gap;
       }
@@ -676,14 +676,9 @@ void cLcd::render() {
   }
 //}}}
 //{{{
-void cLcd::display (bool on) {
+void cLcd::display (int brightness) {
 
-  if (on)
-    // ADJ hi
-    GPIOD->BSRR = GPIO_PIN_13;
-  else
-    // ADJ lo
-    GPIOD->BSRR = GPIO_PIN_13 << 16;
+  TIM4->CCR2 = 100 * brightness;
   }
 //}}}
 
@@ -727,14 +722,9 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   //  DE <-> PF.10
   // ADJ <-> PD.13
 
-  // adj  - PD13
-  GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStructure.Pin = GPIO_PIN_13;
-  HAL_GPIO_Init (GPIOD, &GPIO_InitStructure);
-
   // gpioA - AF14
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.Speed = GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStructure.Pull = GPIO_NOPULL;
   GPIO_InitStructure.Alternate = GPIO_AF14_LTDC;
@@ -770,26 +760,63 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   GPIO_InitStructure.Pin = GPIO_PIN_10 | GPIO_PIN_12;
   HAL_GPIO_Init (GPIOG, &GPIO_InitStructure);
   //}}}
+  //{{{  init tim4 pwm to PD13
+  // adj  - PD13
+  GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStructure.Pull = GPIO_NOPULL;
+  GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
+  GPIO_InitStructure.Alternate = GPIO_AF2_TIM4;
+  GPIO_InitStructure.Pin = GPIO_PIN_13;
+  HAL_GPIO_Init (GPIOD, &GPIO_InitStructure);
 
-  LtdcHandler.Instance = LTDC;
-  LtdcHandler.Init.HorizontalSync     = HORIZ_SYNC - 1;
-  LtdcHandler.Init.AccumulatedHBP     = HORIZ_SYNC - 1;
-  LtdcHandler.Init.AccumulatedActiveW = HORIZ_SYNC + LCD_WIDTH - 1;
-  LtdcHandler.Init.TotalWidth         = HORIZ_SYNC + LCD_WIDTH - 1;
-  LtdcHandler.Init.VerticalSync       = VERT_SYNC - 1;
-  LtdcHandler.Init.AccumulatedVBP     = VERT_SYNC - 1;
-  LtdcHandler.Init.AccumulatedActiveH = VERT_SYNC + LCD_HEIGHT - 1;
-  LtdcHandler.Init.TotalHeigh         = VERT_SYNC + LCD_HEIGHT - 1;
-  LtdcHandler.Init.HSPolarity = LTDC_HSPOLARITY_AL;
-  LtdcHandler.Init.VSPolarity = LTDC_VSPOLARITY_AL;
-  LtdcHandler.Init.DEPolarity = LTDC_DEPOLARITY_AL;
-  LtdcHandler.Init.PCPolarity = LTDC_PCPOLARITY_IPC;
-  LtdcHandler.Init.Backcolor.Red = 0;
-  LtdcHandler.Init.Backcolor.Blue = 0;
-  LtdcHandler.Init.Backcolor.Green = 0;
-  HAL_LTDC_Init (&LtdcHandler);
+  __HAL_RCC_TIM4_CLK_ENABLE();
 
-  LTDC_LayerCfgTypeDef* curLayerCfg = &LtdcHandler.LayerCfg[0];
+  mTimHandle.Instance = TIM4;
+  mTimHandle.Init.Period = 10000 - 1;
+  mTimHandle.Init.Prescaler = 1;
+  mTimHandle.Init.ClockDivision = 0;
+  mTimHandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+
+  if (HAL_TIM_Base_Init (&mTimHandle))
+    printf ("HAL_TIM_Base_Init failed\n");
+
+  // init timOcInit
+  TIM_OC_InitTypeDef timOcInit = {0};
+
+  timOcInit.OCMode       = TIM_OCMODE_PWM1;
+  timOcInit.OCPolarity   = TIM_OCPOLARITY_HIGH;
+  timOcInit.OCFastMode   = TIM_OCFAST_DISABLE;
+  timOcInit.OCNPolarity  = TIM_OCNPOLARITY_HIGH;
+  timOcInit.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  timOcInit.OCIdleState  = TIM_OCIDLESTATE_RESET;
+  timOcInit.Pulse = 10000 / 2;
+
+  if (HAL_TIM_PWM_ConfigChannel (&mTimHandle, &timOcInit, TIM_CHANNEL_2))
+    printf ("HAL_TIM_PWM_ConfigChannel failed\n");
+
+  if (HAL_TIM_PWM_Start (&mTimHandle, TIM_CHANNEL_2))
+    printf ("HAL_TIM_PWM_Start TIM4 ch2 failed\n");
+  //}}}
+
+  mLtdcHandle.Instance = LTDC;
+  mLtdcHandle.Init.HorizontalSync     = HORIZ_SYNC - 1;
+  mLtdcHandle.Init.AccumulatedHBP     = HORIZ_SYNC - 1;
+  mLtdcHandle.Init.AccumulatedActiveW = HORIZ_SYNC + LCD_WIDTH - 1;
+  mLtdcHandle.Init.TotalWidth         = HORIZ_SYNC + LCD_WIDTH - 1;
+  mLtdcHandle.Init.VerticalSync       = VERT_SYNC - 1;
+  mLtdcHandle.Init.AccumulatedVBP     = VERT_SYNC - 1;
+  mLtdcHandle.Init.AccumulatedActiveH = VERT_SYNC + LCD_HEIGHT - 1;
+  mLtdcHandle.Init.TotalHeigh         = VERT_SYNC + LCD_HEIGHT - 1;
+  mLtdcHandle.Init.HSPolarity = LTDC_HSPOLARITY_AL;
+  mLtdcHandle.Init.VSPolarity = LTDC_VSPOLARITY_AL;
+  mLtdcHandle.Init.DEPolarity = LTDC_DEPOLARITY_AL;
+  mLtdcHandle.Init.PCPolarity = LTDC_PCPOLARITY_IPC;
+  mLtdcHandle.Init.Backcolor.Red = 0;
+  mLtdcHandle.Init.Backcolor.Blue = 0;
+  mLtdcHandle.Init.Backcolor.Green = 0;
+  HAL_LTDC_Init (&mLtdcHandle);
+
+  LTDC_LayerCfgTypeDef* curLayerCfg = &mLtdcHandle.LayerCfg[0];
   curLayerCfg->WindowX0 = 0;
   curLayerCfg->WindowY0 = 0;
   curLayerCfg->WindowX1 = getWidth();
@@ -805,7 +832,7 @@ void cLcd::ltdcInit (uint16_t* frameBufferAddress) {
   curLayerCfg->BlendingFactor2 = LTDC_BLENDING_FACTOR2_PAxCA;
   curLayerCfg->ImageWidth = getWidth();
   curLayerCfg->ImageHeight = getHeight();
-  HAL_LTDC_ConfigLayer (&LtdcHandler, curLayerCfg, 0);
+  HAL_LTDC_ConfigLayer (&mLtdcHandle, curLayerCfg, 0);
 
   // set line interupt line number
   LTDC->LIPCR = 0;

@@ -17,8 +17,7 @@
 #define HAL_RCC_MODULE_ENABLED
 #define HAL_SD_MODULE_ENABLED
 #define HAL_SPI_MODULE_ENABLED
-#define HAL_UART_MODULE_ENABLED
-#define HAL_USART_MODULE_ENABLED
+#define HAL_TIM_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
 
 #define HSE_VALUE    ((uint32_t)8000000) /*!< Value of the External oscillator in Hz */
