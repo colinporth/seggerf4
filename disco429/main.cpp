@@ -366,7 +366,6 @@ cTile* loadFile (const std::string& fileName, int scale) {
 
   UINT bytesRead = 0;
   f_read (&gFile, buf, (UINT)filInfo.fsize, &bytesRead);
-  //lcd->info ("- read " + dec(bytesRead));
   f_close (&gFile);
 
   if (bytesRead > 0) {
@@ -398,7 +397,7 @@ cTile* loadFile (const std::string& fileName, int scale) {
     jpeg_finish_decompress (&mCinfo);
 
     lcd->info (COL_YELLOW, "loaded " + dec(mCinfo.image_width) + "x" + dec(mCinfo.image_height) + " " +
-                                        dec(mCinfo.output_width) + "x" + dec(mCinfo.output_height));
+                                       dec(mCinfo.output_width) + "x" + dec(mCinfo.output_height));
     jpeg_destroy_decompress (&mCinfo);
 
     return tile;
