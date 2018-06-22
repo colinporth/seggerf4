@@ -1,9 +1,10 @@
 // main.cpp
 //{{{  includes
+#include <vector>
+
 #include "cmsis_os.h"
 #include "cpuUsage.h"
 
-#include <vector>
 #include "cLcd.h"
 #include "cTraceVec.h"
 
@@ -12,11 +13,10 @@
 
 #include "sd.h"
 #include "../fatFs/ff.h"
-#include "../FatFs/diskio.h"
 
 #include "jpeglib.h"
 //}}}
-//{{{  sdram defines
+//{{{  sdRam defines
 #define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
 #define SDRAM_BANK1_LEN    ((uint32_t)0x00800000)
 
@@ -28,16 +28,12 @@
 #define SDRAM_MODEREG_BURST_LENGTH_4             ((uint16_t)0x0002)
 #define SDRAM_MODEREG_BURST_LENGTH_8             ((uint16_t)0x0004)
 #define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED     ((uint16_t)0x0008)
+
 #define SDRAM_MODEREG_CAS_LATENCY_2              ((uint16_t)0x0020)
 #define SDRAM_MODEREG_CAS_LATENCY_3              ((uint16_t)0x0030)
+
 #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
 //}}}
-//{{{  fatfs defines
-#define QUEUE_SIZE      10
-#define READ_CPLT_MSG   1
-#define WRITE_CPLT_MSG  2
-//}}}
-
 //{{{  const
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 
@@ -57,22 +53,16 @@ std::vector<std::string> mFileVec;
 std::vector<cTile*> mTileVec;
 //}}}
 
-//{{{
-extern "C" { void EXTI0_IRQHandler() {
-  HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_0);
-  }
-}
-//}}}
+extern "C" { void EXTI0_IRQHandler() { HAL_GPIO_EXTI_IRQHandler (GPIO_PIN_0); } }
 //{{{
 void HAL_GPIO_EXTI_Callback (uint16_t GPIO_Pin) {
-
   if (GPIO_Pin == GPIO_PIN_0)
     lcd->toggle();
   }
 //}}}
 
 //{{{
-void SystemClockConfig() {
+void systemClockConfig() {
 //  System Clock source            = PLL (HSE)
 //    SYSCLK(Hz)                     = 180000000
 //    HCLK(Hz)                       = 180000000
@@ -491,12 +481,12 @@ void gyroThread (void* arg) {
 int main() {
 
   HAL_Init();
-  SystemClockConfig();
+  systemClockConfig();
   sdRamInit();
   vPortDefineHeapRegions (kHeapRegions);
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI);
 
-  lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR+ (LCD_WIDTH*LCD_HEIGHT*2));
+  lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
   lcd->init (kHello);
 
   mTraceVec.addTrace (1024, 1, 3);

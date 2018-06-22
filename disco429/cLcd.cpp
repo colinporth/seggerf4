@@ -616,7 +616,7 @@ void cLcd::drawInfo() {
   auto y = getHeight() - titleHeight-4;
   text (COL_WHITE, titleHeight,
         dec (xPortGetFreeHeapSize()) + ":" + dec (xPortGetMinimumEverFreeHeapSize()) +
-        " p:" + dec(mPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms " +
+        " p:" + dec(mNumPresents) + ":" + dec (mDrawTime) + ":" + dec (mWaitTime) + "ms " +
         dec (osGetCPUUsage()) + "%",
         cRect(0, y, getWidth(), titleHeight+gap));
 
@@ -649,7 +649,7 @@ void cLcd::present() {
   xSemaphoreTake (mFrameSem, 1000);
   mWaitTime = HAL_GetTick() - mStartTime;
 
-  mPresents++;
+  mNumPresents++;
 
   // flip
   mDrawBuffer = !mDrawBuffer;
