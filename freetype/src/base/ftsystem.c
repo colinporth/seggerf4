@@ -72,7 +72,8 @@
   {
     FT_UNUSED( memory );
 
-    return pvPortMalloc( size );
+    //return pvPortMalloc( size );
+    return malloc( size );
   }
 
 
@@ -105,11 +106,13 @@
     FT_UNUSED( memory );
     FT_UNUSED( cur_size );
 
-    void* p = pvPortMalloc (new_size);
+    //void* p = pvPortMalloc (new_size);
+    void* p = malloc (new_size);
     if (p) {
       if (block != NULL) {
         memcpy (p, block, cur_size);
-        vPortFree (block);
+        //vPortFree (block);
+        free (block);
         }
       }
 
@@ -136,7 +139,8 @@
   {
     FT_UNUSED( memory );
 
-    vPortFree( block );
+    //vPortFree( block );
+    free( block );
   }
 
 

@@ -1,12 +1,6 @@
 // main.cpp
 #include "stm32f429i_discovery.h"
 //{{{  sdRam defines
-#define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
-#define SDRAM_BANK1_LEN    ((uint32_t)0x01000000)
-
-#define SDRAM_BANK2_ADDR  ((uint16_t*)0xD0000000)
-#define SDRAM_BANK2_LEN    ((uint32_t)0x01000000)
-
 #define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
 #define SDRAM_MODEREG_BURST_LENGTH_2             ((uint16_t)0x0001)
 #define SDRAM_MODEREG_BURST_LENGTH_4             ((uint16_t)0x0002)
@@ -17,24 +11,15 @@
 #define SDRAM_MODEREG_CAS_LATENCY_3              ((uint16_t)0x0030)
 
 #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
-//}}}
 
+#define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
+#define SDRAM_BANK1_LEN    ((uint32_t)0x01000000)
+
+#define SDRAM_BANK2_ADDR  ((uint16_t*)0xD0000000)
+#define SDRAM_BANK2_LEN    ((uint32_t)0x01000000)
+//}}}
 //{{{
 void systemClockConfig() {
-//  System Clock source            = PLL (HSE)
-//    SYSCLK(Hz)                     = 180000000
-//    HCLK(Hz)                       = 180000000
-//    AHB Prescaler                  = 1
-//    APB1 Prescaler                 = 4
-//    APB2 Prescaler                 = 2
-//    HSE Frequency(Hz)              = 8000000
-//    PLL_M                          = 8
-//    PLL_N                          = 384
-//    PLL_P                          = 2
-//    PLL_Q                          = 7
-//    VDD(V)                         = 3.3
-//    Main regulator output voltage  = Scale1 mode
-//    Flash Latency(WS)              = 5
 
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
@@ -46,7 +31,7 @@ void systemClockConfig() {
   rccOscConfig.PLL.PLLState = RCC_PLL_ON;
   rccOscConfig.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   rccOscConfig.PLL.PLLM = 8;
-  rccOscConfig.PLL.PLLN = 360;               // 192Mhz
+  rccOscConfig.PLL.PLLN = 200;               // 168mhz
   rccOscConfig.PLL.PLLP = RCC_PLLP_DIV2;
   rccOscConfig.PLL.PLLQ = 7;
   HAL_RCC_OscConfig (&rccOscConfig);
@@ -90,9 +75,11 @@ void sdRamInit() {
 //   PE01 -> FMC_NBL1
 //   PG15 -> FMC_NCAS
 //   PF11 -> FMC_NRAS
+
 // BANK1 address 0xC0000000
 //   PC02 -> FMC_SDNE0
 //   PC03 -> FMC_SDCKE0
+
 // BANK2 address 0xD0000000
 //   PB06 -> FMC_SDNE1
 //   PB05 -> FMC_SDCKE1
@@ -139,20 +126,30 @@ void sdRamInit() {
   HAL_GPIO_Init (GPIOG, &GPIO_Init_Structure);
   //}}}
 
-//  bank command
+  //{{{  bank command
+  // 64m
   const uint32_t kBank1Command =
     FMC_SDRAM_CLOCK_PERIOD_2 |
-    //FMC_SDRAM_RBURST_ENABLE |
+    FMC_SDRAM_RBURST_ENABLE |
     FMC_SDRAM_RPIPE_DELAY_1 |
 
     FMC_SDRAM_COLUMN_BITS_NUM_9 |
     FMC_SDRAM_ROW_BITS_NUM_12 |
     FMC_SDRAM_INTERN_BANKS_NUM_4 |
     FMC_SDRAM_MEM_BUS_WIDTH_16  |
-    FMC_SDRAM_CAS_LATENCY_2  |
+    FMC_SDRAM_CAS_LATENCY_3  |
     FMC_SDRAM_WRITE_PROTECTION_DISABLE;
+
+  const uint32_t kBank2Command =
+    FMC_SDRAM_COLUMN_BITS_NUM_9 |
+    FMC_SDRAM_ROW_BITS_NUM_12 |
+    FMC_SDRAM_INTERN_BANKS_NUM_4 |
+    FMC_SDRAM_MEM_BUS_WIDTH_16 |
+    FMC_SDRAM_CAS_LATENCY_3 |
+    FMC_SDRAM_WRITE_PROTECTION_DISABLE;
+  //}}}
   FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK1] = kBank1Command;
-  FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK2] = kBank1Command;
+  FMC_SDRAM_DEVICE->SDCR[FMC_SDRAM_BANK2] = kBank2Command;
 
   //{{{  bank timing
   const uint32_t kRowCycleDelay        = 7; // tRC:  min = 63 (6 x 11.90ns)
@@ -170,16 +167,22 @@ void sdRamInit() {
                                ((kWriteRecoveryTime-1) <<16)    |
                                ((kRPDelay-1) << 20)             |
                                ((kRCDDelay-1) << 24);
+
+  const uint32_t kBank2Timing = (kLoadToActiveDelay-1)          |
+                               ((kExitSelfRefreshDelay-1) << 4) |
+                               ((kSelfRefreshTime-1) << 8)      |
+                               ((kWriteRecoveryTime-1) <<16)    |
+                               ((kRCDDelay-1) << 24);
   //}}}
   FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK1] = kBank1Timing;
-  FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK2] = kBank1Timing;
+  FMC_SDRAM_DEVICE->SDTR[FMC_SDRAM_BANK2] = kBank2Timing;
 
   //{{{  send clockEnable command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_CLK_ENABLE |
                             FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
-  HAL_Delay (100);
+  HAL_Delay (2);
 
   //{{{  send PALL prechargeAll command
   FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_PALL |
@@ -193,54 +196,54 @@ void sdRamInit() {
                             ((kAutoRefreshNumber-1) << 5);
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
+  //{{{  send autoRefresh command
+  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_AUTOREFRESH_MODE |
+                            FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
+                            ((kAutoRefreshNumber-1) << 5);
+  while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
+  //}}}
   //{{{  send loadMode command
   FMC_SDRAM_DEVICE->SDCMR =
     FMC_SDRAM_CMD_LOAD_MODE |
     FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_TARGET_BANK2 |
-    ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_2 | SDRAM_MODEREG_BURST_LENGTH_2) << 9);
+    ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_3 | SDRAM_MODEREG_BURST_LENGTH_1) << 9);
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   //}}}
   FMC_SDRAM_DEVICE->SDRTR |= 0x0569 << 1;
   }
 //}}}
-//{{{
+
 void sdRamTest (uint32_t fromValue, uint32_t toValue, uint16_t* addr, uint32_t len) {
 
   for (uint32_t i = fromValue; i <= toValue; i++) {
-    // write
-    int32_t readOk = 0;
-    int32_t readErr = 0;
-
+    uint16_t data = i;
     auto writeAddress = addr;
-    uint16_t value = 0xFFFF;
-    for (uint32_t j = 0; j < len / 2; j++) {
-      *writeAddress++ = (j + i) & 0xFFFF;
-      }
+    for (uint32_t j = 0; j < len/2; j++)
+      *writeAddress++ = data++;
 
+    uint32_t readOk = 0;
+    uint32_t readErr = 0;
     auto readAddress = addr;
     for (uint32_t j = 0; j < len / 2; j++) {
-      uint16_t read = *readAddress++;
-
-      if ((read & 0x5FEF) == ((j + i) & 0x5FEF)) {
-        //printf ("ok %p read:%x == %x\n", readAddress, read, value);
+      uint16_t readWord1 = *readAddress++;
+      if (readWord1 == ((j+i) & 0xFFFF))
         readOk++;
-        }
       else {
-        printf ("error %p read:%x != %x %x\n", readAddress, read, (j + i) & 0x7FFF, i);
+        if (readErr < 4)
+          printf ("- error %p %02x %d - r:%04x != %04x\n", readAddress, i, readErr, readWord1, (j+i) & 0xFFFF);
         readErr++;
         }
       }
-
-    printf ("sdRamTest2 value:%x done\n", i);
+    printf ("%p i:%x ok:%x error:%x %d\n", addr, i, readOk, readErr, (readOk * 100) / (len/2));
     }
   }
-//}}}
 
 int main() {
 
   HAL_Init();
   systemClockConfig();
+
   sdRamInit();
-  sdRamTest (0, 0, (uint16_t*)SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
-  sdRamTest (0, 0, (uint16_t*)SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
+  while (true)
+    sdRamTest (0, 0xff, SDRAM_BANK1_ADDR, 0x01000000);
   }

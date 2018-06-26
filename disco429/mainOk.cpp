@@ -38,8 +38,7 @@
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 
 const HeapRegion_t kHeapRegions[] = {
-  {(uint8_t*)SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN },
-  {(uint8_t*)SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*4), SDRAM_BANK2_LEN - (LCD_WIDTH*LCD_HEIGHT*4) },
+  {(uint8_t*)SDRAM_BANK1_ADDR + (LCD_WIDTH*LCD_HEIGHT*4), SDRAM_BANK1_LEN - (LCD_WIDTH*LCD_HEIGHT*4) },
   { nullptr, 0 } };
 //}}}
 //{{{  var
@@ -684,12 +683,12 @@ int main() {
   HAL_Init();
   systemClockConfig();
   sdRamInit1();
-  sdRamTest2 (16, (uint16_t*)SDRAM_BANK2_ADDR, SDRAM_BANK2_LEN);
+  //sdRamTest2 (16, (uint16_t*)SDRAM_BANK1_ADDR, SDRAM_BANK1_LEN);
 
   vPortDefineHeapRegions (kHeapRegions);
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI);
 
-  lcd = new cLcd (SDRAM_BANK2_ADDR, SDRAM_BANK2_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
+  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK1_ADDR + (LCD_WIDTH*LCD_HEIGHT*2));
   lcd->init (kHello);
 
   mTraceVec.addTrace (1024, 1, 3);

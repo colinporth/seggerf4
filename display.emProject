@@ -47,11 +47,11 @@
         Name="Common"
         filter="c;cpp;cxx;cc;h;s;asm;inc"
         macros="STLport=No" />
-      <file file_name="main.cpp" />
       <file file_name="stm32f429i_discovery.c" />
       <file file_name="cLcd.cpp" />
       <file file_name="gyro.cpp" />
       <file file_name="sd.cpp" />
+      <file file_name="mainOk.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />
@@ -244,6 +244,8 @@
       <file file_name="../drivers/Src/stm32f4xx_hal_dma2d.c" />
       <file file_name="../drivers/Src/stm32f4xx_hal_ltdc.c" />
       <file file_name="../drivers/Src/stm32f4xx_hal_ltdc_ex.c" />
+      <file file_name="../drivers/Src/stm32f4xx_hal_sdram.c" />
+      <file file_name="../drivers/Src/stm32f4xx_ll_fmc.c" />
     </folder>
     <folder Name="freetype">
       <file file_name="../freetype/Src/autofit/autofit.c" />
@@ -346,7 +348,6 @@
     </folder>
     <folder Name="FreeRTOS">
       <file file_name="../FreeRTOS/list.c" />
-      <file file_name="../FreeRTOS/queue.c" />
       <file file_name="../FreeRTOS/timers.c" />
       <folder Name="inc">
         <file file_name="../FreeRTOS/portable/GCC/ARM_CM4F/portmacro.h" />
@@ -369,6 +370,7 @@
       <file file_name="../FreeRTOS/CMSIS_RTOS/cmsis_os.c" />
       <file file_name="../FreeRTOS/cpuUsage.c" />
       <file file_name="../FreeRTOS/tasksMalloc.c" />
+      <file file_name="../FreeRTOS/queueMalloc.c" />
     </folder>
   </project>
 </solution>
