@@ -51,7 +51,7 @@
       <file file_name="cLcd.cpp" />
       <file file_name="gyro.cpp" />
       <file file_name="sd.cpp" />
-      <file file_name="mainOk.cpp" />
+      <file file_name="main.cpp" />
     </folder>
     <folder Name="RTT Files">
       <configuration Name="Common" macros="STLport=No" />
