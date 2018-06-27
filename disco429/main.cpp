@@ -426,6 +426,7 @@ int main() {
   TaskHandle_t appHandle;
   xTaskCreate ((TaskFunction_t)loadThread, "load", 8192, 0, 2, &appHandle);
   //xTaskCreate ((TaskFunction_t)gyroThread, "gyro", 1024, 0, 4, &appHandle);
+  //xTaskCreate ((TaskFunction_t)sdRamTestThread, "test", 1024, 0, 2, &appHandle);
 
   vTaskStartScheduler();
   }
