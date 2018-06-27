@@ -55,7 +55,7 @@ void systemClockConfig() {
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
 
-  // Enable HSE Oscillator and activate PLL with HSE as source
+  //  HSE Oscillator with PLL clock source, 192Mhz
   RCC_OscInitTypeDef rccOscConfig;
   rccOscConfig.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   rccOscConfig.HSEState = RCC_HSE_ON;
@@ -69,7 +69,7 @@ void systemClockConfig() {
 
   HAL_PWREx_EnableOverDrive();
 
-  // Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers
+  // PLL system clock source, config HCLK, PCLK1 and PCLK2 clocks dividers
   RCC_ClkInitTypeDef rccClkConfig;
   rccClkConfig.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK |
                            RCC_CLOCKTYPE_PCLK1  | RCC_CLOCKTYPE_PCLK2;
@@ -84,7 +84,7 @@ void systemClockConfig() {
 void sdRamInit() {
 
   //{{{  clock,pins init
-  // BANK1 address 0xC0000000
+  // BANK1 - 0xC0000000
   //   PC02 -> FMC_SDNE0
   //   PC03 -> FMC_SDCKE0
   //
@@ -147,37 +147,43 @@ void sdRamInit() {
                         FMC_SDRAM_RBURST_ENABLE | FMC_SDRAM_CAS_LATENCY_2 | \
                         FMC_SDRAM_COLUMN_BITS_NUM_9 | FMC_SDRAM_ROW_BITS_NUM_12 | \
                         FMC_SDRAM_INTERN_BANKS_NUM_4 | FMC_SDRAM_MEM_BUS_WIDTH_16
-  FMC_SDRAM_DEVICE->SDCR [FMC_SDRAM_BANK1] = kBank1Command;
 
-  #define kRowCycleDelay        7  // tRC:  min = 63 (6 x 11.90ns)
-  #define kRPDelay              2  // tRP:  15ns => 2 x 11.90ns
-  #define kLoadToActiveDelay    2  // tMRD: 2 Clock cycles
-  #define kExitSelfRefreshDelay 7  // tXSR: min = 70ns (6 x 11.90ns)
-  #define kSelfRefreshTime      4  // tRAS: min = 42ns (4 x 11.90ns) max=120k (ns)
-  #define kWriteRecoveryTime    2  // tWR:  2 Clock cycles
-  #define kRCDDelay             2  // tRCD: 15ns => 2 x 11.90ns
-  #define kBankTiming  (kLoadToActiveDelay-1)           | \
-                       ((kExitSelfRefreshDelay-1) << 4) | ((kSelfRefreshTime-1) << 8)   | \
-                       ((kRowCycleDelay-1) << 12)       | ((kWriteRecoveryTime-1) <<16) | \
-                       ((kRPDelay-1) << 20)             | ((kRCDDelay-1) << 24)
+  #define kLoadToActiveDelay    2  // tMRD           2 clocks
+  #define kExitSelfRefreshDelay 7  // tXSR min 70ns  6 x 10.4ns
+  #define kSelfRefreshTime      4  // tRAS min 44ns  4 x 10.4ns  max 120k ns
+  #define kRowCycleDelay        7  // tRC  min 66ns  7 x 10.4ns
+  #define kWriteRecoveryTime    2  // tWR            2 clocks
+  #define kRPDelay              2  // tRP  min 20ns  2 x 10.40ns
+  #define kRCDDelay             2  // tRCD min 20ns  2 x 10.4ns
+
+  #define kBankTiming (kLoadToActiveDelay-1)           | \
+                      ((kExitSelfRefreshDelay-1) << 4) | ((kSelfRefreshTime-1) << 8)   | \
+                      ((kRowCycleDelay-1) << 12)       | ((kWriteRecoveryTime-1) <<16) | \
+                      ((kRPDelay-1) << 20)             | ((kRCDDelay-1) << 24)
+
+  #define kClockEnable  FMC_SDRAM_CMD_CLK_ENABLE | FMC_SDRAM_CMD_TARGET_BANK1;
+  #define kPreChargeAll FMC_SDRAM_CMD_PALL | FMC_SDRAM_CMD_TARGET_BANK1;
+  #define kAutoRefresh  FMC_SDRAM_CMD_AUTOREFRESH_MODE | FMC_SDRAM_CMD_TARGET_BANK1 | \
+                        ((8-1) << 5)
+  #define kLoadMode     FMC_SDRAM_CMD_LOAD_MODE | FMC_SDRAM_CMD_TARGET_BANK1 | \
+                        ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | \
+                          SDRAM_MODEREG_CAS_LATENCY_2 | \
+                          SDRAM_MODEREG_BURST_LENGTH_8) << 9)
+
+  FMC_SDRAM_DEVICE->SDCR [FMC_SDRAM_BANK1] = kBank1Command;
   FMC_SDRAM_DEVICE->SDTR [FMC_SDRAM_BANK1] = kBankTiming;
 
-  //  send clockEnable command
-  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_CLK_ENABLE;
+  FMC_SDRAM_DEVICE->SDCMR = kClockEnable;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
   HAL_Delay (2);
 
-  // send PALL prechargeAll command
-  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_PALL;
+  FMC_SDRAM_DEVICE->SDCMR = kPreChargeAll;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
-  // send autoRefresh command
-  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_AUTOREFRESH_MODE | ((8-1) << 5);
+  FMC_SDRAM_DEVICE->SDCMR = kAutoRefresh;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
-  // send loadMode command
-  FMC_SDRAM_DEVICE->SDCMR = FMC_SDRAM_CMD_TARGET_BANK1 | FMC_SDRAM_CMD_LOAD_MODE |
-    ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | SDRAM_MODEREG_CAS_LATENCY_2 | SDRAM_MODEREG_BURST_LENGTH_8) << 9);
+  FMC_SDRAM_DEVICE->SDCMR =  kLoadMode;
   while (HAL_IS_BIT_SET (FMC_SDRAM_DEVICE->SDSR, FMC_SDSR_BUSY)) {}
 
   FMC_SDRAM_DEVICE->SDRTR = 0x0569 << 1;
