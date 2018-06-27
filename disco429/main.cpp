@@ -16,21 +16,8 @@
 
 #include "jpeglib.h"
 //}}}
-//{{{  sdRam defines
-#define SDRAM_BANK1_ADDR  ((uint16_t*)0xC0000000)
-#define SDRAM_BANK1_LEN    ((uint32_t)0x01000000)
-
-#define SDRAM_MODEREG_BURST_LENGTH_1          ((uint16_t)0x0000)
-#define SDRAM_MODEREG_BURST_LENGTH_2          ((uint16_t)0x0001)
-#define SDRAM_MODEREG_BURST_LENGTH_4          ((uint16_t)0x0002)
-#define SDRAM_MODEREG_BURST_LENGTH_8          ((uint16_t)0x0004)
-#define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED  ((uint16_t)0x0008)
-
-#define SDRAM_MODEREG_CAS_LATENCY_2           ((uint16_t)0x0020)
-#define SDRAM_MODEREG_CAS_LATENCY_3           ((uint16_t)0x0030)
-
-#define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE  ((uint16_t)0x0200)
-//}}}
+#define SDRAM_BANK1_ADDR  0xC0000000
+#define SDRAM_BANK1_LEN   0x01000000
 //{{{  const
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 
@@ -82,6 +69,7 @@ void systemClockConfig() {
 //}}}
 //{{{
 void sdRamInit() {
+// MT48LC8M16A2 2 Meg x 16 x 4 banks
 
   //{{{  clock,pins init
   // BANK1 - 0xC0000000
@@ -142,19 +130,28 @@ void sdRamInit() {
   GPIO_Init_Structure.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_8 | GPIO_PIN_15;
   HAL_GPIO_Init (GPIOG, &GPIO_Init_Structure);
   //}}}
+  #define SDRAM_MODEREG_BURST_LENGTH_1          ((uint16_t)0x0000)
+  #define SDRAM_MODEREG_BURST_LENGTH_2          ((uint16_t)0x0001)
+  #define SDRAM_MODEREG_BURST_LENGTH_4          ((uint16_t)0x0002)
+  #define SDRAM_MODEREG_BURST_LENGTH_8          ((uint16_t)0x0004)
+  #define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED  ((uint16_t)0x0008)
+  #define SDRAM_MODEREG_CAS_LATENCY_2           ((uint16_t)0x0020)
+  #define SDRAM_MODEREG_CAS_LATENCY_3           ((uint16_t)0x0030)
+  #define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE  ((uint16_t)0x0200)
 
   #define kBank1Command FMC_SDRAM_CLOCK_PERIOD_2 | \
                         FMC_SDRAM_RBURST_ENABLE | FMC_SDRAM_CAS_LATENCY_2 | \
                         FMC_SDRAM_COLUMN_BITS_NUM_9 | FMC_SDRAM_ROW_BITS_NUM_12 | \
                         FMC_SDRAM_INTERN_BANKS_NUM_4 | FMC_SDRAM_MEM_BUS_WIDTH_16
 
-  #define kLoadToActiveDelay    2  // tMRD           2 clocks
-  #define kExitSelfRefreshDelay 7  // tXSR min 70ns  6 x 10.4ns
-  #define kSelfRefreshTime      4  // tRAS min 44ns  4 x 10.4ns  max 120k ns
-  #define kRowCycleDelay        7  // tRC  min 66ns  7 x 10.4ns
-  #define kWriteRecoveryTime    2  // tWR            2 clocks
-  #define kRPDelay              2  // tRP  min 20ns  2 x 10.40ns
-  #define kRCDDelay             2  // tRCD min 20ns  2 x 10.4ns
+  // clock 1 / 192 / 2 = 10.4ns
+  #define kLoadToActiveDelay    2  // tMRD
+  #define kExitSelfRefreshDelay 7  // tXSR min:70ns
+  #define kSelfRefreshTime      4  // tRAS min:44ns max:120kns
+  #define kRowCycleDelay        7  // tRC  min:66ns
+  #define kWriteRecoveryTime    2  // tWR
+  #define kRPDelay              2  // tRP  min:20ns
+  #define kRCDDelay             2  // tRCD min:20ns
 
   #define kBankTiming (kLoadToActiveDelay-1)           | \
                       ((kExitSelfRefreshDelay-1) << 4) | ((kSelfRefreshTime-1) << 8)   | \
@@ -162,9 +159,12 @@ void sdRamInit() {
                       ((kRPDelay-1) << 20)             | ((kRCDDelay-1) << 24)
 
   #define kClockEnable  FMC_SDRAM_CMD_CLK_ENABLE | FMC_SDRAM_CMD_TARGET_BANK1;
+
   #define kPreChargeAll FMC_SDRAM_CMD_PALL | FMC_SDRAM_CMD_TARGET_BANK1;
+
   #define kAutoRefresh  FMC_SDRAM_CMD_AUTOREFRESH_MODE | FMC_SDRAM_CMD_TARGET_BANK1 | \
                         ((8-1) << 5)
+
   #define kLoadMode     FMC_SDRAM_CMD_LOAD_MODE | FMC_SDRAM_CMD_TARGET_BANK1 | \
                         ((SDRAM_MODEREG_WRITEBURST_MODE_SINGLE | \
                           SDRAM_MODEREG_CAS_LATENCY_2 | \
@@ -421,7 +421,7 @@ int main() {
   vPortDefineHeapRegions (kHeapRegions);
   BSP_PB_Init (BUTTON_KEY, BUTTON_MODE_EXTI);
 
-  lcd = new cLcd (SDRAM_BANK1_ADDR, SDRAM_BANK1_ADDR + LCD_WIDTH*LCD_HEIGHT);
+  lcd = new cLcd ((uint16_t*)SDRAM_BANK1_ADDR, (uint16_t*)SDRAM_BANK1_ADDR + LCD_WIDTH*LCD_HEIGHT);
   lcd->init (kHello);
 
   mTraceVec.addTrace (1024, 1, 3);
