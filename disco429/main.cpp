@@ -16,9 +16,10 @@
 
 #include "jpeglib.h"
 //}}}
-#define SDRAM_BANK1_ADDR  0xC0000000
-#define SDRAM_BANK1_LEN   0x01000000
 //{{{  const
+#define SDRAM_BANK1_ADDR  0xC0000000
+#define SDRAM_BANK1_LEN   0x01000000   // 16mb
+
 const std::string kHello = std::string(__TIME__) + " " + std::string(__DATE__);
 
 const HeapRegion_t kHeapRegions[] = {
@@ -371,6 +372,7 @@ void loadThread (void* arg) {
     findFiles ("", ".jpg");
     for (auto file : mFileVec) {
       mTileVec.push_back (loadFile (file, 4));
+      printf ("%s\n", file.c_str());
       lcd->info ("loadfile" + file);
       lcd->change();
       }
