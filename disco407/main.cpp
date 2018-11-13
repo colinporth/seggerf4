@@ -771,8 +771,7 @@ private:
   //{{{
   void drawPix (eDraw draw, cPoint p) {
 
-    uint8_t mask = 0x80 >> (p.x & 7);
-    auto framePtr = getFramePtr (p.y) + p.x/8;
+    auto framePtr = uint32_t (mBuffer[mDrawBuffer] + r.top * getWidth() + r.left)
 
     if (draw == eInvert)
       *framePtr++ ^= mask;
